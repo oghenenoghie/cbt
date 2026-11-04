@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     api_v1_prefix: str = "/api/v1"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    database_url: str = "sqlite:///./cbt.db"
 
     model_config = SettingsConfigDict(
         env_file=".env",
