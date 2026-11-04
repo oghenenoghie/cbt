@@ -29,4 +29,4 @@ Browser and mobile clients must never contain a platform client secret. They sho
 
 ## Current implementation status
 
-The integration architecture and initial Pydantic schemas are scaffolded. Authentication, tenant-aware persistence, public routes, webhook delivery, SDKs, and LTI support are future implementation work. Do not treat the API examples in this directory as live endpoints yet.
+The tenant and integration persistence models, first Alembic migration, API-key hashing helpers, tenant-scoped bearer authentication dependency, and protected `GET /api/v1/integrations/me` endpoint are now scaffolded. The web Integrations page is currently a design preview; it is not yet wired to live management APIs. Tenant administrator login, integration creation/credential lifecycle endpoints, webhook delivery, SDKs, and LTI support remain future implementation work. Do not treat the example exam-launch and webhook endpoints as live.
