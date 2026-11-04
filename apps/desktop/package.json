@@ -1,0 +1,36 @@
+{
+  "name": "@intelligent-cbt/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Windows desktop client for Intelligent CBT",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "electron .",
+    "build": "tsc -p tsconfig.json",
+    "package:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8",
+    "typescript": "^5.7.2"
+  },
+  "build": {
+    "appId": "com.intelligentcbt.desktop",
+    "productName": "Intelligent CBT",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
