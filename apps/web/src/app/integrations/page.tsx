@@ -1,3 +1,5 @@
+import "./integrations.css";
+
 import {
   Activity,
   ArrowDownToLine,
@@ -9,7 +11,6 @@ import {
   Code2,
   KeyRound,
   LockKeyhole,
-  Plus,
   RefreshCw,
   ShieldCheck,
   Webhook,
