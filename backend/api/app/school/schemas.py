@@ -168,3 +168,78 @@ class SubjectOut(BaseModel):
     code: str | None
     level_ids: list[str]
     topics: list[TopicOut]
+
+
+# --- People in classes ---------------------------------------------------------------------------
+
+MAX_ENROL_ROWS = 200
+
+
+class EnrolRequest(_Input):
+    """Student accounts to enrol in the arm, all or none."""
+
+    user_ids: list[str] = Field(min_length=1, max_length=MAX_ENROL_ROWS)
+
+
+class EnrolmentMove(_Input):
+    arm_id: str = Field(min_length=1, max_length=36)
+
+
+class EnrolmentOut(BaseModel):
+    id: str
+    session_id: str
+    arm_id: str
+    candidate_id: str
+    user_id: str | None
+    username: str | None
+    display_name: str
+
+
+class AssignmentCreate(_Input):
+    teacher_id: str = Field(min_length=1, max_length=36)
+    arm_id: str = Field(min_length=1, max_length=36)
+    subject_id: str = Field(min_length=1, max_length=36)
+
+
+class AssignmentOut(BaseModel):
+    id: str
+    teacher_id: str
+    teacher_name: str
+    session_id: str
+    arm_id: str
+    arm_name: str
+    subject_id: str
+    subject_name: str
+
+
+class SessionRef(BaseModel):
+    id: str
+    name: str
+    is_current: bool
+
+
+class SubjectRef(BaseModel):
+    id: str
+    name: str
+    code: str | None
+
+
+class MyEnrolment(BaseModel):
+    session: SessionRef
+    arm_id: str
+    arm_name: str
+    subjects: list[SubjectRef]
+
+
+class MyTeaching(BaseModel):
+    session: SessionRef
+    arm_id: str
+    arm_name: str
+    subject: SubjectRef
+
+
+class MyClasses(BaseModel):
+    """The signed-in person's own classes: as a student, as a teacher, or both empty."""
+
+    enrolments: list[MyEnrolment]
+    teaching: list[MyTeaching]

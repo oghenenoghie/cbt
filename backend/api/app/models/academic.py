@@ -135,6 +135,10 @@ class ClassArm(Base):
             "session_id", "level_id", "name", name="uq_class_arms_session_id_level_id_name"
         ),
         UniqueConstraint("id", "tenant_id", name="uq_class_arms_id_tenant_id"),
+        # Target for enrolments, so an enrolment's session is always its arm's session.
+        UniqueConstraint(
+            "id", "session_id", "tenant_id", name="uq_class_arms_id_session_id_tenant_id"
+        ),
         ForeignKeyConstraint(
             ["session_id", "tenant_id"],
             ["academic_sessions.id", "academic_sessions.tenant_id"],

@@ -59,6 +59,8 @@ Encode these as server-side checks that block publication, not as UI hints.
 
 ## 3. Question bank and exam builder (Phase 5)
 
+- **Already in place:** exams target an arm + subject (+ term). Check `require_teaching` (`app/school/access.py`) before a teacher creates, changes or marks one, and use `Enrolment` to find who sits it.
+
 - Generated drafts and approved question versions are separate records. Approving creates an immutable version.
 - Build and preview exams only from approved questions. Configure duration, availability window, attempts, marks and instructions.
 - **Publishing creates an immutable exam snapshot.** Later edits to bank items must not change a published snapshot. Copy or pin versions; never reference mutable rows.

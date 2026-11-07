@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -76,7 +76,7 @@ All changes need the `X-CSRF-Token` header. Another school's accounts return 404
 
 ### School structure
 
-Everyone signed in at a school can read these; only school admins can change them (with `X-CSRF-Token`). See [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md).
+Staff (school admins and teachers) can read these; only school admins can change them (with `X-CSRF-Token`). Students see only their own classes, at `GET /api/v1/me/classes`. See [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md).
 
 | Endpoint | Purpose |
 |---|---|
@@ -90,6 +90,18 @@ Everyone signed in at a school can read these; only school admins can change the
 | `POST /api/v1/school/subjects/{id}/topics`, `PATCH` / `DELETE /api/v1/school/topics/{id}` | Add, rename, move (`position`) or remove topics |
 
 Duplicate names, and deleting something still in use, return 409 with a message. Another school's records return 404.
+
+### People in classes
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/v1/school/arms/{id}/enrolments` | Enrol student accounts (`user_ids`, up to 200, all or nothing). Creates and links each candidate record if missing. One arm per student per session |
+| `GET /api/v1/school/arms/{id}/enrolments` | The arm's students: school admins, and teachers who teach that arm |
+| `PATCH` / `DELETE /api/v1/school/enrolments/{id}` | Move a student to another arm in the same session, or remove them |
+| `GET` / `POST /api/v1/school/assignments`, `DELETE .../assignments/{id}` | Assign staff to arm + subject pairs (the arm's level must take the subject). Listing is for school admins |
+| `GET /api/v1/me/classes` | Anyone signed in: the arms you're enrolled in (with their subjects) and what you teach |
+
+Future exam and marking endpoints check `require_teaching(...)` in `app/school/access.py`: school admins, or teachers assigned to that arm and subject.
 
 ### Creating the first accounts
 

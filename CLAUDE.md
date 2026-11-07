@@ -11,9 +11,10 @@ Intelligent CBT: a computer-based testing platform for schools, with two clients
 - the identity tables (users, platform admins, sessions, candidates);
 - sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
 - account management for school admins (`/api/v1/school/users`: list, create, update, password reset, unblock, bulk import);
-- school structure (`/api/v1/school/...`): academic sessions and terms, class levels and arms, and subjects with topics and the levels that take them.
+- school structure (`/api/v1/school/...`): academic sessions and terms, class levels and arms, and subjects with topics and the levels that take them;
+- people in classes: student enrolment (which creates and links candidates), teaching assignments to arm + subject, and `GET /api/v1/me/classes`.
 
-The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure). Next is putting people into classes (student enrolment with candidates, teacher assignments), then integration management. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure). Apart from integration management, Phase 2's school foundation is in place. There are no questions or exams yet, and the next product step (a basic exam workflow first, or documents and AI first) is the user's call. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -84,9 +85,12 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - Bulk import is all-or-nothing: every row is validated before any hashing. Generated passwords are returned once and never stored readable.
 
 **School structure** (`app/models/academic.py`, `app/school/`). Calendar, classes and subjects each have a module.
-- `app/school/common.py` holds the shared rules: `read_access` (any school member), `write_access` (school admin + CSRF), `get_owned(...)` (404 for other schools' records), `flush_or_conflict(...)` (a unique or foreign-key violation becomes 409), and `audit(...)`.
+- `app/school/common.py` holds the shared rules: `read_access` (staff: school admins and teachers), `member_access` (any school member, for their own data), `write_access` (school admin + CSRF), `get_owned(...)` (404 for other schools' records), `flush_or_conflict(...)` (a unique or foreign-key violation becomes 409), and `audit(...)`.
 - Reuse these for new school-scoped endpoints.
 - At most one current session per school, enforced by a partial unique index.
+- Students see only their own classes (`app/school/me.py`), never the school-wide lists.
+- **Exam and marking endpoints must call `require_teaching(db, principal, arm_id=..., subject_id=...)`** (`app/school/access.py`). It allows school admins and teachers assigned to that arm and subject.
+- An enrolment references its arm by `(id, session_id, tenant_id)`, so the database keeps one arm per student per session.
 - A parent still in use can't be deleted, because its foreign keys have no `ondelete`.
 
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
