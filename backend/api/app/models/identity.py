@@ -17,6 +17,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
+    Integer,
     String,
     UniqueConstraint,
 )
@@ -157,3 +158,19 @@ class AuthSession(Base):
     )
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class LoginThrottle(Base):
+    """Failed-login counter for one login identifier (school code + username, or admin email).
+
+    Keyed by a SHA-256 of the identifier, so the table holds no usernames. Rows also exist for
+    identifiers that match no account, so being throttled never reveals whether an account exists.
+    """
+
+    __tablename__ = "login_throttles"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    key_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True, nullable=False)
+    failure_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    window_started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -16,7 +16,13 @@ Authoritative sources:
   - `AuthSession`: hashed cookie token, exactly one principal.
   - `Candidate`: optionally linked to a student at the same school.
   - `CandidateExternalIdentity`: how external systems identify a candidate.
-- The only principal that can authenticate so far is an **integration** (`IntegrationPrincipal`, API key). Login, sessions and role checks for people come in Phase 2 part 2.
+- **Sign-in for people** (`app/auth/`): school users log in with school code + username + password, and platform admins with email + password.
+  - Sessions are cookie-based, with an 8-hour maximum and a 1-hour idle timeout.
+  - Requests that change data need the CSRF token.
+  - Role checks: `require_school_role(...)` and `require_platform_admin()`.
+  - Failed logins are throttled.
+  - `python -m app.cli` creates the first school admin and platform admin.
+- Integrations authenticate separately, with API keys (`IntegrationPrincipal`).
 
 ## Roles (from requirements)
 
@@ -59,11 +65,14 @@ Subjects, topics and chapters later scope AI retrieval and generation (see `asse
 - **Candidates are separate records**, optionally linked to one student account at the same school.
 - **Web sessions are server-side.** A Secure, HttpOnly cookie holds a random token, and only its SHA-256 is stored. Cookie sessions need CSRF protection on state-changing requests. `app/main.py` already allows credentialed CORS from the configured origins only.
 - **Students log in with a username and password issued by the school.** OIDC SSO comes later.
+- **Password policy:** staff (including platform admins) need 12+ characters and students 8+, with no forced symbols or expiry. Common, repetitive or sequential passwords are rejected, and so are passwords containing the username or school code.
+- **Sessions:** end after 8 hours, or after 1 hour without activity. Activity is any authenticated request, so an open exam stays signed in.
+- **Throttling:** 5 failed logins in 15 minutes block that school code + username, including for non-existent accounts. The known trade-off is that someone can block a classmate for 15 minutes.
 
 ## Still open: ask, don't assume
 
 - The offline (desktop lab) authentication policy. Decide it in Phase 8.
-- Password policy and hashing parameters, for Phase 2 part 2.
+- How school admins unblock a throttled account, and whether throttling should also consider the device or IP address.
 - Which SSO providers to support first.
 
 ## What Phase 2 unblocks

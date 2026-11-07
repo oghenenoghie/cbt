@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
 
-**Current state (Phase 1 of the delivery plan in `docs/product/requirements.md`):** only `backend/api` contains working code: tenant/integration persistence, API-key authentication, one endpoint (`GET /api/v1/integrations/me`), and the Phase 2 identity tables (users, platform admins, sessions, candidates; decisions in `docs/architecture/decisions/0001-school-identity-model.md`), which have no login or endpoints yet. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync) described in the README does not exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window. Next phase: human user accounts, school membership/roles and admin login (Phase 2).
+**Current state (Phase 1 of the delivery plan in `docs/product/requirements.md`):** only `backend/api` contains working code: tenant/integration persistence, API-key authentication, one endpoint (`GET /api/v1/integrations/me`), the Phase 2 identity tables (users, platform admins, sessions, candidates), and sign-in for people (`/api/v1/auth/*`: login, logout, me; cookie sessions with CSRF, role checks, failed-login throttling). Decisions are in `docs/architecture/decisions/0001-school-identity-model.md`. There are no account-management or school-setup endpoints yet. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync) described in the README does not exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window. Next phase: human user accounts, school membership/roles and admin login (Phase 2).
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -58,9 +58,28 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - Protected endpoints take `principal: IntegrationPrincipal = Depends(get_integration_principal)` and call `principal.require_scope("results:read")` etc. A missing scope gives 403; any credential problem gives 401 with `WWW-Authenticate: Bearer`.
 - Scope names follow `resource:action` (`candidates:read`, `exam-sessions:launch`, `results:write`).
 
+**Session auth for people** (`app/auth/`). It is separate from integration API keys.
+- `POST /auth/login` (school code + username + password) and `POST /auth/platform-admin/login` set an HttpOnly `cbt_session` cookie. Only the token's SHA-256 is stored in `auth_sessions`.
+- `app/auth/sessions.py` enforces the 8-hour maximum, the 1-hour idle timeout, revocation, and the account and school still being active.
+- Protect new endpoints with `app/auth/dependencies.py`:
+  - `get_session_principal` (read) or `require_csrf` (change data; checks the `X-CSRF-Token` header, which is an HMAC of the session token);
+  - role checks `require_school_role("teacher", "school_admin", write=True)` and `require_platform_admin(write=...)`.
+  - Filter school data by `principal.tenant_id`.
+- Failed logins all return one identical 401 and are throttled per identifier (`app/auth/throttle.py`).
+- Passwords: `app/core/passwords.py` (Argon2id; policy is staff ≥12, students ≥8).
+- Audit entries: `app/core/audit.py` `record_audit(...)`, staged in the same transaction as the change. `tenant_id=None` is reserved for platform-level events.
+- First accounts: `python -m app.cli create-school-admin ...` / `create-platform-admin ...`.
+
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 
-**Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures: `db` (session for arranging and inspecting data), `make_tenant()`, `make_user(tenant=, username=, role=, status=)`, `make_candidate(tenant=, user=)`, and `make_credential(tenant=, granted_scopes=, denied_scopes=, expires_at=)`, which returns the raw API key alongside the ORM objects. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
+**Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures:
+- `db`: a session for arranging and inspecting data.
+- `make_tenant()`, `make_candidate(tenant=, user=)`.
+- `make_user(tenant=, username=, role=, status=, password=)`: pass `password` for an account that can log in; hashes are cached per run.
+- `make_credential(tenant=, granted_scopes=, denied_scopes=, expires_at=)`: returns the raw API key alongside the ORM objects.
+- `password_hash_for(password)`: a cached hash, e.g. for a platform admin.
+
+The `client` uses `https://testserver`, so Secure cookies flow as in a browser. To test time-based behaviour (session expiry, throttle windows), move the stored timestamps through `db` instead of waiting. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
 
 **Lint config.** `pyproject.toml` pins an explicit ruff rule set (`E4/E7/E9, F, B, I, UP, ASYNC, DTZ`) so results don't change with ruff's defaults. FastAPI `Depends`/`Security`/`Query`/`Header` are allowed as argument defaults. Use `datetime.now(UTC)`, never naive datetimes.
 
