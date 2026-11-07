@@ -24,7 +24,7 @@ Positioning (web landing page): *examinations built from your school's learning 
 | Phase (from `docs/product/requirements.md`) | Status |
 |---|---|
 | 1. Repository foundation, contracts, local dev | Mostly done: tenant/integration tables, API-key auth, `/api/v1/integrations/me`, CI on SQLite and PostgreSQL, Docker Compose PostgreSQL 17 + pgvector. Missing: `packages/` |
-| 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1); sign-in with cookie sessions, CSRF, role checks and throttling (part 2); account management for school admins (part 3); see ADR 0001. Next: school setup (academic sessions, classes, subjects, topics), then integration management |
+| 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1); sign-in with cookie sessions, CSRF, role checks and throttling (part 2); account management (part 3); school structure, meaning sessions, terms, levels, arms, subjects and topics (part 4); see ADRs 0001 and 0002. Next: student enrolment with candidates and teacher assignments (part 5), then integration management |
 | 3. Document upload, extraction, OCR, approval | Not started (spec: `backend/document-engine/README.md`) |
 | 4. Retrieval and evidence-grounded AI drafts | Not started (spec: `backend/ai-engine/README.md`) |
 | 5. Question bank, teacher review, exam builder | Not started |
@@ -51,7 +51,7 @@ The README's product principles come down to **accuracy before automation**. The
 
 ## Guardrails for Claude when working here
 
-- **Don't invent product decisions.** The docs leave some things open: the offline authentication policy, grading rubrics, result-release rules, and the exact SSO providers. Ask the user instead of guessing, and record the answer in the right doc. Settled decisions live in `docs/architecture/decisions/` (ADR 0001 covers accounts, schools, candidates and login).
+- **Don't invent product decisions.** The docs leave some things open: the offline authentication policy, grading rubrics, result-release rules, and the exact SSO providers. Ask the user instead of guessing, and record the answer in the right doc. Settled decisions live in `docs/architecture/decisions/`: ADR 0001 covers accounts, schools, candidates and login, and ADR 0002 covers sessions, terms, classes, subjects and teacher assignment.
 - **Use only synthetic test data.** Never use real student data or real examination answer keys in fixtures, seeds or examples.
 - **Don't open gated endpoints early.** Integration-management and customer-data endpoints stay closed until admin authentication, tenant-scoped authorization, credential lifecycle, audit writes, rate limiting and security tests exist (`backend/api/README.md`).
 - **Build one small, verifiable step at a time.** The README commits to this, so prefer one domain slice per PR, with its migration and tests.

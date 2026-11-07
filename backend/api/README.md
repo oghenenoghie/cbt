@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -73,6 +73,23 @@ People sign in with a server-side session cookie. Integrations use API keys inst
 | `POST /api/v1/auth/password` | Anyone signed in: change your own password with `current_password` and `new_password` |
 
 All changes need the `X-CSRF-Token` header. Another school's accounts return 404. You can't change your own role or status.
+
+### School structure
+
+Everyone signed in at a school can read these; only school admins can change them (with `X-CSRF-Token`). See [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md).
+
+| Endpoint | Purpose |
+|---|---|
+| `GET` / `POST /api/v1/school/sessions` | Academic sessions with their terms. A new session gets three default terms unless `terms` is given |
+| `PATCH` / `DELETE /api/v1/school/sessions/{id}`, `POST .../make-current` | Change, delete (with its terms and arms), or make current (one per school) |
+| `POST /api/v1/school/sessions/{id}/terms`, `PATCH` / `DELETE /api/v1/school/terms/{id}` | Add, change or remove terms. Dates must fall within the session, and a session keeps at least one term |
+| `GET` / `POST /api/v1/school/levels`, `PATCH` / `DELETE .../levels/{id}` | Class levels (JSS1…), ordered by `position`. A level with arms can't be deleted |
+| `GET` / `POST /api/v1/school/sessions/{id}/arms`, `PATCH` / `DELETE /api/v1/school/arms/{id}` | Arms of a level in a session (JSS1 A). Filter the list by `level_id` |
+| `GET` / `POST /api/v1/school/subjects`, `PATCH` / `DELETE .../subjects/{id}` | Subjects with topics and level links. Filter the list by `level_id` |
+| `PUT /api/v1/school/subjects/{id}/levels` | Replace which class levels take a subject |
+| `POST /api/v1/school/subjects/{id}/topics`, `PATCH` / `DELETE /api/v1/school/topics/{id}` | Add, rename, move (`position`) or remove topics |
+
+Duplicate names, and deleting something still in use, return 409 with a message. Another school's records return 404.
 
 ### Creating the first accounts
 

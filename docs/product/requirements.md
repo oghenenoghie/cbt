@@ -12,7 +12,7 @@ Deliver a school-focused CBT platform with a web application and a Windows deskt
 - Student
 - Invigilator (later phase)
 
-How accounts, schools, candidates and login fit together is recorded in [ADR 0001: School identity model](../architecture/decisions/0001-school-identity-model.md).
+How accounts, schools, candidates and login fit together is recorded in [ADR 0001: School identity model](../architecture/decisions/0001-school-identity-model.md). How sessions, terms, classes, subjects and topics are organised is in [ADR 0002: School structure](../architecture/decisions/0002-school-structure.md).
 
 ## Core workflows
 
