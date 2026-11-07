@@ -23,7 +23,7 @@ Positioning (web landing page): *examinations built from your school's learning 
 
 | Phase (from `docs/product/requirements.md`) | Status |
 |---|---|
-| 1. Repository foundation, contracts, local dev | Mostly done: tenant/integration tables, API-key auth, `/api/v1/integrations/me`, CI. Missing: Docker Compose with PostgreSQL + pgvector, `packages/` |
+| 1. Repository foundation, contracts, local dev | Mostly done: tenant/integration tables, API-key auth, `/api/v1/integrations/me`, CI on SQLite and PostgreSQL, Docker Compose PostgreSQL 17 + pgvector. Missing: `packages/` |
 | 2. Authentication, school tenancy, academic setup | **Next.** Nothing built yet |
 | 3. Document upload, extraction, OCR, approval | Not started (spec: `backend/document-engine/README.md`) |
 | 4. Retrieval and evidence-grounded AI drafts | Not started (spec: `backend/ai-engine/README.md`) |

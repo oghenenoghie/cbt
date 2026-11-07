@@ -17,7 +17,7 @@ uvicorn app.main:app --reload
 
 ## Checks
 
-CI (`.github/workflows/backend-api.yml`) runs these from `backend/api` on Python 3.11 and 3.13:
+CI (`.github/workflows/backend-api.yml`) runs these from `backend/api` on SQLite (Python 3.11 and 3.13) and again on PostgreSQL 17:
 
 ```bash
 ruff check .
@@ -25,11 +25,17 @@ pytest
 alembic upgrade head && alembic check   # fails if models changed without a migration
 ```
 
-Tests use a throwaway SQLite database per test (see `tests/conftest.py`) and never touch your local `cbt.db`.
+By default, tests use a throwaway SQLite database per test (see `tests/conftest.py`) and never touch your local `cbt.db`. To run them against PostgreSQL, start the Compose database (below) and set `TEST_DATABASE_URL`:
+
+```bash
+TEST_DATABASE_URL="postgresql+psycopg://cbt:<password>@localhost:5432/cbt_test" pytest
+```
+
+The suite drops every table it creates, so it refuses any database whose name doesn't end in `_test`.
 
 ## Database configuration
 
-The default local database is SQLite. Set `DATABASE_URL` to a PostgreSQL connection string for shared development or production. Never commit real credentials.
+The default local database is SQLite. For PostgreSQL, start it with Docker Compose (see [infrastructure/docker](../../infrastructure/docker/README.md)) and set `DATABASE_URL="postgresql+psycopg://..."`. Note the `+psycopg` driver, since psycopg 3 is the installed driver. Never commit real credentials.
 
 ## Database foundation
 
