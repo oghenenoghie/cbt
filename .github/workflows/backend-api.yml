@@ -1,0 +1,57 @@
+name: Backend API
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, test and migrations (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Oldest supported version (pyproject requires-python) and a current release.
+        python-version: ["3.11", "3.13"]
+    defaults:
+      run:
+        working-directory: backend/api
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/api/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Test
+        run: pytest
+
+      - name: Check migrations
+        env:
+          DATABASE_URL: sqlite:///./ci-migrations.db
+        run: |
+          alembic upgrade head
+          # Fails if the models have changes that no migration covers.
+          alembic check
+          alembic downgrade base
+          alembic upgrade head
