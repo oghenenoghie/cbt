@@ -53,16 +53,28 @@ def new_level(actor, name="JSS1", position=1):
 # --- Access ------------------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize("role", ["teacher", "student"])
-def test_members_can_read_but_only_admins_change(admin, make_user, sign_in, role: str) -> None:
+def test_teachers_can_read_but_only_admins_change(admin, make_user, sign_in) -> None:
     new_session(admin)
-    make_user(tenant=admin.school, username="member", role=role, password=TEST_PASSWORD)
-    member = sign_in(admin.school, "member")
+    make_user(tenant=admin.school, username="teacher", role="teacher", password=TEST_PASSWORD)
+    teacher = sign_in(admin.school, "teacher")
 
     for path in ("/sessions", "/levels", "/subjects"):
-        assert member.client.get(f"{S}{path}").status_code == 200
-    assert post(member, "/levels", {"name": "JSS9"}).status_code == 403
+        assert teacher.client.get(f"{S}{path}").status_code == 200
+    assert post(teacher, "/levels", {"name": "JSS9"}).status_code == 403
     assert TestClient(app, base_url="https://testserver").get(f"{S}/sessions").status_code == 401
+
+
+def test_students_see_only_their_own_classes_not_the_whole_structure(
+    admin, make_user, sign_in
+) -> None:
+    """ADR 0002: students get GET /api/v1/me/classes instead of the school-wide lists."""
+    new_session(admin)
+    make_user(tenant=admin.school, username="pupil", role="student", password=TEST_PASSWORD)
+    pupil = sign_in(admin.school, "pupil")
+
+    for path in ("/sessions", "/levels", "/subjects"):
+        assert pupil.client.get(f"{S}{path}").status_code == 403
+    assert pupil.client.get("/api/v1/me/classes").status_code == 200
 
 
 def test_changes_need_the_csrf_token(admin) -> None:

@@ -1,7 +1,8 @@
 """Rules shared by every school-structure endpoint.
 
-- Anyone signed in at the school can read the structure; only school admins can change it, and
-  every change needs the CSRF token.
+- Staff (school admins and teachers) can read the structure; only school admins can change it,
+  and every change needs the CSRF token. Students see only their own classes, through
+  `GET /api/v1/me/classes` (ADR 0002).
 - Records are looked up within the caller's school, so another school's IDs return 404.
 - Unique and foreign-key violations become 409 with a clear message, for example a duplicate
   name, or deleting a class level that still has arms.
@@ -19,7 +20,9 @@ from app.auth.dependencies import require_school_role
 from app.auth.sessions import SessionPrincipal
 from app.core.audit import record_audit
 
-read_access = require_school_role("school_admin", "teacher", "student")
+read_access = require_school_role("school_admin", "teacher")
+# Any signed-in school member, for endpoints that show people their own data.
+member_access = require_school_role("school_admin", "teacher", "student")
 write_access = require_school_role("school_admin", write=True)
 
 Record = TypeVar("Record")

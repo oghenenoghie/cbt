@@ -2,7 +2,9 @@
 
 - **Status:** Accepted
 - **Date:** 2026-11-07
-- **Implemented in:** `backend/api/app/models/academic.py`, `backend/api/app/school/` (migration `0004_school_structure`). Teacher assignment is still to come (Phase 2 part 5).
+- **Implemented in:**
+  - structure: `backend/api/app/models/academic.py`, `backend/api/app/school/` (migration `0004_school_structure`)
+  - people in classes: `backend/api/app/models/classroom.py`, `backend/api/app/school/enrolments.py`, `assignments.py`, `me.py`, `access.py` (migration `0005_classrooms`)
 
 ## Context
 
@@ -18,17 +20,28 @@ Phase 2 includes academic setup: "academic sessions; departments, classes, subje
 2. **Classes are levels with arms.**
    - Class levels (e.g. JSS1, SS2) carry over from year to year, ordered by position.
    - Each session has arms within a level (e.g. "JSS1 A"). Arm names are unique within a level and session, so "A" can exist again next year.
-   - Students will be enrolled in an arm for a session (Phase 2 part 5).
+   - Students are enrolled in an arm for a session (decision 7).
 3. **Each school keeps one subject list.**
    - A subject (e.g. Biology) has an optional short code, unique within the school, and ordered topics.
    - A subject is linked to the class levels that take it.
    - AI questions will be scoped to a subject and its topics.
-4. **Teachers are assigned to arm + subject pairs** (e.g. JSS1 A Biology). They will create and mark exams only for their assignments. This comes in Phase 2 part 5.
+4. **Teachers are assigned to arm + subject pairs** (e.g. JSS1 A Biology).
+   - Staff accounts can be assigned (teachers, and school admins who also teach), and the arm's level must take the subject.
+   - Exam and marking endpoints must call `require_teaching` (`app/school/access.py`), which allows school admins and teachers assigned to that arm and subject.
+   - A teacher sees the class list of an arm they teach any subject to. Their own assignments are at `GET /api/v1/me/classes`.
 5. **The database keeps every link inside one school.**
    - Composite foreign keys on `(id, tenant_id)` tie terms to sessions, arms to sessions and levels, topics to subjects, and level-subject links to both sides.
    - Children that only make sense with their parent are deleted with it: terms and arms with their session, and topics and level links with their subject.
-   - A parent still in use can't be deleted. A class level with arms is refused, and so will be anything later records (exams, enrolments) point at.
-6. **Who can do what.** Any signed-in member of the school can read the structure: admins, teachers and students. Only school admins can change it, and every change needs the CSRF token and writes an audit entry. Another school's records return 404.
+   - A parent still in use can't be deleted. A class level with arms is refused, and so is an arm with enrolled students (and therefore its session). Exams will get the same protection.
+6. **Who can do what.**
+   - Staff (school admins and teachers) can read the school structure. Only school admins can change it, and every change needs the CSRF token and writes an audit entry.
+   - **Students see only their own classes:** their arm in each session and that level's subjects, at `GET /api/v1/me/classes`. They can't list the whole school's structure. This follows the product rule of minimising student-facing data.
+   - Another school's records return 404.
+7. **Enrolment rules.**
+   - Enrolling a student account creates and links its candidate record if it has none. Only student accounts can be linked (ADR 0001).
+   - A candidate is in **one arm per session**. The database enforces this: an enrolment references its arm by `(id, session_id, tenant_id)`, so its session is always the arm's session, and `(session_id, candidate_id)` is unique.
+   - Bulk enrolment of up to 200 students is all-or-nothing, with errors listed by row.
+   - Moving a student is only allowed to another arm in the same session. Next session is a new enrolment.
 
 ## Consequences
 
@@ -39,5 +52,5 @@ Phase 2 includes academic setup: "academic sessions; departments, classes, subje
 
 ## Still open
 
-- Whether students can see the whole school's structure, or only their own classes and subjects. This matters once enrolments exist.
+- Enrolling candidates who have no student account (for example ones provisioned by an SIS integration) waits for integration candidate provisioning.
 - Promoting students to the next level at the end of a session: a bulk "roll over" action.
