@@ -5,6 +5,7 @@ Commands, CI gates and fixture names are in `CLAUDE.md`. This file covers how to
 ## Contents
 1. Add a tenant-scoped table
 2. Add a protected integration endpoint
+   - 2b. Add an endpoint for signed-in people
 3. Write an audit entry
 4. Test a new feature
 5. Before opening a PR
@@ -103,41 +104,57 @@ Why it's written this way:
 - Mount new routers in `app/main.py` with `prefix=settings.api_v1_prefix`. Keep each domain in its own package (for example `app/candidates/`).
 - Remember the gate: no customer-data endpoints until the prerequisites in `backend/api/README.md` exist (see the SKILL.md guardrails).
 
-## 3. Write an audit entry
+### 2b. Add an endpoint for signed-in people
 
-There's no audit helper yet. When the first admin or integration change needs one, add a small helper rather than building `AuditLog` rows inline:
+Web and desktop users authenticate with the session cookie, not API keys. Use the dependencies in `app/auth/dependencies.py`:
 
 ```python
-# app/core/audit.py (suggested)
-from typing import Any
-
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.models import AuditLog
+from app.auth.dependencies import require_school_role
+from app.auth.sessions import SessionPrincipal
+from app.db.session import get_db
+
+router = APIRouter(prefix="/subjects", tags=["subjects"])
 
 
+@router.post("")
+def create_subject(
+    body: SubjectCreate,
+    principal: SessionPrincipal = Depends(require_school_role("school_admin", write=True)),
+    db: Session = Depends(get_db),
+) -> SubjectOut:
+    subject = Subject(tenant_id=principal.tenant_id, name=body.name)  # tenant from the session
+    ...
+```
+
+- **Use `write=True` on anything that changes data.** It makes the request carry the session's CSRF token in `X-CSRF-Token`, and tests should cover the 403 when that header is missing.
+- **Read-only endpoints** use `require_school_role(...)` without `write`, or `get_session_principal` when any signed-in person may read.
+- **Platform admins** don't pass `require_school_role`. Use `require_platform_admin()`, and audit every action they take inside a school against that school.
+- **In tests**, sign in through the real endpoint: `make_user(..., password=TEST_PASSWORD)`, then `client.post("/api/v1/auth/login", ...)`. Read `csrf_token` from the response. The test client keeps the cookie.
+
+## 3. Write an audit entry
+
+Use `record_audit` from `app/core/audit.py` (shown here in shortened form) rather than building `AuditLog` rows inline. Pass `request=` to capture `X-Request-ID`:
+
+```python
+# app/core/audit.py (shortened)
 def record_audit(
     db: Session,
     *,
-    tenant_id: str,
-    actor_type: str,          # e.g. "user", "integration"
+    tenant_id: str | None,    # None only for platform-level events
+    actor_type: str,          # "user", "platform_admin", "integration", "system" or "anonymous"
     actor_id: str | None,
     action: str,              # dotted, like webhook events: "integration.credential.revoked"
     resource_type: str,
-    resource_id: str | None,
-    request_id: str | None = None,
+    resource_id: str | None = None,
+    request: Request | None = None,   # records its X-Request-ID header
     details: dict[str, Any] | None = None,
-) -> AuditLog:
-    entry = AuditLog(
-        tenant_id=tenant_id, actor_type=actor_type, actor_id=actor_id, action=action,
-        resource_type=resource_type, resource_id=resource_id, request_id=request_id,
-        details=details or {},
-    )
-    db.add(entry)
-    return entry
+) -> AuditLog: ...
 ```
 
-Add the entry in the **same transaction** as the change and commit them together, so neither can exist without the other. Never put raw keys, secret hashes, answer keys or unnecessary student data in `details`. `X-Request-ID` is already an allowed CORS header, but no middleware generates or propagates a request ID yet.
+Add the entry in the **same transaction** as the change and commit them together, so neither can exist without the other. Never put raw keys, secret hashes, answer keys or unnecessary student data in `details`. `X-Request-ID` is an allowed CORS header and is recorded when the caller sends one. No middleware generates a request ID yet.
 
 ## 4. Test a new feature
 

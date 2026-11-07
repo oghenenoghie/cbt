@@ -2,6 +2,7 @@ import os
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 from uuid import uuid4
 
@@ -12,6 +13,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.api_keys import generate_api_key
+from app.core.passwords import hash_password
 from app.db.base import Base
 from app.db.session import enable_sqlite_foreign_keys, get_db
 from app.main import app
@@ -26,6 +28,12 @@ class IssuedCredential:
     tenant: Tenant
     integration: Integration
     credential: ApiCredential
+
+
+# A synthetic password valid for every role. Argon2 is deliberately slow, so each distinct test
+# password is hashed once per run.
+TEST_PASSWORD = "correct horse battery staple"
+cached_password_hash = lru_cache(maxsize=None)(hash_password)
 
 
 # Set TEST_DATABASE_URL (e.g. postgresql+psycopg://cbt:...@localhost:5432/cbt_test) to run the
@@ -100,7 +108,8 @@ def client(session_factory: sessionmaker[Session]) -> Generator[TestClient, None
 
     app.dependency_overrides[get_db] = override_get_db
     try:
-        yield TestClient(app)
+        # HTTPS, so the Secure session cookie is sent back as a browser would.
+        yield TestClient(app, base_url="https://testserver")
     finally:
         app.dependency_overrides.pop(get_db, None)
 
@@ -164,6 +173,7 @@ def make_user(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[..., 
         username: str | None = None,
         role: str = "teacher",
         status: str = "active",
+        password: str | None = None,
     ) -> User:
         tenant = tenant or make_tenant()
         user = User(
@@ -172,6 +182,7 @@ def make_user(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[..., 
             display_name="Synthetic User",
             role=role,
             status=status,
+            password_hash=cached_password_hash(password) if password else None,
         )
         db.add(user)
         db.commit()
@@ -194,3 +205,9 @@ def make_candidate(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[
         return candidate
 
     return _make_candidate
+
+
+@pytest.fixture
+def password_hash_for() -> Callable[[str], str]:
+    """Argon2 hash of a password, cached across the run."""
+    return cached_password_hash

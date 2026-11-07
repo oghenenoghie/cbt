@@ -13,6 +13,7 @@ from app.models import (  # noqa: F401
     CandidateExternalIdentity,
     Integration,
     IntegrationScope,
+    LoginThrottle,
     PlatformAdmin,
     Tenant,
     User,
