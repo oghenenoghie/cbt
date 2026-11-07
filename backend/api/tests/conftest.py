@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.api_keys import generate_api_key
 from app.db.base import Base
-from app.db.session import get_db
+from app.db.session import enable_sqlite_foreign_keys, get_db
 from app.main import app
-from app.models import ApiCredential, Integration, IntegrationScope, Tenant
+from app.models import ApiCredential, Candidate, Integration, IntegrationScope, Tenant, User
 
 
 @dataclass
@@ -70,6 +70,7 @@ def session_factory(tmp_path: Path) -> Generator[sessionmaker[Session], None, No
             f"sqlite:///{tmp_path / 'test.db'}",
             connect_args={"check_same_thread": False},
         )
+        enable_sqlite_foreign_keys(engine)
     Base.metadata.create_all(engine)
     yield sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     _empty_database(engine)
@@ -153,3 +154,43 @@ def make_credential(
         )
 
     return _make_credential
+
+
+@pytest.fixture
+def make_user(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[..., User]:
+    def _make_user(
+        *,
+        tenant: Tenant | None = None,
+        username: str | None = None,
+        role: str = "teacher",
+        status: str = "active",
+    ) -> User:
+        tenant = tenant or make_tenant()
+        user = User(
+            tenant_id=tenant.id,
+            username=username or f"user-{uuid4().hex[:8]}",
+            display_name="Synthetic User",
+            role=role,
+            status=status,
+        )
+        db.add(user)
+        db.commit()
+        return user
+
+    return _make_user
+
+
+@pytest.fixture
+def make_candidate(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[..., Candidate]:
+    def _make_candidate(*, tenant: Tenant | None = None, user: User | None = None) -> Candidate:
+        tenant_id = tenant.id if tenant else (user.tenant_id if user else make_tenant().id)
+        candidate = Candidate(
+            tenant_id=tenant_id,
+            user_id=user.id if user else None,
+            display_name="Synthetic Candidate",
+        )
+        db.add(candidate)
+        db.commit()
+        return candidate
+
+    return _make_candidate

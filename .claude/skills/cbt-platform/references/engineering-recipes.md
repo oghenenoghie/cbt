@@ -14,7 +14,7 @@ Commands, CI gates and fixture names are in `CLAUDE.md`. This file covers how to
 Follow the conventions in `app/models/`: string UUID keys, an indexed `tenant_id` foreign key, timezone-aware timestamps, and status as a plain string.
 
 ```python
-# app/models/candidate.py (illustrative)
+# app/models/academic.py (illustrative)
 from datetime import datetime
 from uuid import uuid4
 
@@ -25,14 +25,14 @@ from app.db.base import Base
 from app.models.tenant import utc_now
 
 
-class Candidate(Base):
-    __tablename__ = "candidates"
+class Subject(Base):
+    __tablename__ = "subjects"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     tenant_id: Mapped[str] = mapped_column(
         ForeignKey("tenants.id", ondelete="CASCADE"), index=True, nullable=False
     )
-    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="active", index=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
@@ -45,6 +45,20 @@ Then:
 2. With `DATABASE_URL` pointing at a scratch database, run `alembic upgrade head`, then `alembic revision --autogenerate --rev-id 0002_<topic> -m "<description>"`.
 3. Review the generated migration by hand. Index names should follow `ix_<table>_<column>`, foreign keys keep their `ondelete`, and `downgrade()` reverses everything. It must run on SQLite and PostgreSQL, and CI checks both. To check PostgreSQL locally, use the Compose database in `infrastructure/docker/`.
 4. Tables holding external identities need a unique constraint on `(tenant_id, external_system_id, external_id)`. External IDs are only unique within a tenant.
+5. **When the new table points at another tenant-scoped table, let the database keep both rows in one school.** Give the target a `UniqueConstraint("id", "tenant_id")` (`users` and `candidates` already have one), then reference both columns:
+
+   ```python
+   __table_args__ = (
+       ForeignKeyConstraint(
+           ["candidate_id", "tenant_id"],
+           ["candidates.id", "candidates.tenant_id"],
+           ondelete="CASCADE",
+           name="fk_<table>_candidate_same_tenant",
+       ),
+   )
+   ```
+
+   A plain `ForeignKey("candidates.id")` would accept another school's candidate. Name constraints explicitly. Avoid `ondelete="SET NULL"` on a composite key, because it would null `tenant_id` too; use `CASCADE` or the default (refuse the delete). SQLite enforces this only because `enable_sqlite_foreign_keys` (in `app/db/session.py`) turns foreign keys on, and the tests do the same.
 
 `utc_now()` is currently defined in both `app/models/tenant.py` and `app/models/integration.py`. Import one of them rather than adding a third copy.
 
@@ -127,7 +141,8 @@ Add the entry in the **same transaction** as the change and commit them together
 
 ## 4. Test a new feature
 
-- Arrange data through the `tests/conftest.py` fixtures. For a new domain object, add a `make_<thing>` factory fixture following `make_tenant`. Use synthetic data only.
+- Arrange data through the `tests/conftest.py` fixtures (`make_tenant`, `make_credential`, `make_user`, `make_candidate`). For a new domain object, add a `make_<thing>` factory fixture following the same pattern. Use synthetic data only.
+- For a database constraint, commit the bad row and expect `IntegrityError` (see `tests/test_identity_models.py`). Run the tests on PostgreSQL too (`TEST_DATABASE_URL`) when constraints are involved.
 - For every protected endpoint, cover at least:
   - no key → 401
   - key without the scope (`make_credential(granted_scopes=())`) → 403
