@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -48,11 +48,11 @@ def get_integration_principal(
     if credential is None or not verify_api_key(raw_key, credential.secret_hash):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid integration credentials.", headers={"WWW-Authenticate": "Bearer"})
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expiry = credential.expires_at
     if expiry is not None:
         if expiry.tzinfo is None:
-            expiry = expiry.replace(tzinfo=timezone.utc)
+            expiry = expiry.replace(tzinfo=UTC)
         if expiry <= now:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Integration credentials have expired.", headers={"WWW-Authenticate": "Bearer"})
 
