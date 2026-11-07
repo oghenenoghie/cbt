@@ -61,7 +61,7 @@ Encode these as server-side checks that block publication, not as UI hints.
 ## 3. Question bank and exam builder (Phase 5)
 
 - **Already in place:** exams target an arm + subject (+ term). Check `require_teaching` (`app/school/access.py`) before a teacher creates, changes or marks one, and use `Enrolment` to find who sits it.
-- **The question bank is built** (`app/models/questions.py`, `app/questions/`). `Question` → immutable `QuestionVersion` rows (`mcq_single`, `true_false`), with the answer key in `correct_option_ids`. A snapshot must pin `QuestionVersion` ids, never `Question.latest_version`.
+- **The question bank is built** (`app/models/questions.py`, `app/questions/`). `Question` → immutable `QuestionVersion` rows (`mcq_single`, `true_false`), with the answer key in `correct_option_ids`. Reading passages: `Passage` → immutable `PassageVersion`, and `Question.passage_id` links a question to its passage. A snapshot must pin `QuestionVersion` and `PassageVersion` ids, never `latest_version`, and keep a passage's questions together after it.
 - **Decided (ADR 0003):** a teacher prepares and submits an exam, and a school admin approves and publishes it. Results stay hidden until the teacher releases them, unless the exam is set to show them immediately. Students get one timed attempt, which can be resumed while the clock keeps running; the teacher can allow more. Question and option order are shuffled per student by default, fixed at the start of the attempt.
 
 - Generated drafts and approved question versions are separate records. Approving creates an immutable version.

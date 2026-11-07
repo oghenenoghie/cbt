@@ -10,6 +10,12 @@ TRUE_FALSE_OPTIONS = [{"id": "true", "text": "True"}, {"id": "false", "text": "F
 
 Stem = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
 OptionText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
+PassageTitle = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
+]
+PassageBody = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=20000)
+]
 
 
 class _Input(BaseModel):
@@ -57,6 +63,8 @@ class QuestionContent(_Input):
 
 class QuestionCreate(_Input):
     subject_id: str = Field(min_length=1, max_length=36)
+    # A passage of the same subject that this question is about. Can't be changed later.
+    passage_id: str | None = Field(default=None, min_length=1, max_length=36)
     topic_ids: list[str] = Field(default_factory=list, max_length=20)
     content: QuestionContent
 
@@ -92,6 +100,7 @@ class VersionOut(BaseModel):
 class QuestionOut(BaseModel):
     id: str
     subject_id: str
+    passage_id: str | None
     status: str
     source: str
     topic_ids: list[str]
@@ -104,4 +113,45 @@ class QuestionOut(BaseModel):
 class QuestionList(BaseModel):
     questions: list[QuestionOut]
     # Pass as `after` to get the next page; None on the last page.
+    next_after: str | None
+
+
+class PassageContent(_Input):
+    """A reading text. Line breaks in `body` are kept, so paragraphs survive."""
+
+    title: PassageTitle
+    body: PassageBody
+
+
+class PassageCreate(_Input):
+    subject_id: str = Field(min_length=1, max_length=36)
+    content: PassageContent
+
+
+class PassageRevise(_Input):
+    content: PassageContent
+
+
+class PassageVersionOut(BaseModel):
+    version: int
+    title: str
+    body: str
+    created_by_id: str | None
+    created_at: datetime
+
+
+class PassageOut(BaseModel):
+    id: str
+    subject_id: str
+    status: str
+    latest_version: int
+    latest: PassageVersionOut
+    # The passage's active questions, in the order they were written.
+    question_ids: list[str]
+    created_at: datetime
+    updated_at: datetime
+
+
+class PassageList(BaseModel):
+    passages: list[PassageOut]
     next_after: str | None

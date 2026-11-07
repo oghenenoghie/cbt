@@ -3,7 +3,7 @@
 - **Status:** Accepted (the question bank is built; exams follow in stages)
 - **Date:** 2026-11-07
 - **Implemented in:**
-  - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migration `0006_question_bank`)
+  - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migrations `0006_question_bank` and `0007_passages`)
 
 ## Context
 
@@ -11,7 +11,7 @@ With the school foundation in place (ADRs 0001 and 0002), the next product step 
 
 The work is built in four stages, each its own change:
 
-- **A. Question bank:** single-answer multiple-choice and true/false questions, versioned. (Built.)
+- **A. Question bank:** single-answer multiple-choice and true/false questions, and reading passages with the questions that follow them, all versioned. (Built.)
 - **B. Exam builder and publishing:** a teacher prepares an exam for arm + subject pairs and submits it; a school admin approves and publishes it, freezing a snapshot.
 - **C. Sitting an exam:** start and resume, a server-side timer, append-only answer events, submission and auto-grading.
 - **D. Results:** release, students' own results, and item analysis.
@@ -33,6 +33,7 @@ The work is built in four stages, each its own change:
 4. **Question and option order are shuffled per student by default.**
    - Each attempt gets its own order, chosen once at the start and kept on resume. Teachers can turn shuffling off for an exam.
    - True/false options are never shuffled.
+   - A passage's questions stay together, straight after the passage, in the order they were written. The passage and its questions move as one block when the exam's question order is shuffled. Each question's options are still shuffled.
 5. **The question bank is shared per subject.**
    - School admins, and teachers who teach the subject to any arm, can read and edit the subject's questions, whoever wrote them. Students can't reach the bank at all, because it holds answer keys.
    - A teacher who stops teaching a subject loses access to its questions. The questions stay.
@@ -46,15 +47,22 @@ The work is built in four stages, each its own change:
    - A multiple-choice question has 2 to 6 distinct options, stored with ids `a` to `f`, and one correct option. A true/false question has fixed options `true` and `false`.
    - The answer key (`correct_option_ids`) is a separate column so candidate-facing code can leave it out explicitly. It's a list, so multiple-answer questions can be added later without a migration.
    - Marks are whole numbers from 1 to 100. Difficulty (easy, medium, hard) is optional.
-8. **Archive rather than delete.**
+8. **Reading passages: "read the passage and answer the questions that follow".**
+   - A passage is a titled text (up to 20,000 characters, paragraphs kept) in one subject. It's versioned like a question: editing adds a version, and stored versions never change.
+   - A question can be written for a passage of its own subject. The link is set when the question is written and doesn't change. The database enforces the same school and subject: questions reference their passage by `(id, subject_id, tenant_id)`.
+   - A passage lists its active questions in the order they were written. An archived passage takes no new questions; its existing questions are unchanged.
+   - A passage with questions can't be deleted. Archive it, or delete its questions first.
+   - The same people who can use a subject's questions can use its passages, under the same rules.
+   - A published exam (Exams B) pins the passage version current at publishing, alongside its question versions, so later edits to the passage don't reach it.
+9. **Archive rather than delete.**
    - An archived question isn't offered for new exams but stays for exams that already use it. It can be restored.
    - Deleting removes a question and all its versions and tags. It will be refused (409) once an exam uses it.
    - A subject with questions can't be deleted, and nor can a topic that questions are tagged with.
 
 ## Consequences
 
-- Every bank change writes an audit entry (`question.created`, `revised`, `topics_set`, `archived`, `restored`, `deleted`). Entries never copy question text or answers.
-- Questions list newest first, with cursor paging (`next_after`). A teacher's list covers only subjects they teach.
+- Every bank change writes an audit entry (`question.created`, `revised`, `topics_set`, `archived`, `restored`, `deleted`, and the same `passage.*` actions apart from topics). Entries never copy question text, passage text or answers.
+- Questions and passages list newest first, with cursor paging (`next_after`). A teacher's list covers only subjects they teach.
 - AI drafts (Phase 4) will arrive as drafts outside the bank. Approving one creates a question with its own `source`, so the bank only ever holds teacher-approved content.
 
 ## Still open

@@ -6,6 +6,7 @@ from app.auth.dependencies import CSRF_HEADER
 from app.auth.router import router as auth_router
 from app.core.config import get_settings
 from app.integrations.router import router as integrations_router
+from app.questions.passages import router as passages_router
 from app.questions.router import router as questions_router
 from app.school.assignments import router as school_assignments_router
 from app.school.calendar import router as school_calendar_router
@@ -43,6 +44,7 @@ app.include_router(school_enrolments_router, prefix=settings.api_v1_prefix)
 app.include_router(school_assignments_router, prefix=settings.api_v1_prefix)
 app.include_router(me_router, prefix=settings.api_v1_prefix)
 app.include_router(questions_router, prefix=settings.api_v1_prefix)
+app.include_router(passages_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 
 

@@ -5,14 +5,20 @@ reach the bank at all, because it holds answer keys. Editing a question adds a n
 earlier versions never change.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-from sqlalchemy import and_, or_, select
+from fastapi import APIRouter, Depends, Query, Request, Response, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.auth.dependencies import require_school_role
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
-from app.models import Question, QuestionTopic, QuestionVersion, Subject, Topic
+from app.models import Passage, Question, QuestionTopic, QuestionVersion, Subject, Topic
+from app.questions.common import (
+    check_bank_access,
+    newest_first,
+    staff_read,
+    staff_write,
+    visible_subjects,
+)
 from app.questions.schemas import (
     QuestionContent,
     QuestionCreate,
@@ -22,15 +28,9 @@ from app.questions.schemas import (
     QuestionTopics,
     VersionOut,
 )
-from app.school.access import can_use_question_bank, subjects_taught
 from app.school.common import audit, flush_or_conflict, get_owned, invalid
 
 router = APIRouter(prefix="/questions", tags=["question bank"])
-
-staff_read = require_school_role("school_admin", "teacher")
-staff_write = require_school_role("school_admin", "teacher", write=True)
-
-NOT_YOUR_SUBJECT = "You can only use the question bank for subjects you teach."
 
 
 def _version_out(v: QuestionVersion) -> VersionOut:
@@ -85,6 +85,7 @@ def _outs(db: Session, questions: list[Question]) -> list[QuestionOut]:
         QuestionOut(
             id=q.id,
             subject_id=q.subject_id,
+            passage_id=q.passage_id,
             status=q.status,
             source=q.source,
             topic_ids=sorted(topics[q.id]),
@@ -97,14 +98,9 @@ def _outs(db: Session, questions: list[Question]) -> list[QuestionOut]:
     ]
 
 
-def _check_access(db: Session, principal: SessionPrincipal, subject_id: str) -> None:
-    if not can_use_question_bank(db, principal, subject_id):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, detail=NOT_YOUR_SUBJECT)
-
-
 def _question_for(db: Session, principal: SessionPrincipal, question_id: str) -> Question:
     question = get_owned(db, Question, question_id, principal, "Question")
-    _check_access(db, principal, question.subject_id)
+    check_bank_access(db, principal, question.subject_id)
     return question
 
 
@@ -124,6 +120,20 @@ def _check_topics(
     if found != wanted:
         raise invalid("Topics must belong to the question's subject.")
     return wanted
+
+
+def _check_passage(
+    db: Session, principal: SessionPrincipal, subject_id: str, passage_id: str
+) -> None:
+    passage = db.scalar(
+        select(Passage).where(Passage.id == passage_id, Passage.tenant_id == principal.tenant_id)
+    )
+    if passage is None:
+        raise invalid("That passage doesn't exist.")
+    if passage.subject_id != subject_id:
+        raise invalid("The passage must be in the question's subject.")
+    if passage.status != "active":
+        raise invalid("That passage is archived. Restore it before adding questions to it.")
 
 
 def _new_version(
@@ -149,6 +159,7 @@ def _new_version(
 def list_questions(
     subject_id: str | None = None,
     topic_id: str | None = None,
+    passage_id: str | None = None,
     question_status: str = Query(default="active", alias="status", pattern="^(active|archived)$"),
     after: str | None = Query(default=None, description="The `next_after` of the previous page."),
     limit: int = Query(default=50, ge=1, le=200),
@@ -159,33 +170,15 @@ def list_questions(
     query = select(Question).where(
         Question.tenant_id == principal.tenant_id, Question.status == question_status
     )
-    if subject_id is not None:
-        _check_access(db, principal, subject_id)
-        query = query.where(Question.subject_id == subject_id)
-    elif principal.role != "school_admin":
-        query = query.where(Question.subject_id.in_(subjects_taught(db, principal)))
+    query = visible_subjects(db, principal, Question, query, subject_id)
     if topic_id is not None:
         query = query.join(QuestionTopic, QuestionTopic.question_id == Question.id).where(
             QuestionTopic.topic_id == topic_id
         )
-    if after:
-        cursor = db.scalar(
-            select(Question).where(Question.id == after, Question.tenant_id == principal.tenant_id)
-        )
-        if cursor is not None:
-            query = query.where(
-                or_(
-                    Question.created_at < cursor.created_at,
-                    and_(Question.created_at == cursor.created_at, Question.id < cursor.id),
-                )
-            )
-    rows = db.scalars(
-        query.order_by(Question.created_at.desc(), Question.id.desc()).limit(limit + 1)
-    ).all()
-    page = rows[:limit]
-    return QuestionList(
-        questions=_outs(db, list(page)), next_after=page[-1].id if len(rows) > limit else None
-    )
+    if passage_id is not None:
+        query = query.where(Question.passage_id == passage_id)
+    page, next_after = newest_first(db, principal, Question, query, after, limit)
+    return QuestionList(questions=_outs(db, page), next_after=next_after)
 
 
 @router.post("", response_model=QuestionOut, status_code=status.HTTP_201_CREATED)
@@ -202,12 +195,15 @@ def create_question(
     )
     if subject is None:
         raise invalid("That subject doesn't exist.")
-    _check_access(db, principal, subject.id)
+    check_bank_access(db, principal, subject.id)
     topic_ids = _check_topics(db, principal, subject.id, body.topic_ids)
+    if body.passage_id is not None:
+        _check_passage(db, principal, subject.id, body.passage_id)
 
     question = Question(
         tenant_id=principal.tenant_id,
         subject_id=subject.id,
+        passage_id=body.passage_id,
         created_by_id=principal.user_id,
         latest_version=1,
     )

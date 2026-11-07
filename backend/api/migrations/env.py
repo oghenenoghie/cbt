@@ -19,6 +19,8 @@ from app.models import (  # noqa: F401
     Integration,
     IntegrationScope,
     LoginThrottle,
+    Passage,
+    PassageVersion,
     PlatformAdmin,
     Question,
     QuestionTopic,

@@ -1,4 +1,5 @@
-"""The question bank (ADR 0003): who can use it, versioning, topics, archiving and deleting."""
+"""The question bank (ADR 0003): who can use it, versioning, topics, archiving and deleting,
+and reading passages with the questions written for them."""
 
 from datetime import date
 from types import SimpleNamespace
@@ -14,6 +15,8 @@ from app.models import (
     ClassArm,
     ClassLevel,
     ClassLevelSubject,
+    Passage,
+    PassageVersion,
     Question,
     QuestionTopic,
     QuestionVersion,
@@ -22,6 +25,7 @@ from app.models import (
 )
 
 Q = "/api/v1/questions"
+P = "/api/v1/passages"
 S = "/api/v1/school"
 TEST_PASSWORD = "correct horse battery staple"  # what make_user(password=...) is given below
 
@@ -36,6 +40,10 @@ MCQ = {
     "difficulty": "easy",
 }
 TRUE_FALSE = {"type": "true_false", "stem": "This synthetic statement is true.", "correct": True}
+PASSAGE = {
+    "title": "The Synthetic River",
+    "body": "A made-up river runs past a made-up town.\n\nIn the dry season it is shallow.",
+}
 
 
 def count(db: Session, model) -> int:
@@ -103,15 +111,20 @@ def bank(admin, db: Session, make_user, sign_in):
     )
 
 
-def create(who, subject: Subject, content: dict | None = None, topics=()):
+def create(who, subject: Subject, content: dict | None = None, topics=(), passage=None):
+    body = {
+        "subject_id": subject.id,
+        "topic_ids": [t.id for t in topics],
+        "content": content or MCQ,
+    }
+    if passage is not None:
+        body["passage_id"] = passage if isinstance(passage, str) else passage["id"]
+    return who.client.post(Q, json=body, headers=who.headers)
+
+
+def create_passage(who, subject: Subject, content: dict | None = None):
     return who.client.post(
-        Q,
-        json={
-            "subject_id": subject.id,
-            "topic_ids": [t.id for t in topics],
-            "content": content or MCQ,
-        },
-        headers=who.headers,
+        P, json={"subject_id": subject.id, "content": content or PASSAGE}, headers=who.headers
     )
 
 
@@ -554,6 +567,221 @@ def test_the_database_refuses_duplicate_version_numbers(admin, bank, db: Session
             correct_option_ids=[],
         )
     )
+    with pytest.raises(IntegrityError):
+        db.commit()
+    db.rollback()
+
+
+# --- Reading passages ---------------------------------------------------------------------------
+
+
+def test_a_teacher_writes_a_passage_and_questions_that_follow_it(admin, bank, db: Session) -> None:
+    response = create_passage(bank.teacher, bank.science)
+
+    assert response.status_code == 201, response.text
+    passage = response.json()
+    assert (passage["subject_id"], passage["status"], passage["latest_version"]) == (
+        bank.science.id,
+        "active",
+        1,
+    )
+    assert passage["latest"]["title"] == "The Synthetic River"
+    assert "\n\nIn the dry season" in passage["latest"]["body"]  # paragraphs are kept
+    assert passage["question_ids"] == []
+
+    first = create(bank.teacher, bank.science, passage=passage).json()
+    second = create(bank.teacher, bank.science, TRUE_FALSE, passage=passage).json()
+    create(bank.teacher, bank.science)  # a question that isn't about the passage
+
+    assert first["passage_id"] == passage["id"]
+    shown = bank.teacher.client.get(f"{P}/{passage['id']}").json()
+    assert shown["question_ids"] == [first["id"], second["id"]]  # in the order written
+    listed = bank.teacher.client.get(Q, params={"passage_id": passage["id"]}).json()
+    assert {q["id"] for q in listed["questions"]} == {first["id"], second["id"]}
+
+    entry = db.scalar(select(AuditLog).where(AuditLog.action == "passage.created"))
+    assert (entry.resource_id, entry.details) == (passage["id"], {"subject": "Basic Science"})
+
+
+def test_revising_a_question_keeps_its_passage(admin, bank) -> None:
+    passage = create_passage(admin, bank.science).json()
+    question_id = create(admin, bank.science, passage=passage).json()["id"]
+
+    response = admin.client.post(
+        f"{Q}/{question_id}/versions", json={"content": TRUE_FALSE}, headers=admin.headers
+    )
+
+    assert response.json()["passage_id"] == passage["id"]
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        {**PASSAGE, "title": "  "},
+        {**PASSAGE, "body": ""},
+        {**PASSAGE, "title": "x" * 201},
+        {**PASSAGE, "body": "x" * 20001},
+        {"title": "No body"},
+        {**PASSAGE, "author": "Someone"},
+    ],
+)
+def test_invalid_passages_are_refused(admin, bank, content, db: Session) -> None:
+    assert create_passage(admin, bank.science, content).status_code == 422
+    assert count(db, Passage) == 0
+
+
+def test_a_question_and_its_passage_share_a_subject(admin, bank, make_tenant, db: Session) -> None:
+    passage = create_passage(admin, bank.science).json()
+    elsewhere = make_tenant()
+    their_subject = Subject(tenant_id=elsewhere.id, name="Chemistry")
+    db.add(their_subject)
+    db.flush()
+    their_passage = Passage(tenant_id=elsewhere.id, subject_id=their_subject.id)
+    db.add(their_passage)
+    db.commit()
+
+    assert create(admin, bank.physics, passage=passage).status_code == 422
+    # Another school's passage looks exactly like one that doesn't exist.
+    response = create(admin, bank.science, passage=their_passage.id)
+    assert (response.status_code, response.json()["detail"]) == (422, "That passage doesn't exist.")
+    assert create(admin, bank.science, passage="no-such-passage").status_code == 422
+    assert count(db, Question) == 0
+
+
+def test_archived_passages_take_no_new_questions(admin, bank) -> None:
+    passage = create_passage(admin, bank.science).json()
+    kept = create(admin, bank.science, passage=passage).json()["id"]
+
+    archived = admin.client.post(f"{P}/{passage['id']}/archive", headers=admin.headers)
+
+    assert archived.json()["status"] == "archived"
+    assert archived.json()["question_ids"] == [kept]  # its questions are untouched
+    response = create(admin, bank.science, passage=passage)
+    assert response.status_code == 422
+    assert "archived" in response.json()["detail"]
+    assert admin.client.get(P).json()["passages"] == []
+    assert len(admin.client.get(P, params={"status": "archived"}).json()["passages"]) == 1
+
+    admin.client.post(f"{P}/{passage['id']}/restore", headers=admin.headers)
+    assert create(admin, bank.science, passage=passage).status_code == 201
+
+
+def test_archived_questions_leave_the_passage_list(admin, bank) -> None:
+    passage = create_passage(admin, bank.science).json()
+    dropped = create(admin, bank.science, passage=passage).json()["id"]
+    kept = create(admin, bank.science, passage=passage).json()["id"]
+
+    admin.client.post(f"{Q}/{dropped}/archive", headers=admin.headers)
+
+    assert admin.client.get(f"{P}/{passage['id']}").json()["question_ids"] == [kept]
+
+
+def test_editing_a_passage_adds_a_version(admin, bank, db: Session) -> None:
+    passage_id = create_passage(admin, bank.science).json()["id"]
+    revised = {"title": "The Synthetic River (abridged)", "body": "A shorter made-up text."}
+
+    response = admin.client.post(
+        f"{P}/{passage_id}/versions", json={"content": revised}, headers=admin.headers
+    )
+
+    assert response.status_code == 201, response.text
+    assert response.json()["latest_version"] == 2
+    assert response.json()["latest"]["title"] == "The Synthetic River (abridged)"
+    versions = admin.client.get(f"{P}/{passage_id}/versions").json()
+    assert [(v["version"], v["title"]) for v in versions] == [
+        (1, "The Synthetic River"),
+        (2, "The Synthetic River (abridged)"),
+    ]
+    assert versions[0]["body"] == PASSAGE["body"]
+    entry = db.scalar(select(AuditLog).where(AuditLog.action == "passage.revised"))
+    assert entry.details == {"version": 2}
+
+
+def test_a_stored_passage_version_cant_be_changed(admin, bank, db: Session) -> None:
+    passage_id = create_passage(admin, bank.science).json()["id"]
+    version = db.scalar(select(PassageVersion).where(PassageVersion.passage_id == passage_id))
+
+    version.body = "Rewritten in place."
+    with pytest.raises(ValueError, match="can't be changed"):
+        db.flush()
+    db.rollback()
+
+    db.expire_all()
+    stored = db.scalar(select(PassageVersion).where(PassageVersion.passage_id == passage_id))
+    assert stored.body == PASSAGE["body"]
+
+
+def test_a_passage_with_questions_cant_be_deleted(admin, bank, db: Session) -> None:
+    passage_id = create_passage(admin, bank.science).json()["id"]
+    question_id = create(admin, bank.science, passage=passage_id).json()["id"]
+
+    response = admin.client.delete(f"{P}/{passage_id}", headers=admin.headers)
+
+    assert response.status_code == 409
+    assert "Archive it instead" in response.json()["detail"]
+    assert admin.client.delete(f"{Q}/{question_id}", headers=admin.headers).status_code == 204
+    assert admin.client.delete(f"{P}/{passage_id}", headers=admin.headers).status_code == 204
+    assert (count(db, Passage), count(db, PassageVersion)) == (0, 0)
+    assert db.scalar(select(AuditLog).where(AuditLog.action == "passage.deleted")) is not None
+
+
+def test_a_subject_with_passages_cant_be_deleted(admin, bank) -> None:
+    create_passage(admin, bank.physics)
+
+    response = admin.client.delete(f"{S}/subjects/{bank.physics.id}", headers=admin.headers)
+
+    assert response.status_code == 409
+
+
+def test_who_can_use_passages(admin, bank, make_tenant, make_user, sign_in) -> None:
+    science = create_passage(admin, bank.science).json()["id"]
+    physics = create_passage(admin, bank.physics).json()["id"]
+    make_user(
+        tenant=(elsewhere := make_tenant()),
+        username="head",
+        role="school_admin",
+        password=TEST_PASSWORD,
+    )
+    them = sign_in(elsewhere, "head")
+
+    def listed(who, **params):
+        return {p["id"] for p in who.client.get(P, params=params).json()["passages"]}
+
+    assert listed(admin) == {science, physics}
+    assert listed(bank.teacher) == {science}
+    assert listed(bank.other_teacher) == set()
+    assert bank.teacher.client.get(f"{P}/{physics}").status_code == 403
+    assert bank.teacher.client.get(P, params={"subject_id": bank.physics.id}).status_code == 403
+    assert create_passage(bank.teacher, bank.physics).status_code == 403
+    response = bank.teacher.client.post(
+        f"{P}/{physics}/versions", json={"content": PASSAGE}, headers=bank.teacher.headers
+    )
+    assert response.status_code == 403
+
+    assert bank.student.client.get(P).status_code == 403
+    assert bank.student.client.get(f"{P}/{science}").status_code == 403
+    assert create_passage(bank.student, bank.science).status_code == 403
+
+    assert them.client.get(f"{P}/{science}").status_code == 404
+    assert them.client.delete(f"{P}/{science}", headers=them.headers).status_code == 404
+    assert listed(them) == set()
+
+
+def test_passages_page_newest_first(admin, bank) -> None:
+    made = [create_passage(admin, bank.science).json()["id"] for _ in range(3)]
+
+    first = admin.client.get(P, params={"limit": 2}).json()
+    second = admin.client.get(P, params={"limit": 2, "after": first["next_after"]}).json()
+
+    seen = [p["id"] for page in (first, second) for p in page["passages"]]
+    assert sorted(seen) == sorted(made) and len(seen) == 3
+    assert second["next_after"] is None
+
+
+def test_the_database_keeps_a_question_in_its_passages_subject(admin, bank, db: Session) -> None:
+    passage_id = create_passage(admin, bank.science).json()["id"]
+
+    db.add(Question(tenant_id=admin.school.id, subject_id=bank.physics.id, passage_id=passage_id))
     with pytest.raises(IntegrityError):
         db.commit()
     db.rollback()
