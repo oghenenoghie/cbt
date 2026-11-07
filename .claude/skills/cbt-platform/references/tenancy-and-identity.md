@@ -22,6 +22,9 @@ Authoritative sources:
   - Role checks: `require_school_role(...)` and `require_platform_admin()`.
   - Failed logins are throttled.
   - `python -m app.cli` creates the first school admin and platform admin.
+- **Account management** (`app/accounts/`, `/api/v1/school/users`, school admins only):
+  - list, create, update, disable, reset passwords, unblock, and bulk import with optional generated passwords;
+  - people can change their own password at `POST /api/v1/auth/password`.
 - Integrations authenticate separately, with API keys (`IntegrationPrincipal`).
 
 ## Roles (from requirements)
@@ -38,10 +41,10 @@ Authorization is role-based and enforced on the server. The UI may hide actions,
 
 ## Phase 2 scope (school and academic setup)
 
-- Create and manage the school profile and academic sessions.
-- Configure departments, classes, subjects and topics.
-- Invite users and assign roles.
-- Import students and class lists (CSV/XLSX first, per the integration rollout).
+- Create and manage the school profile and academic sessions. **Next.**
+- Configure departments, classes, subjects and topics. **Next.**
+- Invite users and assign roles. **Done** (part 3).
+- Import students and class lists. Accounts are done, as a JSON import; class membership comes with classes. CSV/XLSX upload is still to do; for now the web client can turn a file into the JSON rows.
 
 Subjects, topics and chapters later scope AI retrieval and generation (see `assessment-pipeline.md`), so model them as stable, tenant-scoped entities, not free text.
 
@@ -67,12 +70,14 @@ Subjects, topics and chapters later scope AI retrieval and generation (see `asse
 - **Students log in with a username and password issued by the school.** OIDC SSO comes later.
 - **Password policy:** staff (including platform admins) need 12+ characters and students 8+, with no forced symbols or expiry. Common, repetitive or sequential passwords are rejected, and so are passwords containing the username or school code.
 - **Sessions:** end after 8 hours, or after 1 hour without activity. Activity is any authenticated request, so an open exam stays signed in.
-- **Throttling:** 5 failed logins in 15 minutes block that school code + username, including for non-existent accounts. The known trade-off is that someone can block a classmate for 15 minutes.
+- **Throttling:** 5 failed logins in 15 minutes block that school code + username, including for non-existent accounts. The known trade-off is that someone can block a classmate for 15 minutes, which a school admin can lift with `POST /api/v1/school/users/{id}/unblock`.
+- **Account rules:** admins can't change their own role or status. Disabling an account or resetting its password ends its sessions immediately. Imports are all-or-nothing, and generated passwords are shown once.
 
 ## Still open: ask, don't assume
 
 - The offline (desktop lab) authentication policy. Decide it in Phase 8.
-- How school admins unblock a throttled account, and whether throttling should also consider the device or IP address.
+- Whether throttling should also consider the device or IP address.
+- Whether users must change an admin-set or generated password at first sign-in.
 - Which SSO providers to support first.
 
 ## What Phase 2 unblocks

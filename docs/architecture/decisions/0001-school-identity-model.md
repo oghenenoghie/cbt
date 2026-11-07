@@ -5,6 +5,7 @@
 - **Implemented in:**
   - models: `backend/api/app/models/identity.py`, `backend/api/app/models/candidate.py` (migration `0002_school_identity`)
   - login: `backend/api/app/auth/`, `backend/api/app/core/passwords.py` (migration `0003_login_security`)
+  - account management: `backend/api/app/accounts/`
 
 ## Context
 
@@ -39,6 +40,13 @@ Phase 2 (authentication, school tenancy and academic setup) needs user accounts,
     - Identifiers are stored only as hashes.
     - Every failure returns the same message and does the same hashing work.
 12. **Logins, failures (with a reason), blocks, logouts and account creation are audited.** `audit_logs.tenant_id` may now be null, for platform-level events: platform admin activity, or a login naming a school code that doesn't exist.
+13. **School admins manage their own school's accounts** (`/api/v1/school/users`).
+    - They can create, list, update, disable and re-enable accounts, reset passwords, unblock sign-ins, and import up to 200 accounts at once.
+    - A user at another school is reported as not found.
+    - An admin can't change their own role or status, so a school always keeps at least one active admin.
+    - Disabling an account or resetting its password ends the user's sessions immediately. A reset also lifts any sign-in block.
+    - Imports are all-or-nothing. They can generate a password for each row without one: 14 characters for staff and 10 for students, with no look-alike characters. Generated passwords are returned once and never stored readable.
+    - Anyone signed in can change their own password (`POST /api/v1/auth/password`). That ends their other sessions and keeps the current one.
 
 ## Consequences
 
@@ -48,11 +56,14 @@ Phase 2 (authentication, school tenancy and academic setup) needs user accounts,
 - Deleting a school removes all of its identity data. Other schools' data is unaffected.
 - School roles are `school_admin`, `teacher` and `student`, checked in application code. Adding `invigilator` later is a code change, not a migration.
 - Linking a candidate only to *student* accounts is checked where links are created, not by the database.
-- **Trade-off of decision 11:** anyone who knows a school code and username can trigger a 15-minute block, for example one student blocking another just before an exam. A school admin unblocking an account, and limits that also consider the device, are follow-up work.
-- Until account-management endpoints exist, the first school admin and platform admin are created with `python -m app.cli` (see `backend/api/README.md`).
+- **Trade-off of decision 11:** anyone who knows a school code and username can trigger a 15-minute block, for example one student blocking another just before an exam. A school admin can lift it straight away (`POST /api/v1/school/users/{id}/unblock`). Limits that also consider the device are follow-up work.
+- The first school admin and platform admin are created with `python -m app.cli` (see `backend/api/README.md`). After that, school admins manage their own school's accounts.
+- Promoting a student to a staff role keeps their current password, which may meet only the student minimum, until it's next changed or reset. Reset the password when promoting if that matters.
+- Linking student accounts to candidates is deferred to class enrolment, where candidates are first used.
 
 ## Still open
 
 - Offline (desktop lab) authentication policy: decide in Phase 8.
-- How school admins unblock a throttled account, and whether limits should also consider the device or IP address.
+- Whether sign-in limits should also consider the device or IP address.
+- Whether a user must change an admin-set or generated password at first sign-in.
 - Which SSO providers to support first.

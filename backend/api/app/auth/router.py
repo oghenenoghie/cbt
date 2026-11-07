@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_session_principal, require_csrf
 from app.auth.schemas import (
+    PasswordChange,
     PlatformAdminLoginRequest,
     PlatformAdminSummary,
     SchoolLoginRequest,
@@ -22,15 +23,23 @@ from app.auth.sessions import (
     csrf_token_for,
     find_session,
     revoke_session,
+    revoke_sessions_of,
     start_session,
 )
 from app.auth.throttle import clear_failures, is_blocked, record_failure, throttle_key
 from app.core.audit import record_audit
 from app.core.config import get_settings
-from app.core.passwords import burn_verification_time, hash_password, needs_rehash, verify_password
+from app.core.passwords import (
+    PasswordPolicyError,
+    burn_verification_time,
+    hash_password,
+    needs_rehash,
+    validate_new_password,
+    verify_password,
+)
 from app.db.session import get_db
 from app.models import AuthSession, PlatformAdmin, Tenant, User
-from app.models.identity import normalize_email, normalize_username
+from app.models.identity import STAFF_ROLES, normalize_email, normalize_username
 from app.models.tenant import as_utc, normalize_school_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -280,3 +289,56 @@ def me(
 ) -> SessionInfo:
     """Who is signed in, plus the CSRF token for this session."""
     return _session_info(db, principal)
+
+
+@router.post("/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    body: PasswordChange,
+    request: Request,
+    principal: SessionPrincipal = Depends(require_csrf),
+    db: Session = Depends(get_db),
+) -> Response:
+    """Change your own password. Signs you out everywhere else; this session stays."""
+    if principal.kind == "school_user":
+        account = db.get(User, principal.user_id)
+        staff = account.role in STAFF_ROLES
+        context = (account.username, db.get(Tenant, principal.tenant_id).slug)
+        actor_type = "user"
+    else:
+        account = db.get(PlatformAdmin, principal.platform_admin_id)
+        staff = True
+        context = (account.email.split("@")[0],)
+        actor_type = "platform_admin"
+
+    def audit(action: str, details: dict | None = None) -> None:
+        record_audit(
+            db,
+            tenant_id=principal.tenant_id,
+            actor_type=actor_type,
+            actor_id=account.id,
+            action=action,
+            resource_type=actor_type,
+            resource_id=account.id,
+            request=request,
+            details=details,
+        )
+
+    if not _verify(body.current_password, account.password_hash):
+        audit("auth.password_change.failed")
+        db.commit()
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="Your current password is incorrect.")
+    try:
+        validate_new_password(body.new_password, staff=staff, context=context)
+    except PasswordPolicyError as exc:
+        raise HTTPException(422, detail=str(exc)) from exc
+
+    account.password_hash = hash_password(body.new_password)
+    owner = (
+        {"user_id": account.id}
+        if principal.kind == "school_user"
+        else {"platform_admin_id": account.id}
+    )
+    ended = revoke_sessions_of(db, keep_session_id=principal.session_id, **owner)
+    audit("auth.password_changed", {"other_sessions_ended": ended})
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

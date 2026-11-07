@@ -27,6 +27,8 @@ from app.db.base import Base
 from app.models.tenant import utc_now
 
 SCHOOL_ROLES = frozenset({"school_admin", "teacher", "student"})
+# Roles held to the staff password policy (ADR 0001); platform admins are staff too.
+STAFF_ROLES = frozenset({"school_admin", "teacher"})
 _USERNAME_PATTERN = re.compile(r"[a-z0-9._-]{1,100}")
 
 

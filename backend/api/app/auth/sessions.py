@@ -79,6 +79,34 @@ def revoke_session(session: AuthSession) -> None:
         session.revoked_at = utc_now()
 
 
+def revoke_sessions_of(
+    db: Session,
+    *,
+    user_id: str | None = None,
+    platform_admin_id: str | None = None,
+    keep_session_id: str | None = None,
+) -> int:
+    """Revoke every live session of one person, optionally keeping one (the caller's own).
+
+    Pass exactly one of `user_id` or `platform_admin_id`. Stages the changes (the caller
+    commits) and returns how many sessions were revoked.
+    """
+    if (user_id is None) == (platform_admin_id is None):
+        raise ValueError("Pass exactly one of user_id or platform_admin_id.")
+    owner = (
+        AuthSession.user_id == user_id
+        if user_id is not None
+        else AuthSession.platform_admin_id == platform_admin_id
+    )
+    sessions = db.scalars(select(AuthSession).where(owner, AuthSession.revoked_at.is_(None))).all()
+    revoked = 0
+    for session in sessions:
+        if session.id != keep_session_id:
+            revoke_session(session)
+            revoked += 1
+    return revoked
+
+
 def find_session(db: Session, token: str) -> AuthSession | None:
     """The session for a token, live or not."""
     return db.scalar(select(AuthSession).where(AuthSession.token_hash == hash_session_token(token)))

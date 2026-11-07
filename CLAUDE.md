@@ -6,7 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
 
-**Current state (Phase 1 of the delivery plan in `docs/product/requirements.md`):** only `backend/api` contains working code: tenant/integration persistence, API-key authentication, one endpoint (`GET /api/v1/integrations/me`), the Phase 2 identity tables (users, platform admins, sessions, candidates), and sign-in for people (`/api/v1/auth/*`: login, logout, me; cookie sessions with CSRF, role checks, failed-login throttling). Decisions are in `docs/architecture/decisions/0001-school-identity-model.md`. There are no account-management or school-setup endpoints yet. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync) described in the README does not exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window. Next phase: human user accounts, school membership/roles and admin login (Phase 2).
+**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md`, in progress):** only `backend/api` contains working code. It has:
+- tenant and integration persistence, with API-key authentication and `GET /api/v1/integrations/me`;
+- the identity tables (users, platform admins, sessions, candidates);
+- sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
+- account management for school admins (`/api/v1/school/users`: list, create, update, password reset, unblock, bulk import).
+
+The decisions behind these are in `docs/architecture/decisions/0001-school-identity-model.md`. Next is school setup (academic sessions, classes, subjects, topics), then integration management. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -70,6 +76,12 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - Audit entries: `app/core/audit.py` `record_audit(...)`, staged in the same transaction as the change. `tenant_id=None` is reserved for platform-level events.
 - First accounts: `python -m app.cli create-school-admin ...` / `create-platform-admin ...`.
 
+**Account management** (`app/accounts/router.py`, `/api/v1/school/users`) is for school admins only.
+- A user at another school returns 404, never 403.
+- Admins can't change their own role or status, so a school always keeps an active admin.
+- Disabling an account or resetting its password ends that user's sessions immediately (`revoke_sessions_of`). A reset also lifts a sign-in block.
+- Bulk import is all-or-nothing: every row is validated before any hashing. Generated passwords are returned once and never stored readable.
+
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 
 **Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures:
@@ -88,7 +100,7 @@ The `client` uses `https://testserver`, so Secure cookies flow as in a browser. 
 These come from `docs/architecture/overview.md`, `docs/integrations/overview.md` and `backend/api/README.md`, and are hard requirements:
 
 - **Source-grounded AI only.** Questions and answers must be supported by retrieved passages from the selected school's *approved* document versions, with citations. Model general knowledge is never an acceptable source. Treat model output as untrusted until validated (schema, citation coverage, answer support, scope, duplication). If evidence is insufficient, return fewer questions plus a shortfall report rather than padding. AI drafts stay drafts until a teacher approves them. The model provider sits behind a replaceable adapter.
-- **Integration management is gated.** Don't expose integration-management or customer-data endpoints until administrator authentication, tenant-scoped authorization, credential lifecycle routes, audit-log writes, rate limiting and security tests exist. The `AuditLog` model exists, but nothing writes to it yet.
+- **Integration management is gated.** Don't expose integration-management or customer-data endpoints until administrator authentication, tenant-scoped authorization, credential lifecycle routes, audit-log writes, rate limiting and security tests exist. Sign-in and account changes already write audit entries through `app/core/audit.py`; integration-management changes must too.
 - **Exam integrity.** Published exam snapshots are immutable: later question-bank edits must not change them. Keep separate entities for documents and immutable document versions, question drafts and approved versions, exam templates and published snapshots, and answer events and final submissions.
 - **Candidate-facing data.** Never return answer keys or unpublished questions through candidate-facing scopes. Don't return results before the school's release policy allows it.
 - **Clients hold no secrets.** No platform API secrets in browser code, the desktop bundle or the Electron renderer. The desktop device is untrusted, so the server validates every synced submission (signed packages, idempotent sync).
