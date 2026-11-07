@@ -1,7 +1,5 @@
 """School admins managing their school's accounts, and people changing their own password."""
 
-from types import SimpleNamespace
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -19,36 +17,11 @@ LOGIN = "/api/v1/auth/login"
 ME = "/api/v1/auth/me"
 
 
-@pytest.fixture
-def sign_in(client: TestClient):
-    """Sign someone in on their own client (the `client` fixture keeps the test database wired)."""
-
-    def _sign_in(school: Tenant, username: str, password: str = TEST_PASSWORD):
-        browser = TestClient(app, base_url="https://testserver")
-        response = browser.post(
-            LOGIN, json={"school_code": school.slug, "username": username, "password": password}
-        )
-        assert response.status_code == 200, response.text
-        return SimpleNamespace(
-            client=browser, headers={"X-CSRF-Token": response.json()["csrf_token"]}
-        )
-
-    return _sign_in
-
-
 def can_sign_in(school: Tenant, username: str, password: str) -> int:
     response = TestClient(app, base_url="https://testserver").post(
         LOGIN, json={"school_code": school.slug, "username": username, "password": password}
     )
     return response.status_code
-
-
-@pytest.fixture
-def admin(make_tenant, make_user, sign_in):
-    school = make_tenant()
-    user = make_user(tenant=school, username="head", role="school_admin", password=TEST_PASSWORD)
-    session = sign_in(school, "head")
-    return SimpleNamespace(school=school, user=user, client=session.client, headers=session.headers)
 
 
 def create(admin, **fields):

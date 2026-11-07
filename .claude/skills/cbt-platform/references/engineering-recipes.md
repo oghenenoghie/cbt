@@ -131,8 +131,9 @@ def create_subject(
 
 - **Use `write=True` on anything that changes data.** It makes the request carry the session's CSRF token in `X-CSRF-Token`, and tests should cover the 403 when that header is missing.
 - **Read-only endpoints** use `require_school_role(...)` without `write`, or `get_session_principal` when any signed-in person may read.
+- **School-scoped resources:** reuse `app/school/common.py`. It provides `read_access` and `write_access`, `get_owned(db, Model, id, principal, "Thing")` for 404s across schools, `flush_or_conflict(db, message)` to turn constraint violations into 409, and `audit(...)`.
 - **Platform admins** don't pass `require_school_role`. Use `require_platform_admin()`, and audit every action they take inside a school against that school.
-- **In tests**, sign in through the real endpoint: `make_user(..., password=TEST_PASSWORD)`, then `client.post("/api/v1/auth/login", ...)`. Read `csrf_token` from the response. The test client keeps the cookie.
+- **In tests**, use the `admin` fixture (a signed-in school admin) or `sign_in(school, username)` (returns `.client` and CSRF `.headers`). Both sign in through the real endpoint.
 
 ## 3. Write an audit entry
 

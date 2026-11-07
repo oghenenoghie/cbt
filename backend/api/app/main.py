@@ -6,6 +6,9 @@ from app.auth.dependencies import CSRF_HEADER
 from app.auth.router import router as auth_router
 from app.core.config import get_settings
 from app.integrations.router import router as integrations_router
+from app.school.calendar import router as school_calendar_router
+from app.school.classes import router as school_classes_router
+from app.school.subjects import router as school_subjects_router
 
 settings = get_settings()
 
@@ -29,6 +32,9 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(accounts_router, prefix=settings.api_v1_prefix)
+app.include_router(school_calendar_router, prefix=settings.api_v1_prefix)
+app.include_router(school_classes_router, prefix=settings.api_v1_prefix)
+app.include_router(school_subjects_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 
 

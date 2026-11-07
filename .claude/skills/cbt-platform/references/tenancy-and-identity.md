@@ -41,8 +41,9 @@ Authorization is role-based and enforced on the server. The UI may hide actions,
 
 ## Phase 2 scope (school and academic setup)
 
-- Create and manage the school profile and academic sessions. **Next.**
-- Configure departments, classes, subjects and topics. **Next.**
+- Create and manage academic sessions and terms. **Done** (part 4, ADR 0002). Editing the school profile is still to do.
+- Configure classes (levels and arms), subjects and topics. **Done** (part 4). Departments aren't modelled yet.
+- Enrol students in arms (creating and linking candidates) and assign teachers to arm + subject pairs. **Next** (part 5).
 - Invite users and assign roles. **Done** (part 3).
 - Import students and class lists. Accounts are done, as a JSON import; class membership comes with classes. CSV/XLSX upload is still to do; for now the web client can turn a file into the JSON rows.
 

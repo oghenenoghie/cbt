@@ -10,9 +10,10 @@ Intelligent CBT: a computer-based testing platform for schools, with two clients
 - tenant and integration persistence, with API-key authentication and `GET /api/v1/integrations/me`;
 - the identity tables (users, platform admins, sessions, candidates);
 - sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
-- account management for school admins (`/api/v1/school/users`: list, create, update, password reset, unblock, bulk import).
+- account management for school admins (`/api/v1/school/users`: list, create, update, password reset, unblock, bulk import);
+- school structure (`/api/v1/school/...`): academic sessions and terms, class levels and arms, and subjects with topics and the levels that take them.
 
-The decisions behind these are in `docs/architecture/decisions/0001-school-identity-model.md`. Next is school setup (academic sessions, classes, subjects, topics), then integration management. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure). Next is putting people into classes (student enrolment with candidates, teacher assignments), then integration management. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -34,7 +35,7 @@ pytest tests/test_integration_auth.py::test_revoked_credential_is_rejected   # o
 pytest -k expired                  # tests matching a name
 ```
 
-PostgreSQL locally: `docker compose -f infrastructure/docker/compose.yaml up -d` (from the repo root, after copying `infrastructure/docker/.env.example` to `.env`). It creates `cbt` for development and `cbt_test` for tests. Run the suite on it with `TEST_DATABASE_URL="postgresql+psycopg://cbt:<password>@localhost:5432/cbt_test" pytest`. The suite drops all its tables, so it refuses database names that don't end in `_test`. URLs need the `+psycopg` driver.
+PostgreSQL locally: `docker compose -f infrastructure/docker/compose.yaml up -d` (from the repo root, after copying `infrastructure/docker/.env.example` to `.env`). It creates `cbt` for development and `cbt_test` for tests. Run the suite on it with `TEST_DATABASE_URL="postgresql+psycopg://cbt:<password>@localhost:5432/cbt_test" pytest`. The suite drops all its tables, so it refuses database names that don't end in `_test`. URLs need the `+psycopg` driver. Run migration checks (`alembic downgrade base`, which drops every table) against `cbt_test` too, never the `cbt` development database.
 
 CI (`.github/workflows/backend-api.yml`) has two parts:
 - On SQLite with Python 3.11 and 3.13: `ruff check .`, `pytest`, then `alembic upgrade head && alembic check && alembic downgrade base && alembic upgrade head`.
@@ -82,6 +83,12 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - Disabling an account or resetting its password ends that user's sessions immediately (`revoke_sessions_of`). A reset also lifts a sign-in block.
 - Bulk import is all-or-nothing: every row is validated before any hashing. Generated passwords are returned once and never stored readable.
 
+**School structure** (`app/models/academic.py`, `app/school/`). Calendar, classes and subjects each have a module.
+- `app/school/common.py` holds the shared rules: `read_access` (any school member), `write_access` (school admin + CSRF), `get_owned(...)` (404 for other schools' records), `flush_or_conflict(...)` (a unique or foreign-key violation becomes 409), and `audit(...)`.
+- Reuse these for new school-scoped endpoints.
+- At most one current session per school, enforced by a partial unique index.
+- A parent still in use can't be deleted, because its foreign keys have no `ondelete`.
+
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 
 **Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures:
@@ -90,6 +97,8 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - `make_user(tenant=, username=, role=, status=, password=)`: pass `password` for an account that can log in; hashes are cached per run.
 - `make_credential(tenant=, granted_scopes=, denied_scopes=, expires_at=)`: returns the raw API key alongside the ORM objects.
 - `password_hash_for(password)`: a cached hash, e.g. for a platform admin.
+- `sign_in(school, username, password=...)`: signs someone in on their own browser and returns `.client` and CSRF `.headers`.
+- `admin`: a signed-in school admin at a fresh school, with `.school`, `.user`, `.client` and `.headers`.
 
 The `client` uses `https://testserver`, so Secure cookies flow as in a browser. To test time-based behaviour (session expiry, throttle windows), move the stored timestamps through `db` instead of waiting. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
 

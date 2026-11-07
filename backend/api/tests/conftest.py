@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -211,3 +212,33 @@ def make_candidate(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[
 def password_hash_for() -> Callable[[str], str]:
     """Argon2 hash of a password, cached across the run."""
     return cached_password_hash
+
+
+@pytest.fixture
+def sign_in(client: TestClient) -> Callable[..., SimpleNamespace]:
+    """Sign someone in on a browser of their own; returns `.client` and CSRF `.headers`.
+
+    Depends on `client` so the test database stays wired into the app.
+    """
+
+    def _sign_in(school: Tenant, username: str, password: str = TEST_PASSWORD) -> SimpleNamespace:
+        browser = TestClient(app, base_url="https://testserver")
+        response = browser.post(
+            "/api/v1/auth/login",
+            json={"school_code": school.slug, "username": username, "password": password},
+        )
+        assert response.status_code == 200, response.text
+        return SimpleNamespace(
+            client=browser, headers={"X-CSRF-Token": response.json()["csrf_token"]}
+        )
+
+    return _sign_in
+
+
+@pytest.fixture
+def admin(make_tenant, make_user, sign_in) -> SimpleNamespace:
+    """A signed-in school admin ("head") at a fresh school: `.school`, `.user`, `.client`, `.headers`."""
+    school = make_tenant()
+    user = make_user(tenant=school, username="head", role="school_admin", password=TEST_PASSWORD)
+    session = sign_in(school, "head")
+    return SimpleNamespace(school=school, user=user, client=session.client, headers=session.headers)
