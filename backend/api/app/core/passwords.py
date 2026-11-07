@@ -8,6 +8,7 @@ Policy: at least 12 characters for staff (school admins, teachers, platform admi
 passwords are rejected, as are passwords containing the username or school code.
 """
 
+import secrets
 import unicodedata
 from collections.abc import Iterable
 
@@ -84,3 +85,20 @@ def validate_new_password(password: str, *, staff: bool, context: Iterable[str] 
         word = word.casefold()
         if len(word) >= 4 and word in folded:
             raise PasswordPolicyError("Don't include your username or school code in the password.")
+
+
+# No look-alike characters (0/O, 1/l/I), so a generated password can be read out or copied by hand.
+_GENERATED_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+
+
+def generate_password(*, staff: bool, context: Iterable[str] = ()) -> str:
+    """A random password that meets the policy: 14 characters for staff, 10 for students."""
+    length = STAFF_MIN_LENGTH + 2 if staff else STUDENT_MIN_LENGTH + 2
+    context = tuple(context)
+    while True:
+        password = "".join(secrets.choice(_GENERATED_ALPHABET) for _ in range(length))
+        try:
+            validate_new_password(password, staff=staff, context=context)
+        except PasswordPolicyError:
+            continue
+        return password

@@ -60,6 +60,20 @@ People sign in with a server-side session cookie. Integrations use API keys inst
 - Session and throttle limits are settings (`SESSION_*`, `LOGIN_*` in `.env.example`).
 - New endpoints protect themselves with `app/auth/dependencies.py`: `require_school_role("teacher", write=True)` for a change, or `get_session_principal` to read.
 
+### Account management (school admins)
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/school/users` | Accounts at your school, ordered by username. Filters: `role`, `status`; paging: `limit`, `after` (the previous page's `next_after`) |
+| `POST /api/v1/school/users` | Create an account: `username`, `display_name`, `role`, optional `email` and `password` |
+| `GET` / `PATCH /api/v1/school/users/{id}` | Read, or change `display_name`, `email`, `role`, `status` (`active` or `disabled`) |
+| `POST /api/v1/school/users/{id}/password` | Set a new password (ends the user's sessions and lifts any sign-in block) |
+| `POST /api/v1/school/users/{id}/unblock` | Lift a sign-in block after repeated failed attempts |
+| `POST /api/v1/school/users/import` | Up to 200 accounts at once, all or nothing. `generate_passwords: true` returns a generated password once per row that has none |
+| `POST /api/v1/auth/password` | Anyone signed in: change your own password with `current_password` and `new_password` |
+
+All changes need the `X-CSRF-Token` header. Another school's accounts return 404. You can't change your own role or status.
+
 ### Creating the first accounts
 
 No account-management endpoints exist yet, so create the first accounts from the command line (it prompts for the password):

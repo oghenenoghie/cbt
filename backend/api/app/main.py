@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.accounts.router import router as accounts_router
 from app.auth.dependencies import CSRF_HEADER
 from app.auth.router import router as auth_router
 from app.core.config import get_settings
@@ -27,6 +28,7 @@ app.add_middleware(
 
 
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
+app.include_router(accounts_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 
 

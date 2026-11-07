@@ -24,7 +24,7 @@ Positioning (web landing page): *examinations built from your school's learning 
 | Phase (from `docs/product/requirements.md`) | Status |
 |---|---|
 | 1. Repository foundation, contracts, local dev | Mostly done: tenant/integration tables, API-key auth, `/api/v1/integrations/me`, CI on SQLite and PostgreSQL, Docker Compose PostgreSQL 17 + pgvector. Missing: `packages/` |
-| 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1), and sign-in with cookie sessions, CSRF, role checks and throttling (part 2); see ADR 0001. Next: account management and school setup, then integration management |
+| 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1); sign-in with cookie sessions, CSRF, role checks and throttling (part 2); account management for school admins (part 3); see ADR 0001. Next: school setup (academic sessions, classes, subjects, topics), then integration management |
 | 3. Document upload, extraction, OCR, approval | Not started (spec: `backend/document-engine/README.md`) |
 | 4. Retrieval and evidence-grounded AI drafts | Not started (spec: `backend/ai-engine/README.md`) |
 | 5. Question bank, teacher review, exam builder | Not started |
