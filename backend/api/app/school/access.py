@@ -51,3 +51,39 @@ def require_teaching(
             status.HTTP_403_FORBIDDEN,
             detail="You're not assigned to teach this class and subject.",
         )
+
+
+def teaches_subject(db: Session, principal: SessionPrincipal, subject_id: str) -> bool:
+    """Whether the signed-in teacher teaches this subject to any arm."""
+    return (
+        db.scalar(
+            select(TeachingAssignment.id)
+            .where(
+                TeachingAssignment.tenant_id == principal.tenant_id,
+                TeachingAssignment.teacher_id == principal.user_id,
+                TeachingAssignment.subject_id == subject_id,
+            )
+            .limit(1)
+        )
+        is not None
+    )
+
+
+def can_use_question_bank(db: Session, principal: SessionPrincipal, subject_id: str) -> bool:
+    """School admins, and teachers who teach the subject. Never students: the bank holds answer keys."""
+    if principal.kind != "school_user":
+        return False
+    if principal.role == "school_admin":
+        return True
+    return principal.role == "teacher" and teaches_subject(db, principal, subject_id)
+
+
+def subjects_taught(db: Session, principal: SessionPrincipal) -> set[str]:
+    return set(
+        db.scalars(
+            select(TeachingAssignment.subject_id).where(
+                TeachingAssignment.tenant_id == principal.tenant_id,
+                TeachingAssignment.teacher_id == principal.user_id,
+            )
+        )
+    )

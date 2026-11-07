@@ -1,9 +1,10 @@
 # Assessment pipeline: materials → questions → exams → results
 
-None of this is built yet. Authoritative sources:
+Only the question bank is built (section 3). Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`
+- `docs/architecture/decisions/0003-exams.md`: the exam decisions and the question bank model
 
 ## Contents
 1. Learning materials (Phase 3)
@@ -60,6 +61,8 @@ Encode these as server-side checks that block publication, not as UI hints.
 ## 3. Question bank and exam builder (Phase 5)
 
 - **Already in place:** exams target an arm + subject (+ term). Check `require_teaching` (`app/school/access.py`) before a teacher creates, changes or marks one, and use `Enrolment` to find who sits it.
+- **The question bank is built** (`app/models/questions.py`, `app/questions/`). `Question` → immutable `QuestionVersion` rows (`mcq_single`, `true_false`), with the answer key in `correct_option_ids`. A snapshot must pin `QuestionVersion` ids, never `Question.latest_version`.
+- **Decided (ADR 0003):** a teacher prepares and submits an exam, and a school admin approves and publishes it. Results stay hidden until the teacher releases them, unless the exam is set to show them immediately. Students get one timed attempt, which can be resumed while the clock keeps running; the teacher can allow more. Question and option order are shuffled per student by default, fixed at the start of the attempt.
 
 - Generated drafts and approved question versions are separate records. Approving creates an immutable version.
 - Build and preview exams only from approved questions. Configure duration, availability window, attempts, marks and instructions.
