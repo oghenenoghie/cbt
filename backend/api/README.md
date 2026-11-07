@@ -15,6 +15,20 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
+## Checks
+
+CI (`.github/workflows/backend-api.yml`) runs these from `backend/api` on Python 3.11 and 3.13:
+
+```bash
+ruff check .
+pytest
+alembic upgrade head && alembic check   # fails if models changed without a migration
+```
+
+Tests use a throwaway SQLite database per test (see `tests/conftest.py`) and never touch your local `cbt.db`.
+
+## Database configuration
+
 The default local database is SQLite. Set `DATABASE_URL` to a PostgreSQL connection string for shared development or production. Never commit real credentials.
 
 ## Database foundation
