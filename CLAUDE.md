@@ -8,6 +8,8 @@ Intelligent CBT: a computer-based testing platform for schools, with two clients
 
 **Current state (Phase 1 of the delivery plan in `docs/product/requirements.md`):** only `backend/api` contains working code: tenant/integration persistence, API-key authentication and one endpoint (`GET /api/v1/integrations/me`). `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync) described in the README does not exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window. Next phase: human user accounts, school membership/roles and admin login (Phase 2).
 
+For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
+
 `docs/integrations/api-contract.md` describes the *target* public API (OAuth token endpoint, exam sessions, webhooks, `{"error": {...}}` envelope). Most of it is not implemented. Check the code before assuming an endpoint or behaviour exists. Errors currently use FastAPI's default `{"detail": ...}` shape.
 
 ## Commands
