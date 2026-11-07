@@ -43,7 +43,7 @@ class Candidate(Base):
 Then:
 1. Export the model from `app/models/__init__.py` (and its `__all__`), **and** add it to the import in `migrations/env.py`. If you miss either, autogenerate won't see the table and CI's `alembic check` fails.
 2. With `DATABASE_URL` pointing at a scratch database, run `alembic upgrade head`, then `alembic revision --autogenerate --rev-id 0002_<topic> -m "<description>"`.
-3. Review the generated migration by hand. Index names should follow `ix_<table>_<column>`, foreign keys keep their `ondelete`, and `downgrade()` reverses everything. It must run on SQLite (CI) and PostgreSQL.
+3. Review the generated migration by hand. Index names should follow `ix_<table>_<column>`, foreign keys keep their `ondelete`, and `downgrade()` reverses everything. It must run on SQLite and PostgreSQL, and CI checks both. To check PostgreSQL locally, use the Compose database in `infrastructure/docker/`.
 4. Tables holding external identities need a unique constraint on `(tenant_id, external_system_id, external_id)`. External IDs are only unique within a tenant.
 
 `utc_now()` is currently defined in both `app/models/tenant.py` and `app/models/integration.py`. Import one of them rather than adding a third copy.

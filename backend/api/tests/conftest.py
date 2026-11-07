@@ -1,3 +1,4 @@
+import os
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass
 from datetime import datetime
@@ -6,7 +7,8 @@ from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import Engine, create_engine, text
+from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.api_keys import generate_api_key
@@ -26,15 +28,51 @@ class IssuedCredential:
     credential: ApiCredential
 
 
+# Set TEST_DATABASE_URL (e.g. postgresql+psycopg://cbt:...@localhost:5432/cbt_test) to run the
+# suite against PostgreSQL instead of a throwaway SQLite file.
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    # Tests drop every table they create, so refuse anything that could be a real database.
+    if TEST_DATABASE_URL:
+        database = make_url(TEST_DATABASE_URL).database or ""
+        if not database.endswith("_test"):
+            raise pytest.UsageError(
+                f"TEST_DATABASE_URL must name a database ending in '_test' (got {database!r}): "
+                "the test suite drops all application tables in it."
+            )
+
+
+def _empty_database(engine: Engine) -> None:
+    """Drop the application tables and any Alembic stamp, leaving the database empty.
+
+    Dropping alembic_version too matters: a stamp left without its tables would make a later
+    `alembic upgrade head` believe the schema already exists.
+    """
+    Base.metadata.drop_all(engine)
+    with engine.begin() as connection:
+        connection.execute(text("DROP TABLE IF EXISTS alembic_version"))
+
+
 @pytest.fixture
 def session_factory(tmp_path: Path) -> Generator[sessionmaker[Session], None, None]:
-    """A fresh SQLite database per test, so tests never touch a developer's local database."""
-    engine = create_engine(
-        f"sqlite:///{tmp_path / 'test.db'}",
-        connect_args={"check_same_thread": False},
-    )
+    """Empty application tables per test, never on a developer's working database.
+
+    Default: a fresh SQLite file under tmp_path. With TEST_DATABASE_URL: the given PostgreSQL
+    database, emptied before (in case an earlier run was interrupted) and after each test.
+    """
+    if TEST_DATABASE_URL:
+        engine = create_engine(TEST_DATABASE_URL)
+        _empty_database(engine)
+    else:
+        engine = create_engine(
+            f"sqlite:///{tmp_path / 'test.db'}",
+            connect_args={"check_same_thread": False},
+        )
     Base.metadata.create_all(engine)
     yield sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
+    _empty_database(engine)
     engine.dispose()
 
 

@@ -28,9 +28,15 @@ pytest tests/test_integration_auth.py::test_revoked_credential_is_rejected   # o
 pytest -k expired                  # tests matching a name
 ```
 
-CI (`.github/workflows/backend-api.yml`) runs on Python 3.11 and 3.13: `ruff check .`, `pytest`, then `alembic upgrade head && alembic check && alembic downgrade base && alembic upgrade head`. `alembic check` fails if a model changed without a matching migration.
+PostgreSQL locally: `docker compose -f infrastructure/docker/compose.yaml up -d` (from the repo root, after copying `infrastructure/docker/.env.example` to `.env`). It creates `cbt` for development and `cbt_test` for tests. Run the suite on it with `TEST_DATABASE_URL="postgresql+psycopg://cbt:<password>@localhost:5432/cbt_test" pytest`. The suite drops all its tables, so it refuses database names that don't end in `_test`. URLs need the `+psycopg` driver.
 
-New migration: with the database at head, `alembic revision --autogenerate --rev-id 0002_<topic> -m "<description>"`, then review the generated file by hand. Revision IDs are sequential and descriptive (see `migrations/versions/0001_tenants_integrations.py`). Migrations must work on both SQLite (local/CI) and PostgreSQL (target production database).
+CI (`.github/workflows/backend-api.yml`) has two parts:
+- On SQLite with Python 3.11 and 3.13: `ruff check .`, `pytest`, then `alembic upgrade head && alembic check && alembic downgrade base && alembic upgrade head`.
+- On PostgreSQL 17 (`pgvector/pgvector:0.8.0-pg17`, the same image as Compose): `pytest`, then the same migration sequence.
+
+`alembic check` fails if a model changed without a matching migration.
+
+New migration: with the database at head, `alembic revision --autogenerate --rev-id 0002_<topic> -m "<description>"`, then review the generated file by hand. Revision IDs are sequential and descriptive (see `migrations/versions/0001_tenants_integrations.py`). Migrations must work on both SQLite and PostgreSQL (the production target), and CI checks both.
 
 ### Web and desktop
 
@@ -54,7 +60,7 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 
-**Tests** (`tests/conftest.py`): every test gets a fresh SQLite file database (via `tmp_path`) and a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures: `db` (session for arranging and inspecting data), `make_tenant()` and `make_credential(tenant=, granted_scopes=, denied_scopes=, expires_at=)`, which returns the raw key alongside the ORM objects. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
+**Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures: `db` (session for arranging and inspecting data), `make_tenant()` and `make_credential(tenant=, granted_scopes=, denied_scopes=, expires_at=)`, which returns the raw key alongside the ORM objects. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
 
 **Lint config.** `pyproject.toml` pins an explicit ruff rule set (`E4/E7/E9, F, B, I, UP, ASYNC, DTZ`) so results don't change with ruff's defaults. FastAPI `Depends`/`Security`/`Query`/`Header` are allowed as argument defaults. Use `datetime.now(UTC)`, never naive datetimes.
 
