@@ -27,7 +27,7 @@ Positioning (web landing page): *examinations built from your school's learning 
 | 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1); sign-in with cookie sessions, CSRF, role checks and throttling (part 2); account management (part 3); school structure, meaning sessions, terms, levels, arms, subjects and topics (part 4); enrolment and teaching assignments (part 5); see ADRs 0001 and 0002. Remaining: school profile editing, departments, integration management |
 | 3. Document upload, extraction, OCR, approval | Not started (spec: `backend/document-engine/README.md`) |
 | 4. Retrieval and evidence-grounded AI drafts | Not started (spec: `backend/ai-engine/README.md`) |
-| 5. Question bank, teacher review, exam builder | **In progress** (ADR 0003). Done: the question bank (Exams A). Next: the exam builder with admin-approved publishing (Exams B) |
+| 5. Question bank, teacher review, exam builder | **In progress** (ADR 0003). Done: the question bank (Exams A). Next: the exam builder with coordinator-approved publishing (Exams B) |
 | 6. Diagram generation and visual question types | Not started (spec: `backend/diagram-engine/README.md`) |
 | 7. Online exam delivery, grading, reporting | Not started; decisions settled in ADR 0003 (Exams C and D) |
 | 8. Electron desktop shell and offline exam package | Bare window only (`apps/desktop/src/main.ts`) |

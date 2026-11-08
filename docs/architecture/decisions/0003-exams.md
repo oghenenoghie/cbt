@@ -1,7 +1,7 @@
 # ADR 0003: Exams and the question bank
 
 - **Status:** Accepted (the question bank is built; exams follow in stages)
-- **Date:** 2026-11-07
+- **Date:** 2026-11-07 (decision 2 revised 2026-11-08: exam coordinators approve exams)
 - **Implemented in:**
   - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migrations `0006_question_bank` and `0007_passages`)
 
@@ -12,7 +12,7 @@ With the school foundation in place (ADRs 0001 and 0002), the next product step 
 The work is built in four stages, each its own change:
 
 - **A. Question bank:** single-answer multiple-choice and true/false questions, and reading passages with the questions that follow them, all versioned. (Built.)
-- **B. Exam builder and publishing:** a teacher prepares an exam for arm + subject pairs and submits it; a school admin approves and publishes it, freezing a snapshot.
+- **B. Exam builder and publishing:** a teacher or school admin prepares an exam for one or more arms and submits it; an exam coordinator (or, for a teacher's exam, a school admin) approves and publishes it, freezing a snapshot.
 - **C. Sitting an exam:** start and resume, a server-side timer, append-only answer events, submission and auto-grading.
 - **D. Results:** release, students' own results, and item analysis.
 
@@ -22,10 +22,14 @@ The work is built in four stages, each its own change:
    - Scores stay hidden from students until the exam's teacher (or a school admin) releases them.
    - A teacher can choose "show results immediately" for an exam instead, for example for a practice test.
    - Candidate-facing endpoints check this before returning anything about a result.
-2. **Publishing needs a school admin's approval.**
-   - A teacher prepares an exam and submits it. A school admin approves and publishes it, or sends it back with a note.
-   - Publishing freezes an **immutable snapshot**: the exact question versions, their order, marks and settings. Later edits to the bank or the exam template never change a published exam.
-   - The teacher can only prepare exams for arm + subject pairs they're assigned to (`require_teaching`, ADR 0002).
+2. **Publishing needs approval from someone other than the exam's author.**
+   - A teacher or school admin prepares an exam and submits it. An approver publishes it, or sends it back with a note.
+   - **Exam coordinators approve exams.** Being a coordinator is a designation on a staff account, not a separate role: a school admin marks teachers or school admins as exam coordinators, and they keep their own role and classes. A school can have several.
+   - A **school admin can also approve a teacher's exam**. An exam prepared by a school admin must be approved by an exam coordinator.
+   - **Nobody approves an exam they prepared**, including coordinators. A coordinator's own exam goes to another coordinator or, if they're a teacher, to a school admin.
+   - One exam can be set for several arms, as long as they're at the same level and take the exam's subject. The author must be allowed to teach each one (`require_teaching`, ADR 0002).
+   - Publishing freezes an **immutable snapshot**: the exact question and passage versions, their order, marks and settings. Later edits to the bank or the exam template never change a published exam.
+   - **A published exam can't be edited.** Before it opens, an approver can withdraw it, and a corrected copy goes through approval again.
 3. **One timed attempt by default.**
    - An exam has an availability window and a duration. A student gets one attempt. The teacher can allow more.
    - An attempt can be resumed (after a crash or a lost connection), but the clock keeps running from when it started. The server owns the clock; the client's timer is only a display.
