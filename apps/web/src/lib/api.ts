@@ -81,17 +81,25 @@ function rowErrors(detail: unknown): RowError[] {
   return Array.isArray(errors) ? (errors as RowError[]) : [];
 }
 
-/** Every page of a `/school/users` listing (it pages by username, at most 200 at a time). */
-export async function listAllUsers<T extends { username: string }>(
-  params: Record<string, string>,
-): Promise<T[]> {
-  const users: T[] = [];
+/**
+ * Every page of a listing that pages with `after` and `next_after` (200 at a time). `key` names
+ * the list in each page, for example "users" or "passages".
+ */
+export async function listAll<T>(path: string, key: string): Promise<T[]> {
+  const items: T[] = [];
+  const separator = path.includes("?") ? "&" : "?";
   let after: string | null = null;
   do {
-    const query = new URLSearchParams({ ...params, limit: "200", ...(after ? { after } : {}) });
-    const page: { users: T[]; next_after: string | null } = await api(`/school/users?${query}`);
-    users.push(...page.users);
-    after = page.next_after;
+    const query = `limit=200${after ? `&after=${encodeURIComponent(after)}` : ""}`;
+    const page: Record<string, unknown> = await api(`${path}${separator}${query}`);
+    items.push(...(page[key] as T[]));
+    after = page.next_after as string | null;
   } while (after);
-  return users;
+  return items;
+}
+
+/** Every page of a `/school/users` listing (it pages by username). */
+export function listAllUsers<T extends { username: string }>(params: Record<string, string>): Promise<T[]> {
+  const query = new URLSearchParams(params).toString();
+  return listAll<T>(query ? `/school/users?${query}` : "/school/users", "users");
 }

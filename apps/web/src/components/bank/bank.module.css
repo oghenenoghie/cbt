@@ -1,0 +1,230 @@
+/* Shared by the question bank and passage screens. */
+
+.stem {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 16px;
+}
+
+.options {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.option span:last-child {
+  overflow-wrap: anywhere;
+}
+
+.correct {
+  border-color: #abefc6;
+  background: var(--success-soft);
+}
+
+.letter {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.correct .letter {
+  border-color: var(--success);
+  background: var(--success);
+  color: #fff;
+}
+
+.explanation {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--primary);
+  background: var(--primary-soft);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  font-size: 14px;
+}
+
+.explanation p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}
+
+.passageBody {
+  margin: 0;
+  max-height: 340px;
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.section {
+  padding-top: 16px;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.section h3 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.explain {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* A row's main text opens it: a button that reads like a link. */
+.open {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  font-weight: 600;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.open:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.history {
+  display: grid;
+  gap: 8px;
+}
+
+.history details {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.history summary {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.history details > div {
+  padding: 0 12px 12px;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- The question editor ------------------------------------------------------------------ */
+
+.optionRows {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.optionRow input[type="text"] {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.optionRow input[type="text"]:focus {
+  border-color: var(--primary);
+  box-shadow: var(--focus);
+  outline: none;
+}
+
+.optionRow input[type="radio"] {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--success);
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 24px;
+}
+
+.topicChecks {
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+}
+
+.counter {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.passageQuestions {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.passageQuestions li > span {
+  display: block;
+}
