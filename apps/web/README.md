@@ -50,7 +50,7 @@ npm run build
 | `src/app/(school)/dashboard/` | Greeting, your classes (`/me/classes`), and for admins a checklist of setup still to do |
 | `src/app/(school)/account/` | Your details and changing your password |
 | `src/app/(school)/school/` | School setup, for school admins only (the layout explains this to anyone else) |
-| `src/app/(school)/(staff)/` | Screens for staff, school admins and teachers: the question bank (`/questions`), passages (`/passages`), exams (`/exams`, one exam at `/exams/view?id=…`) and approvals (`/approvals`). Students get an explanation instead |
+| `src/app/(school)/(staff)/` | Screens for staff, school admins and teachers: the question bank (`/questions`), passages (`/passages`), exams (`/exams`, one exam at `/exams/view?id=…`), approvals (`/approvals`), an exam's results (`/exams/results?id=…`) and a marked script (`/exams/script?exam=…&attempt=…`). Students get an explanation instead |
 | `src/app/(school)/(student)/` | Screens for students: their exams (`/my-exams`) and results (`/my-results`, one at `/my-results/view?exam=…`). Staff get an explanation instead |
 | `src/app/(exam)/sit/` | Sitting an exam (`/sit?attempt=…`), outside the app shell so there's nothing to wander off to. Its own layout checks the person is a signed-in student |
 | `src/app/integrations/` | A static design preview, not connected to the API yet |
@@ -122,6 +122,8 @@ the API works out for the signed-in person and checks again on every action.
 | **Exams** (`/exams`) | Every exam you can see, newest first, by status and subject; start a **New exam** (subject, term, classes, times and settings) |
 | **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** |
 | **Approvals** (`/approvals`) | For exam coordinators and school admins: the exams waiting for them. The dashboard shows how many |
+| **Results** (`/exams/results?id=…`) | Whether students can see them yet, and **Release results** once the exam has closed. A summary (students, handed in, didn't sit, average, highest, lowest), then two tabs: **Students** (each student's counted attempt, by class or by score, with a CSV download) and **Questions** (item analysis: the share who got each question right and how many chose each option, in paper order or hardest first) |
+| **A marked script** (`/exams/script?exam=…&attempt=…`) | One student's attempt in paper order, each question marked, with the right answer and their answer. Opened from a name in the results or in who has started |
 
 Choices worth knowing:
 
@@ -134,6 +136,13 @@ Choices worth knowing:
 - **Who has started** refreshes every 30 seconds while the exam is open (until closing plus its
   duration, the latest an attempt can end). It shows staff each attempt's progress and, once finished,
   its score; students see scores only through results.
+- **Releasing results** is offered where the API's `allowed_actions` includes `release_results`: the
+  exam has closed, its results wait for a teacher, and the person may release them (its author, its
+  subject's teachers in its classes, or a school admin). It can't be taken back. The dashboard lists
+  closed exams whose results are waiting.
+- **Results count each student's latest finished attempt**, as the API does. Staff see scores and the
+  answer key whether or not results are released; students see only what's released, never the key.
+- **Item analysis names the options from the frozen paper**, which lists questions in the same order.
 - The page addresses an exam as `/exams/view?id=…` rather than a dynamic route, so the screens stay
   compatible with a static export for the desktop app.
 
@@ -177,6 +186,6 @@ The screens are being built in stages, each its own pull request:
 3. **Teaching**, in three parts:
    1. **Question bank** (built): questions and passages.
    2. **Exams** (built): the exam builder, submitting, approvals, publishing, and who has started.
-   3. **Results**: releasing results, class results, item analysis and marked scripts.
+   3. **Results** (built): releasing results, class results, item analysis and marked scripts.
 4. **Students** (built): sitting exams (timer, autosave, resume) and their results. Built before the
    staff results screens, so an exam can be run end to end in the browser.

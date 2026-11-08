@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, ClipboardCheck, GraduationCap, PencilLine } from "lucide-react";
+import { BookOpen, ClipboardCheck, GraduationCap, Megaphone, PencilLine } from "lucide-react";
 import Link from "next/link";
 
 import { useSignedIn } from "@/lib/session";
@@ -127,6 +127,38 @@ function ApprovalsCard() {
   );
 }
 
+/**
+ * For staff: closed exams whose results wait for a teacher to release them, and that this person
+ * may release. Shown only when there's something to do.
+ */
+function ReleaseCard() {
+  const exams = useApi<{ exams: Exam[] }>("/exams?status=published&limit=50");
+  if (exams.status !== "ready") return null;
+  const waiting = exams.data.exams.filter((e) => e.allowed_actions.includes("release_results"));
+  if (waiting.length === 0) return null;
+  return (
+    <section className="card">
+      <h2>
+        <Megaphone size={18} aria-hidden="true" style={{ verticalAlign: "-3px", marginRight: 6 }} />
+        Results to release
+      </h2>
+      <p className="card-intro">
+        {waiting.length === 1 ? "1 exam has" : `${waiting.length} exams have`} closed. Students can&apos;t see
+        their scores until the results are released.
+      </p>
+      <ul className={styles.list}>
+        {waiting.slice(0, 5).map((e) => (
+          <li key={e.id}>
+            <Link href={`/exams/results?id=${e.id}`} style={{ fontWeight: 600 }}>
+              {e.title}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /** For students: exams open now, and the next one coming up. */
 function MyExamsCard() {
   const exams = useApi<{ exams: MyExam[] }>("/me/exams");
@@ -162,6 +194,7 @@ export default function DashboardPage() {
       <p className="page-intro">{school.name}</p>
       <div className={styles.grid}>
         {user.role === "student" && <MyExamsCard />}
+        {user.role !== "student" && <ReleaseCard />}
         {(user.role === "school_admin" || user.is_exam_coordinator) && <ApprovalsCard />}
         {user.role === "school_admin" && <SetupChecklist />}
         <ClassesCard />

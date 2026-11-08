@@ -1,6 +1,7 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { Loaded } from "@/components/Feedback";
@@ -100,7 +101,17 @@ export function Attempts({ exam }: { exam: Exam }) {
                     {list.map((a) => (
                       <tr key={a.id}>
                         <td>
-                          {a.candidate_name}
+                          {a.status === "submitted" ? (
+                            <Link
+                              href={`/exams/script?exam=${exam.id}&attempt=${a.id}`}
+                              aria-label={`Marked script: ${a.candidate_name}${exam.max_attempts > 1 ? `, attempt ${a.number}` : ""}`}
+                              style={{ fontWeight: 600 }}
+                            >
+                              {a.candidate_name}
+                            </Link>
+                          ) : (
+                            a.candidate_name
+                          )}
                           {exam.max_attempts > 1 && <span className="sub">Attempt {a.number}</span>}
                         </td>
                         <td>{status(a)}</td>

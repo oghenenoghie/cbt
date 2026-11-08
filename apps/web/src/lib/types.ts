@@ -413,3 +413,89 @@ export interface ReviewQuestion {
 export interface MyResultDetail extends MyResult {
   blocks: { passage: { title: string; body: string } | null; questions: ReviewQuestion[] }[];
 }
+
+// --- Results for staff (answer keys included) -------------------------------------------------
+
+export interface StudentResult {
+  candidate_id: string;
+  candidate_name: string;
+  /** The student's class for the exam's session; null if they've since left the exam's classes. */
+  arm_id: string | null;
+  arm_name: string | null;
+  status: "not_sat" | "in_progress" | "submitted";
+  attempts_used: number;
+  counted_attempt_id: string | null;
+  counted_attempt_number: number | null;
+  score: number | null;
+  percentage: number | null;
+}
+
+export interface ExamResults {
+  exam_id: string;
+  results_release: ResultsRelease;
+  results_released_at: string | null;
+  max_score: number;
+  summary: {
+    students: number;
+    sat: number;
+    not_sat: number;
+    average_percentage: number | null;
+    highest_percentage: number | null;
+    lowest_percentage: number | null;
+  };
+  students: StudentResult[];
+}
+
+/** How one question did across the counted attempts. */
+export interface ItemStat {
+  position: number;
+  block: number;
+  question_id: string;
+  version: number;
+  type: QuestionType;
+  stem: string;
+  passage_title: string | null;
+  marks: number;
+  correct_option_ids: string[];
+  answered: number;
+  correct: number;
+  /** Percentage of counted attempts that got it right. */
+  facility: number;
+  /** How many chose each option, by option id. */
+  option_counts: Record<string, number>;
+}
+
+export interface ItemAnalysis {
+  exam_id: string;
+  attempts_counted: number;
+  items: ItemStat[];
+}
+
+export interface ScriptQuestion {
+  position: number;
+  question_id: string;
+  version: number;
+  type: QuestionType;
+  stem: string;
+  options: QuestionOption[];
+  correct_option_ids: string[];
+  selected_option_ids: string[];
+  is_correct: boolean;
+  score: number;
+  marks: number;
+}
+
+/** One student's marked attempt, with the answer key. Staff only. */
+export interface Script {
+  attempt_id: string;
+  exam_id: string;
+  candidate_id: string;
+  candidate_name: string;
+  number: number;
+  submitted_at: string;
+  submitted_reason: string;
+  score: number;
+  max_score: number;
+  percentage: number;
+  questions: ScriptQuestion[];
+}

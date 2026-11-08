@@ -1,9 +1,11 @@
 "use client";
 
-import { Copy, Send, Trash2, Undo2, Upload, XCircle } from "lucide-react";
+import { BarChart3, Copy, Send, Trash2, Undo2, Upload, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { ClassPicker } from "@/components/exams/ExamFields";
+import { ReleaseResults } from "@/components/exams/ReleaseResults";
 import { ErrorAlert } from "@/components/Feedback";
 import { ConfirmModal, Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
@@ -199,6 +201,19 @@ export function ExamActions({
   return (
     <>
       <div className="actions">
+        {can("release_results") && (
+          <ReleaseResults
+            exam={exam}
+            classes={classes}
+            onReleased={(updated) => onChanged(updated, "Results released. Students can see them now.")}
+          />
+        )}
+        {exam.status === "published" && (
+          <Link className="btn btn-secondary" href={`/exams/results?id=${exam.id}`}>
+            <BarChart3 size={16} aria-hidden="true" />
+            Results
+          </Link>
+        )}
         {can("submit") && (
           <button
             type="button"
