@@ -13,6 +13,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -20,6 +21,7 @@ from sqlalchemy import (
     Integer,
     String,
     UniqueConstraint,
+    false,
 )
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
@@ -49,6 +51,10 @@ class User(Base):
         UniqueConstraint("tenant_id", "username", name="uq_users_tenant_id_username"),
         # Target for composite foreign keys that must stay inside one school.
         UniqueConstraint("id", "tenant_id", name="uq_users_id_tenant_id"),
+        CheckConstraint(
+            "NOT is_exam_coordinator OR role IN ('school_admin', 'teacher')",
+            name="ck_users_exam_coordinator_is_staff",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
@@ -60,6 +66,11 @@ class User(Base):
     email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     role: Mapped[str] = mapped_column(String(30), nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="active", index=True, nullable=False)
+    # Exam coordinators approve exams for publishing (ADR 0003). A designation school admins give
+    # to staff accounts, on top of their role.
+    is_exam_coordinator: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     # Null until a password is set (an invited account, or SSO-only later). Never a plain password.
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

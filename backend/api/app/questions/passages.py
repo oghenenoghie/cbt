@@ -247,8 +247,8 @@ def delete_passage(
     db.delete(passage)
     flush_or_conflict(
         db,
-        "Questions belong to this passage, so it can't be deleted. Archive it instead, "
-        "or delete its questions first.",
+        "Questions belong to this passage, or an exam uses it, so it can't be deleted. "
+        "Archive it instead, or delete its questions first.",
     )
     audit(db, principal, request, "passage.deleted", "passage", passage_id)
     db.commit()

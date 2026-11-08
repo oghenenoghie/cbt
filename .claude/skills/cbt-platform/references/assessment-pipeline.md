@@ -1,6 +1,6 @@
 # Assessment pipeline: materials → questions → exams → results
 
-Only the question bank is built (section 3). Authoritative sources:
+The question bank and exam builder are built (section 3). Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`
@@ -61,6 +61,7 @@ Encode these as server-side checks that block publication, not as UI hints.
 ## 3. Question bank and exam builder (Phase 5)
 
 - **Already in place:** exams target an arm + subject (+ term). Check `require_teaching` (`app/school/access.py`) before a teacher creates, changes or marks one, and use `Enrolment` to find who sits it.
+- **The exam builder is built** (`app/models/exams.py`, `app/exams/`): drafts with classes and ordered items, a frozen `ExamPaperItem` paper on submission, approval, publishing, withdrawing and copying. Exams C (sitting) must start attempts only for published exams, from enrolments in the exam's arms, and read questions from the frozen paper, shuffling blocks (passage groups stay together) and options per the exam's settings.
 - **The question bank is built** (`app/models/questions.py`, `app/questions/`). `Question` → immutable `QuestionVersion` rows (`mcq_single`, `true_false`), with the answer key in `correct_option_ids`. Reading passages: `Passage` → immutable `PassageVersion`, and `Question.passage_id` links a question to its passage. A snapshot must pin `QuestionVersion` and `PassageVersion` ids, never `latest_version`, and keep a passage's questions together after it.
 - **Decided (ADR 0003):** a teacher or admin prepares and submits an exam. An exam coordinator (a designation a school admin gives staff accounts) approves and publishes it; a school admin can also approve a teacher's exam. Nobody approves their own exam. One exam can cover several arms of one level, and a published exam can't be edited, only withdrawn before it opens. Results stay hidden until the teacher releases them, unless the exam is set to show them immediately. Students get one timed attempt, which can be resumed while the clock keeps running; the teacher can allow more. Question and option order are shuffled per student by default, fixed at the start of the attempt.
 

@@ -49,6 +49,7 @@ def _out(user: User) -> UserOut:
         email=user.email,
         role=user.role,
         status=user.status,
+        is_exam_coordinator=user.is_exam_coordinator,
         has_password=user.password_hash is not None,
         created_at=user.created_at,
     )
@@ -115,6 +116,7 @@ def _audit(
 def list_users(
     role: SchoolRole | None = None,
     account_status: AccountStatus | None = Query(default=None, alias="status"),
+    exam_coordinator: bool | None = None,
     after: str | None = Query(default=None, description="The `next_after` of the previous page."),
     limit: int = Query(default=50, ge=1, le=200),
     principal: SessionPrincipal = Depends(read_access),
@@ -126,6 +128,8 @@ def list_users(
         query = query.where(User.role == role)
     if account_status is not None:
         query = query.where(User.status == account_status)
+    if exam_coordinator is not None:
+        query = query.where(User.is_exam_coordinator == exam_coordinator)
     if after:
         query = query.where(User.username > normalize_username(after))
     users = db.scalars(query.order_by(User.username).limit(limit + 1)).all()
@@ -190,25 +194,33 @@ def update_user(
     principal: SessionPrincipal = Depends(write_access),
     db: Session = Depends(get_db),
 ) -> UserOut:
-    """Change name, email, role or status. Disabling an account signs it out everywhere.
+    """Change name, email, role, status or exam coordinator designation. Disabling an account
+    signs it out everywhere.
 
-    Admins can't change their own role or status, so a school always keeps an active admin.
+    Admins can't change their own role, status or designation, so a school always keeps an
+    active admin and nobody grants themselves the right to approve exams.
     """
     user = _get_user(db, principal, user_id)
     changes = body.model_dump(exclude_unset=True)
-    for field in ("display_name", "role", "status"):
+    for field in ("display_name", "role", "status", "is_exam_coordinator"):
         if field in changes and changes[field] is None:
-            raise HTTPException(
-                422, detail=f"{field} can't be empty."
-            )
+            raise HTTPException(422, detail=f"{field} can't be empty.")
     if "email" in changes and changes["email"] is not None:
         changes["email"] = normalize_email(changes["email"])
 
     changed = sorted(field for field, value in changes.items() if getattr(user, field) != value)
-    if user.id == principal.user_id and {"role", "status"} & set(changed):
+    if user.id == principal.user_id and {"role", "status", "is_exam_coordinator"} & set(changed):
         raise HTTPException(
             status.HTTP_409_CONFLICT,
-            detail="You can't change your own role or status. Ask another school admin.",
+            detail="You can't change your own role, status or exam coordinator designation. "
+            "Ask another school admin.",
+        )
+    coordinator = changes.get("is_exam_coordinator", user.is_exam_coordinator)
+    if coordinator and changes.get("role", user.role) not in STAFF_ROLES:
+        raise HTTPException(
+            422,
+            detail="Only staff accounts (teachers and school admins) can be exam coordinators. "
+            "Remove the designation before making this account a student.",
         )
     for field in changed:
         setattr(user, field, changes[field])
@@ -217,6 +229,8 @@ def update_user(
         details: dict = {"fields": changed}
         if "role" in changed:
             details["role"] = user.role
+        if "is_exam_coordinator" in changed:
+            details["is_exam_coordinator"] = user.is_exam_coordinator
         if "status" in changed:
             details["status"] = user.status
             if user.status == "disabled":

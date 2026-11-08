@@ -30,6 +30,8 @@ class UserUpdate(BaseModel):
     email: str | None = Field(default=None, max_length=320)
     role: SchoolRole | None = None
     status: AccountStatus | None = None
+    # Exam coordinators approve exams (ADR 0003). Only staff accounts can be coordinators.
+    is_exam_coordinator: bool | None = None
 
 
 class PasswordReset(BaseModel):
@@ -66,6 +68,7 @@ class UserOut(BaseModel):
     email: str | None
     role: str
     status: str
+    is_exam_coordinator: bool
     has_password: bool
     created_at: datetime
 
