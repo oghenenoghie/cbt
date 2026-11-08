@@ -29,7 +29,7 @@ Positioning (web landing page): *examinations built from your school's learning 
 | 4. Retrieval and evidence-grounded AI drafts | Not started (spec: `backend/ai-engine/README.md`) |
 | 5. Question bank, teacher review, exam builder | **Done** (ADR 0003): the question bank and passages (Exams A), and the exam builder with coordinator-approved publishing (Exams B) |
 | 6. Diagram generation and visual question types | Not started (spec: `backend/diagram-engine/README.md`) |
-| 7. Online exam delivery, grading, reporting | **In progress** (ADR 0003). Done: sitting exams with automatic marking (Exams C). Next: results, release and reports (Exams D) |
+| 7. Online exam delivery, grading, reporting | **Done through the API** (ADR 0003): sitting exams with automatic marking (Exams C), results release, students' results and staff reports (Exams D). No web screens yet |
 | 8. Electron desktop shell and offline exam package | Bare window only (`apps/desktop/src/main.ts`) |
 | 9. Synchronization, school LAN mode, packaging, hardening | Not started |
 

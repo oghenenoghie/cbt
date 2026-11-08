@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
 
-**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, and the exam workflow has started):** only `backend/api` contains working code. It has:
+**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, and a basic exam workflow is complete through the API):** only `backend/api` contains working code. It has:
 - tenant and integration persistence, with API-key authentication and `GET /api/v1/integrations/me`;
 - the identity tables (users, platform admins, sessions, candidates);
 - sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
@@ -15,9 +15,10 @@ Intelligent CBT: a computer-based testing platform for schools, with two clients
 - people in classes: student enrolment (which creates and links candidates), teaching assignments to arm + subject, and `GET /api/v1/me/classes`;
 - the question bank (`/api/v1/questions`, `/api/v1/passages`): single-answer multiple-choice and true/false questions with immutable versions and topic tags, and reading passages that questions can follow;
 - the exam builder (`/api/v1/exams`): drafts for one or more classes, a frozen paper on submission, approval by exam coordinators (a designation on staff accounts) or school admins, publishing, withdrawing and copying;
-- sitting exams (`/api/v1/me/exams`, `/api/v1/me/attempts`): start or resume within the window, a server-side clock, append-only answers, submission or time-up, automatic marking, and `GET /api/v1/exams/{id}/attempts` for staff.
+- sitting exams (`/api/v1/me/exams`, `/api/v1/me/attempts`): start or resume within the window, a server-side clock, append-only answers, submission or time-up, automatic marking, and `GET /api/v1/exams/{id}/attempts` for staff;
+- results: release by the teacher after closing (or immediately), students' own scores and right/wrong review (`/api/v1/me/results`), and for staff class results, item analysis and marked scripts.
 
-The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results. Students can't see their results yet. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results (built). There are no web screens for any of it yet: the API is the only way in. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -112,8 +113,14 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 **Sitting exams** (`app/models/attempts.py`, `app/attempts/`; ADR 0003 decision 11).
 - `ExamAttempt` fixes the student's `question_order`, `option_orders` and `ends_at` (start plus duration, capped at closing) when it starts. `AnswerEvent`s are append-only, the latest per paper item wins, and submission writes `AttemptResponse`s with marks.
 - `app/attempts/service.py` holds the rules: `exams_for` (published exams for the candidate's arms), `new_orders`, `finish` (marking) and `finish_overdue`. Expired attempts are finished lazily (10-second `GRACE`) wherever attempts are read, so call `finish_overdue` before reporting on attempts.
-- Student endpoints (`app/attempts/student.py`) must never return answer keys, explanations or scores; their schemas in `app/attempts/schemas.py` don't have those fields. Results are Exams D.
+- Student endpoints (`app/attempts/student.py`) must never return answer keys, explanations or scores; their schemas in `app/attempts/schemas.py` don't have those fields. Scores reach students only through the results endpoints.
 - Composite foreign keys on `(attempt_id, exam_id, tenant_id)` and `(paper_item_id, exam_id, tenant_id)` keep answers on their own exam's paper. Move attempt times in tests with a Core `update(ExamAttempt)`.
+
+**Results** (`app/results/`; ADR 0003 decision 12).
+- `app/results/service.py`: `counted_attempts` (the latest finished attempt per student), `score_visible` (released, or an immediate exam), `review_visible` (also closed) and `can_release_results` (published, teacher release, not yet released, closed plus `GRACE`).
+- Student schemas (`MyResult`, `MyResultDetail`) have no correct options: students see score, percentage and, after closing, right/wrong per question. Staff schemas include answer keys.
+- Release permission is `Viewer.can_release` (author, teachers of the subject in the exam's classes, school admins). Exam coordinators see results but don't release unless they also teach it.
+- Tests for results reuse the classroom setup from `tests/test_attempts.py` through its `build_school()` helper.
 
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 

@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, and `0009_attempts` adds students' attempts, answer events and marked responses (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -160,6 +160,19 @@ Students sit published exams set for their classes. These endpoints never return
 | `POST /api/v1/me/attempts/{id}/submit` | Hand in the attempt (safe to repeat) |
 
 An attempt ends at its start plus the duration, or at closing time if sooner. Saves are accepted for 10 seconds after that; then the attempt is submitted with what was saved.
+
+### Results
+
+A student's result is their latest finished attempt. Students see their score once results are released (or straight away, for exams set to `immediate`), and after the exam closes, each answer marked right or wrong. They never see the correct options. See [ADR 0003](../../docs/architecture/decisions/0003-exams.md), decision 12.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/me/results` | Students: your released results, most recent exam first |
+| `GET /api/v1/me/exams/{id}/result` | Students: one result, with the right/wrong review once the exam has closed (409 until released) |
+| `POST /api/v1/exams/{id}/release-results` | The exam's author, its subject teachers or a school admin: release results once the exam has closed |
+| `GET /api/v1/exams/{id}/results` | Staff: every student the exam is set for, including those who didn't sit, and a summary |
+| `GET /api/v1/exams/{id}/item-analysis` | Staff: per question, how many answered and got it right (facility), and how many chose each option |
+| `GET /api/v1/exams/{id}/attempts/{attempt_id}` | Staff: one student's marked script, with the answer key |
 
 ### Creating the first accounts
 

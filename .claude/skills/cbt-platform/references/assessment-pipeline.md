@@ -1,6 +1,6 @@
 # Assessment pipeline: materials → questions → exams → results
 
-The question bank, exam builder (section 3) and sitting exams (section 5) are built. Authoritative sources:
+The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API only. Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`
@@ -80,7 +80,8 @@ Encode these as server-side checks that block publication, not as UI hints.
 
 ## 5. Delivery, grading and results (Phase 7)
 
-- **Built (Exams C, `app/attempts/`):** students start or resume published exams for their arms; the server owns the clock (start + duration, capped at closing, 10-second grace, lazy time-up); each attempt fixes its shuffled order; `AnswerEvent`s are append-only and submission writes marked `AttemptResponse`s. Student schemas carry no answer keys or scores. Next is Exams D: release results per the exam's `results_release`, students' own results, item analysis.
+- **Built (Exams C, `app/attempts/`):** students start or resume published exams for their arms; the server owns the clock (start + duration, capped at closing, 10-second grace, lazy time-up); each attempt fixes its shuffled order; `AnswerEvent`s are append-only and submission writes marked `AttemptResponse`s. Student schemas carry no answer keys or scores.
+- **Built (Exams D, `app/results/`):** the latest finished attempt counts; teacher release only after closing (plus grace), or immediate; students see score and, after closing, right/wrong per question but never correct options; staff get class results (including students who didn't sit), item analysis (facility, option counts) and marked scripts.
 - Autosave answers after every change. Store an **append-only answer event history**, separate from the final submission.
 - Support controlled resumption after a crash or restart.
 - Grade objective questions automatically. Subjective answers go to teacher marking.
