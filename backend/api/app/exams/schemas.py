@@ -127,6 +127,8 @@ class ExamOut(BaseModel):
     submitted_at: datetime | None
     published_at: datetime | None
     withdrawn_at: datetime | None
+    # When the results were released to students; None until then (or for "immediate" exams).
+    results_released_at: datetime | None
     copied_from_id: str | None
     items: list[ExamItemOut]
     # What the signed-in person may do with this exam now: a hint for the interface. The server

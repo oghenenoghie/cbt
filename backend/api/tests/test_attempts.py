@@ -58,8 +58,7 @@ def count(db: Session, model, **where) -> int:
     return db.scalar(query)
 
 
-@pytest.fixture
-def school(admin, db: Session, make_user, sign_in):
+def build_school(admin, db: Session, make_user, sign_in) -> SimpleNamespace:
     """JSS1 A (amy, ben) and JSS1 B (cara) this session; dan is a student in no class. mrs.okafor
     teaches Basic Science to both arms; mr.eze is an exam coordinator; mr.bello teaches nothing.
     The bank holds q1 (answer b, 2 marks), q2 (true, 1 mark) and a passage with pq1 (answer a,
@@ -152,6 +151,11 @@ def school(admin, db: Session, make_user, sign_in):
         cara=sign_in(admin.school, "cara"),
         dan=sign_in(admin.school, "dan"),
     )
+
+
+@pytest.fixture
+def school(admin, db: Session, make_user, sign_in):
+    return build_school(admin, db, make_user, sign_in)
 
 
 def published(

@@ -11,6 +11,8 @@ from app.exams.router import router as exams_router
 from app.integrations.router import router as integrations_router
 from app.questions.passages import router as passages_router
 from app.questions.router import router as questions_router
+from app.results.staff import router as results_staff_router
+from app.results.student import router as results_student_router
 from app.school.assignments import router as school_assignments_router
 from app.school.calendar import router as school_calendar_router
 from app.school.classes import router as school_classes_router
@@ -51,6 +53,8 @@ app.include_router(passages_router, prefix=settings.api_v1_prefix)
 app.include_router(exams_router, prefix=settings.api_v1_prefix)
 app.include_router(attempts_staff_router, prefix=settings.api_v1_prefix)
 app.include_router(attempts_student_router, prefix=settings.api_v1_prefix)
+app.include_router(results_staff_router, prefix=settings.api_v1_prefix)
+app.include_router(results_student_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 
 

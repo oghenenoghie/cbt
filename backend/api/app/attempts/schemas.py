@@ -27,6 +27,8 @@ class MyExam(BaseModel):
     # The attempt to resume, if one is under way.
     attempt_in_progress_id: str | None
     can_start: bool
+    # Whether GET /me/exams/{id}/result has a result for you now.
+    result_available: bool
 
 
 class MyExamList(BaseModel):
