@@ -10,6 +10,7 @@ from datetime import date, timedelta
 from types import SimpleNamespace
 
 import pytest
+from samples import make_docx, make_pdf
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
@@ -35,7 +36,6 @@ from app.models import (
     Topic,
     User,
 )
-from tests.samples import make_docx, make_pdf
 
 D = "/api/v1/documents"
 S = "/api/v1/school"
