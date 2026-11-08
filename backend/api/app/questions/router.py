@@ -6,12 +6,26 @@ earlier versions never change.
 """
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from app.ai.retrieval import location
+from app.ai.schemas import QuestionCitationOut
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
-from app.models import Passage, Question, QuestionTopic, QuestionVersion, Subject, Topic
+from app.models import (
+    Document,
+    DocumentSegment,
+    DocumentVersion,
+    Passage,
+    Question,
+    QuestionCitation,
+    QuestionDraft,
+    QuestionTopic,
+    QuestionVersion,
+    Subject,
+    Topic,
+)
 from app.questions.common import (
     check_bank_access,
     newest_first,
@@ -253,6 +267,41 @@ def list_versions(
     return [_version_out(v) for v in versions]
 
 
+@router.get("/{question_id}/citations", response_model=list[QuestionCitationOut])
+def list_citations(
+    question_id: str,
+    principal: SessionPrincipal = Depends(staff_read),
+    db: Session = Depends(get_db),
+) -> list[QuestionCitationOut]:
+    """The evidence kept with an AI question's versions (ADR 0005), oldest version first. A
+    question written by hand has none."""
+    question = _question_for(db, principal, question_id)
+    rows = db.execute(
+        select(
+            QuestionCitation, QuestionVersion.version, DocumentSegment, DocumentVersion, Document
+        )
+        .join(QuestionVersion, QuestionVersion.id == QuestionCitation.question_version_id)
+        .join(DocumentSegment, DocumentSegment.id == QuestionCitation.segment_id)
+        .join(DocumentVersion, DocumentVersion.id == DocumentSegment.version_id)
+        .join(Document, Document.id == DocumentVersion.document_id)
+        .where(QuestionVersion.question_id == question.id)
+        .order_by(QuestionVersion.version, QuestionCitation.position)
+    ).all()
+    return [
+        QuestionCitationOut(
+            version=number,
+            position=citation.position,
+            segment_id=segment.id,
+            document_id=document.id,
+            document_title=document.title,
+            document_version=doc_version.version,
+            location=location(segment),
+            quote=citation.quote,
+        )
+        for citation, number, segment, doc_version, document in rows
+    ]
+
+
 @router.post(
     "/{question_id}/versions", response_model=QuestionOut, status_code=status.HTTP_201_CREATED
 )
@@ -361,6 +410,12 @@ def delete_question(
 ) -> Response:
     """Delete a question and its history. Refused once an exam uses it; archive it instead."""
     question = _question_for(db, principal, question_id)
+    # An AI draft approved into this question stays approved, without the link.
+    db.execute(
+        update(QuestionDraft)
+        .where(QuestionDraft.question_id == question.id)
+        .values(question_id=None)
+    )
     db.delete(question)
     flush_or_conflict(db, "An exam uses this question, so it can't be deleted. Archive it instead.")
     audit(db, principal, request, "question.deleted", "question", question_id)

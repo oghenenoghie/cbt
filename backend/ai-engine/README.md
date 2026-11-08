@@ -1,5 +1,7 @@
 # AI Question Generation Engine
 
+**Implemented inside the API** (`backend/api/app/ai/`, ADR 0005): retrieval in `retrieval.py`, the provider adapter in `provider.py` (Claude in `claude.py`, a deterministic fake in `fake.py`), the checks in `checks.py`, and the queue in `processing.py`. Question types so far: single-answer multiple choice and true/false.
+
 The engine generates candidate questions only from retrieved passages belonging to approved school document versions.
 
 Required pipeline:

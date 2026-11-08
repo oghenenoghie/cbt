@@ -7,6 +7,7 @@ from app.models.academic import (
     Term,
     Topic,
 )
+from app.models.ai import AiRequest, AiSource, DraftCitation, QuestionCitation, QuestionDraft
 from app.models.attempts import AnswerEvent, AttemptResponse, ExamAttempt
 from app.models.candidate import Candidate, CandidateExternalIdentity
 from app.models.classroom import Enrolment, TeachingAssignment
@@ -25,6 +26,8 @@ from app.models.tenant import AuditLog, Tenant
 
 __all__ = [
     "AcademicSession",
+    "AiRequest",
+    "AiSource",
     "AnswerEvent",
     "ApiCredential",
     "AttemptResponse",
@@ -36,6 +39,7 @@ __all__ = [
     "ClassLevel",
     "ClassLevelSubject",
     "Document",
+    "DraftCitation",
     "DocumentSegment",
     "DocumentTopic",
     "DocumentVersion",
@@ -52,6 +56,8 @@ __all__ = [
     "Passage",
     "PassageVersion",
     "Question",
+    "QuestionCitation",
+    "QuestionDraft",
     "QuestionTopic",
     "QuestionVersion",
     "Subject",

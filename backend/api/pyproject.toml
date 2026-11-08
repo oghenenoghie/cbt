@@ -19,6 +19,8 @@ dependencies = [
   "python-multipart>=0.0.9,<1.0",
   "pypdfium2>=4.30,<6",
   "python-docx>=1.1,<2",
+  # AI question drafts (ADR 0005): Claude through the Anthropic API.
+  "anthropic>=2.6,<3",
 ]
 
 [project.optional-dependencies]
