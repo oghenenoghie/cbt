@@ -1,10 +1,11 @@
 # ADR 0003: Exams and the question bank
 
-- **Status:** Accepted (the question bank and exam builder are built; sitting exams and results follow)
+- **Status:** Accepted (the question bank, exam builder and sitting exams are built; results follow)
 - **Date:** 2026-11-07 (decision 2 revised 2026-11-08: exam coordinators approve exams)
 - **Implemented in:**
   - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migrations `0006_question_bank` and `0007_passages`)
   - exam builder and publishing: `backend/api/app/models/exams.py`, `backend/api/app/exams/`; the coordinator designation in `backend/api/app/accounts/` (migration `0008_exams`)
+  - sitting exams: `backend/api/app/models/attempts.py`, `backend/api/app/attempts/` (migration `0009_attempts`)
 
 ## Context
 
@@ -14,7 +15,7 @@ The work is built in four stages, each its own change:
 
 - **A. Question bank:** single-answer multiple-choice and true/false questions, and reading passages with the questions that follow them, all versioned. (Built.)
 - **B. Exam builder and publishing:** a teacher or school admin prepares an exam for one or more arms and submits it; an exam coordinator (or, for a teacher's exam, a school admin) approves and publishes it, freezing a snapshot. (Built.)
-- **C. Sitting an exam:** start and resume, a server-side timer, append-only answer events, submission and auto-grading.
+- **C. Sitting an exam:** start and resume, a server-side timer, append-only answer events, submission and auto-grading. (Built.)
 - **D. Results:** release, students' own results, and item analysis.
 
 ## Decisions
@@ -75,16 +76,31 @@ The work is built in four stages, each its own change:
    - The database backs this up. A published paper's rows can't be changed or removed. A submitted or published exam's settings, classes and items can't change. A question, passage, subject, term, level or class that an exam uses can't be deleted.
    - A school admin can't change their own coordinator designation, just as they can't change their own role, so nobody grants themselves the right to approve exams.
 
+11. **Sitting an exam (Exams C).**
+   - A student can sit a published exam when their candidate record is enrolled in one of its classes. Other exams, and drafts, look like they don't exist (404). Staff don't sit exams.
+   - An attempt can start only while the exam is open, and only while the student has attempts left (`max_attempts`, 1 by default). At most one attempt per student is in progress; starting again resumes it.
+   - **The server keeps time.** An attempt ends at its start plus the duration, or at the exam's closing time if that comes first, so a late start gets less time. Answers and submissions are accepted for 10 seconds after the end, to allow for a slow connection. After that, the attempt is finished with the answers saved so far, the next time anything reads it. No background worker is needed.
+   - **Each attempt's order is fixed when it starts.** Blocks are shuffled, a passage's questions stay together and in order, and multiple-choice options are shuffled. True/false options never move. Resuming shows the same order.
+   - **Answers are append-only.** Every change is a new numbered `AnswerEvent`, and the latest per question is the current answer. Saving the same answer again adds nothing.
+   - **Submitting**, or time running out, stores one `AttemptResponse` per question with its final answer and mark, and closes the attempt. A single-answer question scores its marks only when the chosen option is the correct one. Submitting again does nothing, so clients can retry safely.
+   - **What students see:** while sitting, the questions in their order, options, marks, passage text, their saved answers and the time left by the server's clock. Never answer keys, explanations or scores. Once submitted, only the attempt's status: results wait for release (Exams D).
+   - **What staff see:** anyone who can see the exam can follow its attempts: who started, who finished and how, answered counts and scores.
+   - The database ties every answer and response to its attempt's own exam paper, keeps one attempt in progress per student, and refuses changes to an attempt's deadline, order and submitted state, and to any answer event or response.
+
 ## Consequences
 
 - Every bank change writes an audit entry (`question.created`, `revised`, `topics_set`, `archived`, `restored`, `deleted`, and the same `passage.*` actions apart from topics). Entries never copy question text, passage text or answers.
 - Questions and passages list newest first, with cursor paging (`next_after`). A teacher's list covers only subjects they teach.
 - Every exam change writes an audit entry (`exam.created`, `updated`, `arms_set`, `items_set`, `submitted`, `returned`, `published`, `withdrawn`, `copied`, `deleted`). Notes and reasons aren't copied into the audit log.
 - `allowed_actions` on each exam tells the interface what the signed-in person can do with it now. The server checks every action again.
-- Exams C will read the frozen paper, never the editable exam, so what students sit is always what was approved.
+- Students sit the frozen paper, never the editable exam, so what they sit is always what was approved.
+- Starting and submitting attempts write audit entries (`attempt.started`, `attempt.submitted`; time-up submissions are recorded as the system). Individual answers aren't audited: the answer events are their own record.
 - AI drafts (Phase 4) will arrive as drafts outside the bank. Approving one creates a question with its own `source`, so the bank only ever holds teacher-approved content.
 
 ## Still open
+
+- Which attempt counts when a student has several (best, latest or first), decided with results (Exams D).
+- Extra time or an extra attempt for one student (for example after a power cut), and ending an attempt early by staff.
 
 - Importing questions in bulk (for example from a spreadsheet).
 - Images and diagrams in questions, which wait for the diagram engine.
