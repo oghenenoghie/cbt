@@ -19,6 +19,8 @@ from app.models import (
     ExamArm,
     ExamItem,
     ExamPaperItem,
+    Passage,
+    Question,
     Subject,
     Term,
     User,
@@ -487,6 +489,33 @@ def test_items_must_suit_the_exam(school, items, message) -> None:
 
     assert response.status_code == 422
     assert message in response.json()["detail"]
+
+
+def test_another_schools_classes_and_items_look_like_they_dont_exist(
+    school, make_tenant, db: Session
+) -> None:
+    elsewhere = make_tenant().id
+    year = AcademicSession(
+        tenant_id=elsewhere, name="2026/2027", starts_on=date(2026, 9, 1), ends_on=date(2027, 7, 31)
+    )
+    level = ClassLevel(tenant_id=elsewhere, name="JSS1", position=1)
+    subject = Subject(tenant_id=elsewhere, name="Basic Science")
+    db.add_all([year, level, subject])
+    db.flush()
+    arm = ClassArm(tenant_id=elsewhere, session_id=year.id, level_id=level.id, name="A")
+    question = Question(tenant_id=elsewhere, subject_id=subject.id)
+    passage = Passage(tenant_id=elsewhere, subject_id=subject.id)
+    db.add_all([arm, question, passage])
+    db.commit()
+    exam_id = new_exam(school.head, school)
+
+    for response, what in [
+        (create(school.head, school, arm_ids=[arm.id]), "classes"),
+        (put_items(school.head, exam_id, ("q", question.id)), "questions"),
+        (put_items(school.head, exam_id, ("p", passage.id)), "passages"),
+    ]:
+        assert response.status_code == 422
+        assert response.json()["detail"] == f"Some of those {what} don't exist."
 
 
 def test_archived_and_empty_items_are_refused(school) -> None:
