@@ -27,7 +27,7 @@ def school(admin, db: Session, make_user, sign_in):
     return build_school(admin, db, make_user, sign_in)
 
 
-def close_exam(db: Session, exam_id: str, minutes_ago: int = 5) -> None:
+def close_exam(db: Session, exam_id: str, minutes_ago: float = 5) -> None:
     """Move the exam's window into the past, as if it had closed. Attempts end with it."""
     closes = datetime.now(UTC).replace(microsecond=0) - timedelta(minutes=minutes_ago)
     db.execute(
@@ -104,6 +104,14 @@ def test_releasing_results_once_the_exam_closes(school, db: Session) -> None:
     assert release(school.teacher, exam_id).status_code == 409  # already released
 
 
+def test_results_wait_until_the_last_saves_are_in(school, db: Session) -> None:
+    # Closed 3 seconds ago: answers saved within the 10-second grace still count.
+    exam_id = published(school)
+    close_exam(db, exam_id, minutes_ago=3 / 60)
+
+    assert release(school.teacher, exam_id).status_code == 409
+
+
 def test_who_can_release(school, db: Session) -> None:
     exam_id = published(school)
     close_exam(db, exam_id)
@@ -127,8 +135,11 @@ def test_immediate_exams_dont_need_releasing(school, db: Session) -> None:
 
 def test_only_published_exams_have_results_to_release(school, db: Session) -> None:
     draft = published(school, publish=False)
+    close_exam(db, draft)
 
-    assert release(school.teacher, draft).status_code == 409
+    response = release(school.teacher, draft)
+    assert response.status_code == 409
+    assert "published" in response.json()["detail"]
 
 
 def test_release_finishes_attempts_still_marked_in_progress(school, db: Session) -> None:
@@ -228,6 +239,19 @@ def test_the_latest_attempt_counts(school, db: Session) -> None:
     assert (amy["counted_attempt_number"], amy["score"]) == (2, 0)
 
 
+def test_an_attempt_still_in_progress_doesnt_count(school, db: Session) -> None:
+    exam_id = published(school, max_attempts=2, results_release="immediate")
+    first = sit(school, db, school.amy, exam_id, {school.q1: "b"})  # 2
+    start(school.amy, exam_id)  # a second attempt, not finished
+
+    mine = my_result(school.amy, exam_id).json()
+    staff = school.teacher.client.get(f"{E}/{exam_id}/results").json()
+
+    assert (mine["attempt_id"], mine["score"], mine["attempts_used"]) == (first, 2, 2)
+    amy = next(s for s in staff["students"] if s["counted_attempt_id"])
+    assert (amy["status"], amy["counted_attempt_id"], amy["score"]) == ("in_progress", first, 2)
+
+
 def test_students_only_see_their_own_exams_results(school, db: Session) -> None:
     exam_id = published(school, results_release="immediate")
     sit(school, db, school.amy, exam_id, {school.q1: "b"})
@@ -296,8 +320,22 @@ def test_item_analysis(school, db: Session) -> None:
         0.0,
         "A Made-up Lake",
     )
+    q2 = items["This statement is true."]  # amy answered it, ben left it blank
+    assert (q2["answered"], q2["correct"], q2["facility"]) == (1, 1, 50.0)
     assert [i["position"] for i in body["items"]] == [1, 2, 3, 4]
     assert school.amy.client.get(f"{E}/{exam_id}/item-analysis").status_code == 403
+
+
+def test_item_analysis_counts_each_students_latest_attempt(school, db: Session) -> None:
+    exam_id = published(school, max_attempts=2)
+    sit(school, db, school.amy, exam_id, {school.q1: "b"})  # right, then superseded
+    sit(school, db, school.amy, exam_id, {school.q1: "a"})  # wrong: this one counts
+
+    body = school.teacher.client.get(f"{E}/{exam_id}/item-analysis").json()
+
+    assert body["attempts_counted"] == 1
+    q1 = next(i for i in body["items"] if i["stem"] == "Pick the second option.")
+    assert (q1["correct"], q1["option_counts"]) == (0, {"a": 1, "b": 0, "c": 0})
 
 
 def test_a_students_marked_script(school, db: Session, make_tenant, make_user, sign_in) -> None:
