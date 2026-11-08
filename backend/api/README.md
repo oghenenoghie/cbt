@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -103,9 +103,35 @@ Duplicate names, and deleting something still in use, return 409 with a message.
 
 Future exam and marking endpoints check `require_teaching(...)` in `app/school/access.py`: school admins, or teachers assigned to that arm and subject.
 
+### Question bank
+
+School admins, and teachers who teach the subject, can use a subject's questions; changes need `X-CSRF-Token`. Students can't reach the bank, because it holds answer keys. See [ADR 0003](../../docs/architecture/decisions/0003-exams.md).
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/questions` | Newest first. Filters: `subject_id`, `topic_id`, `passage_id`, `status` (`active` by default, or `archived`); paging with `limit` and `after` (the previous page's `next_after`). Teachers see only subjects they teach |
+| `POST /api/v1/questions` | Write a question: `subject_id`, optional `topic_ids` from that subject, optional `passage_id` (an active passage of that subject; can't be changed later), and `content` |
+| `GET /api/v1/questions/{id}` | The question with its latest version |
+| `GET` / `POST /api/v1/questions/{id}/versions` | Every version, oldest first; or edit the question by adding a version. Earlier versions never change |
+| `PUT /api/v1/questions/{id}/topics` | Replace the topic tags (no new version) |
+| `POST /api/v1/questions/{id}/archive`, `.../restore` | Stop or resume offering it for new exams |
+| `DELETE /api/v1/questions/{id}` | Delete it with its history; archive instead once an exam uses it |
+
+`content` for a multiple-choice question is `{"type": "mcq_single", "stem": ..., "options": [2 to 6 strings], "correct": <0-based index>}`; for true/false it's `{"type": "true_false", "stem": ..., "correct": true}`. Both take optional `explanation`, `marks` (1 to 100, default 1) and `difficulty` (`easy`, `medium`, `hard`). Responses give options ids (`a` to `f`, or `true`/`false`) and the answer as `correct_option_ids`.
+
+Reading passages ("read the passage and answer the questions that follow") follow the same rules:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET` / `POST /api/v1/passages` | List (filters `subject_id`, `status`; paging as above), or write one: `subject_id` and `content: {"title", "body"}` (body up to 20,000 characters, line breaks kept) |
+| `GET /api/v1/passages/{id}` | The passage with its latest version and `question_ids`: its active questions in the order written |
+| `GET` / `POST /api/v1/passages/{id}/versions` | Every version, or edit the passage by adding one |
+| `POST /api/v1/passages/{id}/archive`, `.../restore` | An archived passage takes no new questions |
+| `DELETE /api/v1/passages/{id}` | Refused (409) while any question belongs to it |
+
 ### Creating the first accounts
 
-No account-management endpoints exist yet, so create the first accounts from the command line (it prompts for the password):
+Account management needs a signed-in school admin, so create the first accounts from the command line (it prompts for the password):
 
 ```bash
 python -m app.cli create-school-admin --school-code greenfield \

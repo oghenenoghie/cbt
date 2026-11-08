@@ -6,15 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
 
-**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md`, in progress):** only `backend/api` contains working code. It has:
+**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, and the exam workflow has started):** only `backend/api` contains working code. It has:
 - tenant and integration persistence, with API-key authentication and `GET /api/v1/integrations/me`;
 - the identity tables (users, platform admins, sessions, candidates);
 - sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
 - account management for school admins (`/api/v1/school/users`: list, create, update, password reset, unblock, bulk import);
 - school structure (`/api/v1/school/...`): academic sessions and terms, class levels and arms, and subjects with topics and the levels that take them;
-- people in classes: student enrolment (which creates and links candidates), teaching assignments to arm + subject, and `GET /api/v1/me/classes`.
+- people in classes: student enrolment (which creates and links candidates), teaching assignments to arm + subject, and `GET /api/v1/me/classes`;
+- the question bank (`/api/v1/questions`, `/api/v1/passages`): single-answer multiple-choice and true/false questions with immutable versions and topic tags, and reading passages that questions can follow.
 
-The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure). Apart from integration management, Phase 2's school foundation is in place. There are no questions or exams yet, and the next product step (a basic exam workflow first, or documents and AI first) is the user's call. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author; C, sitting exams; D, results. There are no exams yet. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -92,6 +93,13 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - **Exam and marking endpoints must call `require_teaching(db, principal, arm_id=..., subject_id=...)`** (`app/school/access.py`). It allows school admins and teachers assigned to that arm and subject.
 - An enrolment references its arm by `(id, session_id, tenant_id)`, so the database keeps one arm per student per session.
 - A parent still in use can't be deleted, because its foreign keys have no `ondelete`.
+
+**Question bank** (`app/models/questions.py`, `app/questions/`, `/api/v1/questions`; ADR 0003).
+- School admins, and teachers who teach the subject to any arm (`can_use_question_bank` in `app/school/access.py`), can use a subject's questions. Students get 403 everywhere, because the bank holds answer keys.
+- A `Question` holds subject, topics, status (`active`/`archived`) and `latest_version`. Content lives in `QuestionVersion` rows that never change: editing adds version n+1, and an ORM `before_update` listener refuses changes to a stored version. A clash on `(question_id, version)` becomes 409.
+- The answer key is `QuestionVersion.correct_option_ids`. `VersionOut` includes it and is for staff only. Candidate-facing responses (Exams C) must use their own schemas without it.
+- Archive instead of deleting once a question is used. A subject with questions, or a tagged topic, can't be deleted.
+- Reading passages (`app/questions/passages.py`) are versioned the same way (`Passage` → `PassageVersion`). `Question.passage_id` is set at creation and never changes; its foreign key is `(passage_id, subject_id, tenant_id)`, so a passage is always in its questions' school and subject. Shared rules for both routers (access, listing, paging) are in `app/questions/common.py`.
 
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 
