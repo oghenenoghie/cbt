@@ -1,10 +1,12 @@
 "use client";
 
-import { BookOpen, ClipboardCheck, GraduationCap } from "lucide-react";
+import { BookOpen, ClipboardCheck, GraduationCap, PencilLine } from "lucide-react";
 import Link from "next/link";
 
 import { useSignedIn } from "@/lib/session";
-import type { Exam, MyClasses } from "@/lib/types";
+import { formatDateTime } from "@/lib/format";
+import { stageOf } from "@/lib/sitting";
+import type { Exam, MyClasses, MyExam } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
 
 import styles from "./dashboard.module.css";
@@ -125,6 +127,31 @@ function ApprovalsCard() {
   );
 }
 
+/** For students: exams open now, and the next one coming up. */
+function MyExamsCard() {
+  const exams = useApi<{ exams: MyExam[] }>("/me/exams");
+  if (exams.status !== "ready") return null;
+  const open = exams.data.exams.filter((e) => ["in_progress", "can_start"].includes(stageOf(e)));
+  const next = exams.data.exams.find((e) => stageOf(e) === "upcoming");
+  return (
+    <section className="card">
+      <h2>
+        <PencilLine size={18} aria-hidden="true" style={{ verticalAlign: "-3px", marginRight: 6 }} />
+        Your exams
+      </h2>
+      <p className="card-intro">
+        {open.length > 0
+          ? `${open.length === 1 ? "1 exam is" : `${open.length} exams are`} open for you now.`
+          : "No exam is open for you right now."}
+        {next ? ` Next: ${next.title}, ${formatDateTime(next.opens_at)}.` : ""}
+      </p>
+      <Link className={`btn ${open.length ? "btn-primary" : "btn-secondary"}`} href="/my-exams">
+        {open.length ? "Go to my exams" : "See my exams"}
+      </Link>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const { user, school } = useSignedIn();
   return (
@@ -134,6 +161,7 @@ export default function DashboardPage() {
       </h1>
       <p className="page-intro">{school.name}</p>
       <div className={styles.grid}>
+        {user.role === "student" && <MyExamsCard />}
         {(user.role === "school_admin" || user.is_exam_coordinator) && <ApprovalsCard />}
         {user.role === "school_admin" && <SetupChecklist />}
         <ClassesCard />
