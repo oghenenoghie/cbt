@@ -11,7 +11,14 @@ import styles from "./bank.module.css";
  * A version as staff see it, with the right answer marked. This holds the answer key: it is only
  * for the question bank, never for anything a student sees.
  */
-export function QuestionBody({ version }: { version: QuestionVersion }) {
+export function QuestionBody({
+  version,
+}: {
+  /** A bank version, or a question on an exam paper (which has no explanation). */
+  version: Pick<QuestionVersion, "type" | "stem" | "options" | "correct_option_ids"> & {
+    explanation?: string | null;
+  };
+}) {
   const correct = new Set(version.correct_option_ids);
   return (
     <div>

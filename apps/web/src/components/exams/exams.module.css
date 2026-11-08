@@ -1,0 +1,45 @@
+/* Shared by the exam screens. */
+
+.explain {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.checks {
+  display: grid;
+  gap: 10px;
+}
+
+.level {
+  display: grid;
+  gap: 6px;
+}
+
+.levelName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.armChecks {
+  display: grid;
+  gap: 8px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(140px, 100%), 1fr));
+}
+
+.title {
+  font-weight: 600;
+}
+
+.title:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}

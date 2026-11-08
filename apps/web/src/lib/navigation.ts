@@ -1,6 +1,8 @@
 import {
   BookOpen,
   CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
   FileQuestion,
   LayoutDashboard,
   Presentation,
@@ -12,13 +14,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { SchoolRole } from "@/lib/types";
+import type { SchoolRole, SessionInfo } from "@/lib/types";
+
+type SignedInUser = NonNullable<SessionInfo["user"]>;
 
 export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
   roles: SchoolRole[];
+  /** A further condition beyond the role, such as being an exam coordinator. */
+  when?: (user: SignedInUser) => boolean;
 }
 
 export interface NavGroup {
@@ -34,6 +40,19 @@ const ADMINS: SchoolRole[] = ["school_admin"];
 // is a convenience, not access control.
 export const NAV_GROUPS: NavGroup[] = [
   { items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: EVERYONE }] },
+  {
+    label: "Exams",
+    items: [
+      { href: "/exams", label: "Exams", icon: ClipboardList, roles: STAFF },
+      {
+        href: "/approvals",
+        label: "Approvals",
+        icon: ClipboardCheck,
+        roles: STAFF,
+        when: (user) => user.role === "school_admin" || user.is_exam_coordinator,
+      },
+    ],
+  },
   {
     label: "Question bank",
     items: [
@@ -55,9 +74,9 @@ export const NAV_GROUPS: NavGroup[] = [
   { items: [{ href: "/account", label: "Account", icon: UserRound, roles: EVERYONE }] },
 ];
 
-export function navFor(role: SchoolRole): NavGroup[] {
+export function navFor(user: SignedInUser): NavGroup[] {
   return NAV_GROUPS.map((group) => ({
     ...group,
-    items: group.items.filter((item) => item.roles.includes(role)),
+    items: group.items.filter((item) => item.roles.includes(user.role) && (item.when?.(user) ?? true)),
   })).filter((group) => group.items.length > 0);
 }

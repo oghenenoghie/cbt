@@ -203,3 +203,119 @@ export interface Passage {
   created_at: string;
   updated_at: string;
 }
+
+// --- Exams (staff) -----------------------------------------------------------------------------
+
+/** draft → submitted → published (or back to draft when sent back); published → withdrawn. */
+export type ExamStatus = "draft" | "submitted" | "published" | "withdrawn";
+export type ResultsRelease = "teacher" | "immediate";
+/** What the signed-in person may do with an exam now: a hint; the API checks every action. */
+export type ExamAction =
+  | "edit"
+  | "submit"
+  | "delete"
+  | "publish"
+  | "return"
+  | "withdraw"
+  | "release_results"
+  | "copy";
+
+export interface ExamItem {
+  position: number;
+  question_id: string | null;
+  passage_id: string | null;
+}
+
+export interface Exam {
+  id: string;
+  subject_id: string;
+  term_id: string;
+  level_id: string;
+  arm_ids: string[];
+  title: string;
+  instructions: string | null;
+  duration_minutes: number;
+  opens_at: string;
+  closes_at: string;
+  max_attempts: number;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  results_release: ResultsRelease;
+  status: ExamStatus;
+  /** The approver's note when it was last sent back, or the reason it was withdrawn. */
+  review_note: string | null;
+  created_by_id: string;
+  created_by_name: string;
+  reviewed_by_id: string | null;
+  reviewed_by_name: string | null;
+  reviewed_at: string | null;
+  submitted_at: string | null;
+  published_at: string | null;
+  withdrawn_at: string | null;
+  results_released_at: string | null;
+  copied_from_id: string | null;
+  items: ExamItem[];
+  allowed_actions: ExamAction[];
+  created_at: string;
+  updated_at: string;
+}
+
+/** The settings an exam is created or edited with. Times are ISO strings with a zone. */
+export interface ExamSettings {
+  title: string;
+  instructions: string | null;
+  duration_minutes: number;
+  opens_at: string;
+  closes_at: string;
+  max_attempts: number;
+  shuffle_questions: boolean;
+  shuffle_options: boolean;
+  results_release: ResultsRelease;
+}
+
+/** A question as it appears on the paper, with its answer. Staff only. */
+export interface PaperQuestion {
+  position: number;
+  question_id: string;
+  version: number;
+  type: QuestionType;
+  stem: string;
+  options: QuestionOption[];
+  correct_option_ids: string[];
+  marks: number;
+}
+
+export interface PaperBlock {
+  block: number;
+  passage: { passage_id: string; version: number; title: string; body: string } | null;
+  questions: PaperQuestion[];
+}
+
+export interface Paper {
+  exam_id: string;
+  /** True once submitted: pinned to exact versions. A draft's paper shows the latest versions. */
+  frozen: boolean;
+  question_count: number;
+  total_marks: number;
+  blocks: PaperBlock[];
+  /** For a draft, what stops it being submitted. */
+  problems: string[];
+}
+
+/** An attempt as staff see it while following an exam. */
+export interface AttemptSummary {
+  id: string;
+  candidate_id: string;
+  candidate_name: string;
+  number: number;
+  status: "in_progress" | "submitted";
+  started_at: string;
+  ends_at: string;
+  submitted_at: string | null;
+  /** "student" when they submitted, "time_up" when the clock ran out. */
+  submitted_reason: string | null;
+  answered_count: number;
+  question_count: number;
+  score: number | null;
+  max_score: number;
+}

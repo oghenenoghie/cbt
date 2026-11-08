@@ -89,9 +89,11 @@ def _arm_ids(db: Session, exam_ids: list[str]) -> dict[str, list[str]]:
     return {exam_id: sorted(ids) for exam_id, ids in arms.items()}
 
 
-def _author_roles(db: Session, exams: list[Exam]) -> dict[str, str]:
-    ids = {e.created_by_id for e in exams}
-    return dict(db.execute(select(User.id, User.role).where(User.id.in_(ids))).all())
+def _people(db: Session, exams: list[Exam]) -> dict[str, tuple[str, str]]:
+    """(role, display name) of each exam's author and reviewer."""
+    ids = {e.created_by_id for e in exams} | {e.reviewed_by_id for e in exams if e.reviewed_by_id}
+    rows = db.execute(select(User.id, User.role, User.display_name).where(User.id.in_(ids)))
+    return {user_id: (role, name) for user_id, role, name in rows}
 
 
 def _actions(viewer: Viewer, exam: Exam, arm_ids: list[str], author_role: str) -> list[str]:
@@ -120,7 +122,7 @@ def _outs(db: Session, viewer: Viewer, exams: list[Exam]) -> list[ExamOut]:
         return []
     ids = [e.id for e in exams]
     arms = _arm_ids(db, ids)
-    roles = _author_roles(db, exams)
+    people = _people(db, exams)
     items: dict[str, list[ExamItemOut]] = {exam_id: [] for exam_id in ids}
     for item in db.scalars(
         select(ExamItem).where(ExamItem.exam_id.in_(ids)).order_by(ExamItem.position)
@@ -149,7 +151,9 @@ def _outs(db: Session, viewer: Viewer, exams: list[Exam]) -> list[ExamOut]:
             status=e.status,
             review_note=e.review_note,
             created_by_id=e.created_by_id,
+            created_by_name=people.get(e.created_by_id, ("", ""))[1],
             reviewed_by_id=e.reviewed_by_id,
+            reviewed_by_name=people[e.reviewed_by_id][1] if e.reviewed_by_id in people else None,
             reviewed_at=e.reviewed_at,
             submitted_at=e.submitted_at,
             published_at=e.published_at,
@@ -157,7 +161,9 @@ def _outs(db: Session, viewer: Viewer, exams: list[Exam]) -> list[ExamOut]:
             results_released_at=e.results_released_at,
             copied_from_id=e.copied_from_id,
             items=items[e.id],
-            allowed_actions=_actions(viewer, e, arms[e.id], roles.get(e.created_by_id, "")),
+            allowed_actions=_actions(
+                viewer, e, arms[e.id], people.get(e.created_by_id, ("", ""))[0]
+            ),
             created_at=e.created_at,
             updated_at=e.updated_at,
         )

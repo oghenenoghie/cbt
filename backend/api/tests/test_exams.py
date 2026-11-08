@@ -114,7 +114,11 @@ def school(admin, db: Session, make_user, sign_in):
         ("amy", "student"),
     ]:
         people[username] = make_user(
-            tenant=admin.school, username=username, role=role, password=TEST_PASSWORD
+            tenant=admin.school,
+            username=username,
+            role=role,
+            password=TEST_PASSWORD,
+            display_name=f"Synthetic {username}",
         )
     people["mr.eze"].is_exam_coordinator = True
     db.commit()
@@ -315,6 +319,8 @@ def test_a_teacher_prepares_an_exam_for_classes_they_teach(school, db: Session) 
     )
     assert exam["results_release"] == "teacher"
     assert exam["created_by_id"] == school.people["mrs.okafor"].id
+    assert exam["created_by_name"] == school.people["mrs.okafor"].display_name
+    assert (exam["reviewed_by_id"], exam["reviewed_by_name"]) == (None, None)
     assert sorted(exam["allowed_actions"]) == ["copy", "delete", "edit", "submit"]
     entry = db.scalar(select(AuditLog).where(AuditLog.action == "exam.created"))
     assert entry.details == {"subject": "Basic Science", "classes": 2}
@@ -674,6 +680,8 @@ def test_a_coordinator_publishes_a_teachers_exam(school, db: Session) -> None:
     exam = response.json()
     assert exam["status"] == "published"
     assert exam["reviewed_by_id"] == school.people["mr.eze"].id
+    assert exam["reviewed_by_name"] == school.people["mr.eze"].display_name
+    assert exam["created_by_name"] == school.people["mrs.okafor"].display_name
     assert exam["published_at"] is not None
     entry = db.scalar(select(AuditLog).where(AuditLog.action == "exam.published"))
     assert (entry.actor_id, entry.details) == (school.people["mr.eze"].id, {"questions": 3})
