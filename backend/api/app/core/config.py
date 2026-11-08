@@ -25,6 +25,17 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_throttle_window_minutes: int = 15
 
+    # Learning materials (ADR 0004).
+    # Where uploaded originals are kept: a directory on local disk for now.
+    storage_dir: str = "./storage"
+    # The largest upload, and limits that stop a small file unpacking into something huge.
+    document_max_mb: int = 25
+    document_max_pages: int = 1000
+    document_max_unzipped_mb: int = 200
+    # "inline": process each upload in the API process right after it's received (development
+    # and tests). "worker": leave it queued for `python -m app.worker` (production).
+    document_processing: str = "inline"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

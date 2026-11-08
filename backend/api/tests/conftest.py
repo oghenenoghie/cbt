@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.api_keys import generate_api_key
 from app.core.passwords import hash_password
+from app.core.storage import LocalStorage, get_storage
 from app.db.base import Base
 from app.db.session import enable_sqlite_foreign_keys, get_db
 from app.main import app
@@ -97,8 +98,17 @@ def db(session_factory: sessionmaker[Session]) -> Generator[Session, None, None]
 
 
 @pytest.fixture
-def client(session_factory: sessionmaker[Session]) -> Generator[TestClient, None, None]:
-    """Test client whose requests each get their own session on the test database."""
+def storage(tmp_path: Path) -> LocalStorage:
+    """Where this test's uploads are kept: a directory of its own."""
+    return LocalStorage(tmp_path / "storage")
+
+
+@pytest.fixture
+def client(
+    session_factory: sessionmaker[Session], storage: LocalStorage
+) -> Generator[TestClient, None, None]:
+    """Test client whose requests each get their own session on the test database, and keep
+    uploads in this test's own storage."""
 
     def override_get_db() -> Generator[Session, None, None]:
         session = session_factory()
@@ -108,11 +118,13 @@ def client(session_factory: sessionmaker[Session]) -> Generator[TestClient, None
             session.close()
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_storage] = lambda: storage
     try:
         # HTTPS, so the Secure session cookie is sent back as a browser would.
         yield TestClient(app, base_url="https://testserver")
     finally:
         app.dependency_overrides.pop(get_db, None)
+        app.dependency_overrides.pop(get_storage, None)
 
 
 @pytest.fixture

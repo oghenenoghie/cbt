@@ -1,6 +1,6 @@
 # Assessment pipeline: materials → questions → exams → results
 
-The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API only. Authoritative sources:
+The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) have started: stage A is built (ADR 0004). Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`
@@ -16,7 +16,9 @@ The question bank, exam builder (section 3), sitting exams and results (section 
 
 ## 1. Learning materials (Phase 3)
 
-**Inputs:** PDF (including scanned), DOCX, PPTX, XLSX, CSV, TXT, JPG/JPEG, PNG. Planned tooling: PyMuPDF, python-docx, python-pptx, OCR.
+**Inputs:** PDF (including scanned), DOCX, PPTX, XLSX, CSV, TXT, JPG/JPEG, PNG. Tooling: pypdfium2 for PDF (not PyMuPDF: its AGPL licence), python-docx, then python-pptx and openpyxl, and Tesseract for OCR (ADR 0004).
+
+**Built (Docs A, `app/documents/`, `/api/v1/documents`; ADR 0004):** subject staff (admins, and teachers of the subject) upload, review and approve, including their own uploads; materials are shared within the subject. PDF with a text layer, Word and text are extracted into immutable `DocumentSegment`s with `kind`/`number`/`label` provenance and `no_text` flags; versions carry warnings, and approving needs them acknowledged. Processing is queued on `DocumentVersion.status` and run by `python -m app.worker` (or inline in development). The newest approved version of an active document is the evidence Phase 4 may use.
 
 **Stages**, in order:
 1. Validate file type, size (configurable limits), malware and upload ownership.

@@ -19,3 +19,11 @@ Processing stages:
 7. Publish extracted chunks to retrieval only after school approval.
 
 Never silently treat failed or low-quality OCR as complete content.
+
+## Status
+
+Stage A is built inside the API (`backend/api/app/documents/`, ADR 0004): upload, storage,
+extraction for PDF with a text layer, Word (.docx) and text files, review and approval, with
+`python -m app.worker` processing uploads in the background. PowerPoint, Excel and CSV come next,
+then OCR with Tesseract for scanned pages and images. It stays a module of the API (a modular
+monolith) until there's a measured need to split it out.

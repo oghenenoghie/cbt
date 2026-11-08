@@ -15,6 +15,10 @@ dependencies = [
   "alembic>=1.13,<2.0",
   "psycopg[binary]>=3.2,<4.0",
   "argon2-cffi>=23.1,<26",
+  # Learning materials (ADR 0004): uploads, PDF and Word text.
+  "python-multipart>=0.0.9,<1.0",
+  "pypdfium2>=4.30,<6",
+  "python-docx>=1.1,<2",
 ]
 
 [project.optional-dependencies]
@@ -38,7 +42,14 @@ select = ["E4", "E7", "E9", "F", "B", "I", "UP", "ASYNC", "DTZ"]
 
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's dependency markers are designed to be used as argument defaults.
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Security", "fastapi.Query", "fastapi.Header"]
+extend-immutable-calls = [
+  "fastapi.Depends",
+  "fastapi.Security",
+  "fastapi.Query",
+  "fastapi.Header",
+  "fastapi.File",
+  "fastapi.Form",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
