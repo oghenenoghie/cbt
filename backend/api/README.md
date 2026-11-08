@@ -212,7 +212,7 @@ Drafting is off until you choose a provider: `AI_PROVIDER=anthropic` with `ANTHR
 |---|---|
 | `POST /api/v1/ai/requests` | Ask for drafts: `subject_id`, optional `topic_ids`, `document_ids`, `objective`, `question_types` (`mcq_single`, `true_false`), `count` (up to 20), `difficulty`, `marks`. The evidence is chosen and recorded at once (422 if nothing approved matches); drafting follows in the background (202). 503 when drafting isn't set up, 429 over the school's limits |
 | `GET /api/v1/ai/requests` | Newest first. Filters: `subject_id`, `status` (`queued`, `processing`, `done`, `failed`); paging with `limit` and `after` |
-| `GET /api/v1/ai/requests/{id}` | The request, its `sources` (S1, S2, ...: document, version, page or section), every candidate in order (pending, approved, dismissed, or rejected with `reasons`), the shortfall report (`notes`) and `usage` (model, tokens, estimated cost, latency) |
+| `GET /api/v1/ai/requests/{id}` | The request, its `sources` (S1, S2, ...: document, version, page or section, and the `text` the model was given), every candidate in order (pending, approved, dismissed, or rejected with `reasons`), the shortfall report (`notes`) and `usage` (model, tokens, estimated cost, latency) |
 | `POST /api/v1/ai/requests/{id}/retry` | Draft a failed request again from the same evidence |
 | `GET /api/v1/ai/drafts` | Drafts with a `status` (default `pending`), newest first. Filters: `subject_id`, `request_id` |
 | `GET` / `PATCH /api/v1/ai/drafts/{id}` | A draft with its citations (each quote, where it is, and whether it was `found`); or change a pending draft's `content` (the bank's question format) and `topic_ids` |

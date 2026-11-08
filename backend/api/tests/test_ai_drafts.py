@@ -346,6 +346,8 @@ def test_the_model_sees_only_the_permitted_evidence(
     # Only the page that matches the objective, labelled from S1.
     assert [s["label"] for s in detail["sources"]] == ["S1"]
     assert detail["sources"][0]["location"] == "page 1"
+    # Reviewers see exactly the text the model was given.
+    assert detail["sources"][0]["text"] == ai.briefs[0].sources[0].text
     assert ai.briefs[0].subject == "Basic Science"
     assert ai.briefs[0].objective == "the nucleus"
 

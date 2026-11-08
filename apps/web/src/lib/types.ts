@@ -499,3 +499,197 @@ export interface Script {
   percentage: number;
   questions: ScriptQuestion[];
 }
+
+// Learning materials (ADR 0004) --------------------------------------------------------------
+
+export type VersionStatus = "queued" | "processing" | "extracted" | "failed" | "approved" | "rejected";
+
+export interface DocumentVersion {
+  version: number;
+  filename: string;
+  /** What the file turned out to be: "pdf", "docx" or "txt". */
+  kind: string;
+  content_type: string;
+  size_bytes: number;
+  sha256: string;
+  note: string | null;
+  status: VersionStatus;
+  attempts: number;
+  segment_count: number | null;
+  char_count: number | null;
+  /** What the reviewer must know before approving, e.g. pages with no readable text. */
+  warnings: string[];
+  /** Why processing failed, in words a teacher can act on. */
+  error: string | null;
+  uploaded_by_id: string | null;
+  uploaded_by_name: string | null;
+  created_at: string;
+  processed_at: string | null;
+  reviewed_by_id: string | null;
+  reviewed_by_name: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+}
+
+export interface LearningDocument {
+  id: string;
+  subject_id: string;
+  title: string;
+  description: string | null;
+  status: BankStatus;
+  topic_ids: string[];
+  latest_version: number;
+  latest: DocumentVersion;
+  /** The newest approved version: the one used as evidence for AI drafts. */
+  approved_version: number | null;
+  created_by_id: string | null;
+  created_by_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LearningDocumentDetail extends LearningDocument {
+  /** Every version, newest first. */
+  versions: DocumentVersion[];
+}
+
+export interface DocumentSegment {
+  position: number;
+  /** "page" (PDF), "section" (Word) or "lines" (text). */
+  kind: "page" | "section" | "lines";
+  number: number;
+  /** The chapter or heading it falls under. */
+  label: string | null;
+  text: string;
+  char_count: number;
+  method: string;
+  confidence: number | null;
+  /** e.g. ["no_text"]: nothing readable on this part. */
+  flags: string[];
+}
+
+export interface SegmentPage {
+  segments: DocumentSegment[];
+  next_after: number | null;
+}
+
+// AI question drafts (ADR 0005) ----------------------------------------------------------------
+
+export type AiRequestStatus = "queued" | "processing" | "done" | "failed";
+export type DraftStatus = "pending" | "approved" | "dismissed" | "rejected";
+
+export interface AiUsage {
+  model: string | null;
+  provider_calls: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  /** An estimate from the server's configured prices, in US dollars. */
+  cost_usd: number;
+  latency_ms: number;
+}
+
+export interface AiSource {
+  label: string;
+  segment_id: string;
+  document_id: string;
+  document_title: string;
+  version: number;
+  location: string;
+  char_count: number;
+  score: number;
+  /** The text the model was given. */
+  text: string;
+}
+
+export interface DraftCitation {
+  position: number;
+  source_label: string;
+  segment_id: string | null;
+  document_id: string | null;
+  document_title: string | null;
+  location: string | null;
+  quote: string;
+  /** Found word for word in the material it names. Only found quotes count. */
+  found: boolean;
+}
+
+export interface AnswerCheck {
+  supported: boolean;
+  single_answer: boolean;
+  clear: boolean;
+  in_scope: boolean;
+  assessment: string;
+}
+
+/** A draft with its answer key: staff only. */
+export interface QuestionDraft {
+  id: string;
+  request_id: string;
+  subject_id: string;
+  position: number;
+  status: DraftStatus;
+  /** A question type, or what the model wrote for a rejected one. */
+  type: string;
+  stem: string;
+  options: QuestionOption[];
+  correct_option_ids: string[];
+  explanation: string | null;
+  marks: number;
+  difficulty: Difficulty | null;
+  topic_ids: string[];
+  /** Why a rejected draft failed the checks. */
+  reasons: string[];
+  answer_check: AnswerCheck | null;
+  citations: DraftCitation[];
+  edited_by_id: string | null;
+  edited_at: string | null;
+  reviewed_by_id: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  /** The bank question an approved draft became. */
+  question_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AiRequest {
+  id: string;
+  subject_id: string;
+  requested_by_id: string | null;
+  requested_by_name: string | null;
+  question_types: QuestionType[];
+  count: number;
+  difficulty: Difficulty | null;
+  marks: number;
+  topic_ids: string[];
+  document_ids: string[];
+  objective: string | null;
+  status: AiRequestStatus;
+  error: string | null;
+  accepted_count: number;
+  rejected_count: number;
+  /** The shortfall report, as sentences. */
+  notes: string[];
+  usage: AiUsage;
+  created_at: string;
+  finished_at: string | null;
+}
+
+export interface AiRequestDetail extends AiRequest {
+  sources: AiSource[];
+  /** Every candidate in the order written. */
+  drafts: QuestionDraft[];
+}
+
+export interface QuestionCitation {
+  version: number;
+  position: number;
+  segment_id: string;
+  document_id: string;
+  document_title: string;
+  document_version: number;
+  location: string;
+  quote: string;
+}

@@ -211,6 +211,7 @@ def _detail(db: Session, request: AiRequest) -> AiRequestDetail:
                 location=location(segments[s.segment_id][0]),
                 char_count=segments[s.segment_id][0].char_count,
                 score=round(s.score, 4),
+                text=segments[s.segment_id][0].text,
             )
             for s in sources
         ],

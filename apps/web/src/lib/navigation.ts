@@ -5,11 +5,13 @@ import {
   ClipboardCheck,
   ClipboardList,
   FileQuestion,
+  FileText,
   LayoutDashboard,
   PencilLine,
   Presentation,
   School,
   ScrollText,
+  Sparkles,
   UserPlus,
   UserRound,
   Users,
@@ -67,6 +69,8 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/questions", label: "Questions", icon: FileQuestion, roles: STAFF },
       { href: "/passages", label: "Passages", icon: ScrollText, roles: STAFF },
+      { href: "/materials", label: "Learning materials", icon: FileText, roles: STAFF },
+      { href: "/drafting", label: "AI drafts", icon: Sparkles, roles: STAFF },
     ],
   },
   {

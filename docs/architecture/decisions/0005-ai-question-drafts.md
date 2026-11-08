@@ -1,6 +1,6 @@
 # ADR 0005: AI question drafts from approved materials
 
-- **Status:** Accepted. Stage A is built; stage B (web screens) follows.
+- **Status:** Accepted. Stages A and B are built.
 - **Date:** 2026-11-08
 - **Implemented in:** `backend/api/app/models/ai.py`, `backend/api/app/ai/`, `backend/api/app/worker.py` (migration `0012_ai_drafts`)
 
@@ -22,7 +22,7 @@ They didn't fix the provider, how retrieval works, or who reviews drafts. When P
 The work is built in stages:
 
 - **A. Requests, evidence, drafting, checks and review**, through the API. (Built.)
-- **B. Web screens** for asking, reviewing drafts beside their evidence, and approving.
+- **B. Web screens** for asking, reviewing drafts beside their evidence, and approving. (Built: `apps/web`, `/drafting`.)
 
 PowerPoint, Excel, CSV and OCR (ADR 0004 stages B and C) are still to come. Until they exist, only PDF pages with text, Word and text files can be evidence.
 

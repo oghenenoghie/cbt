@@ -29,13 +29,23 @@ function sameSet(a: Set<string>, b: Set<string>): boolean {
   return a.size === b.size && [...a].every((id) => b.has(id));
 }
 
+/** An AI draft being corrected before approval: its content, and how to save it. */
+export interface DraftEdit {
+  content: QuestionContent;
+  topicIds: string[];
+  /** Save the changes; the caller closes the editor or shows the result. */
+  save: (content: QuestionContent, topicIds: string[]) => Promise<void>;
+}
+
 /**
- * Write a question for `subject`, or edit `question`. Editing the content adds a new version (the
- * earlier ones never change); changing only the topics doesn't. The API checks everything again.
+ * Write a question for `subject`, edit `question`, or correct an AI `draft`. Editing a question's
+ * content adds a new version (the earlier ones never change); changing only the topics doesn't.
+ * The API checks everything again.
  */
 export function QuestionEditor({
   subject,
   question,
+  draft,
   passages = [],
   passage = null,
   defaultPassageId = "",
@@ -46,6 +56,8 @@ export function QuestionEditor({
   subject: Subject;
   /** The question to edit; leave out to write a new one. */
   question?: Question;
+  /** An AI draft to correct instead (ADR 0005); its changes stay on the draft. */
+  draft?: DraftEdit;
   /** Active passages a new question can be about, to choose from. */
   passages?: Passage[];
   /** The passage fixed for this question: the one it's written from, or an edited question's. */
@@ -55,10 +67,11 @@ export function QuestionEditor({
   onClose: () => void;
   /** A step of the save worked but the editor stays open (a later step failed). */
   onUpdated?: (question: Question) => void;
-  onFinished: (question: Question, summary: string) => void;
+  onFinished?: (question: Question, summary: string) => void;
 }) {
   const { user } = useSignedIn();
-  const initial = question ? contentOf(question.latest) : null;
+  const initial = question ? contentOf(question.latest) : (draft?.content ?? null);
+  const initialTopics = question?.topic_ids ?? draft?.topicIds ?? [];
   const [type, setType] = useState<QuestionType>(initial?.type ?? "mcq_single");
   const [stem, setStem] = useState(initial?.stem ?? "");
   const [options, setOptions] = useState<string[]>(initial?.options ?? ["", "", "", ""]);
@@ -71,7 +84,7 @@ export function QuestionEditor({
   const [marks, setMarks] = useState(String(initial?.marks ?? 1));
   const [difficulty, setDifficulty] = useState<Difficulty | "">(initial?.difficulty ?? "");
   const [explanation, setExplanation] = useState(initial?.explanation ?? "");
-  const [topics, setTopics] = useState<Set<string>>(() => new Set(question?.topic_ids ?? []));
+  const [topics, setTopics] = useState<Set<string>>(() => new Set(initialTopics));
   const [passageId, setPassageId] = useState(passage?.id ?? defaultPassageId);
   const [problem, setProblem] = useState<string | null>(null);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -89,7 +102,7 @@ export function QuestionEditor({
   const contentDirty = initial
     ? normalise(content) !== normalise(initial)
     : Boolean(stem.trim() || options.some((o) => o.trim()) || explanation.trim());
-  const topicsDirty = !sameSet(topics, new Set(question?.topic_ids ?? []));
+  const topicsDirty = !sameSet(topics, new Set(initialTopics));
   const dirty = contentDirty || topicsDirty;
 
   function requestClose() {
@@ -127,6 +140,10 @@ export function QuestionEditor({
     const body = { ...content, stem: stem.trim(), options: content.options?.map((o) => o.trim()) ?? null };
 
     await run(async () => {
+      if (draft) {
+        await draft.save(body, [...topics]);
+        return;
+      }
       if (!question) {
         const created = await api<Question>("/questions", {
           method: "POST",
@@ -137,7 +154,7 @@ export function QuestionEditor({
             content: body,
           },
         });
-        onFinished(created, "Question added.");
+        onFinished?.(created, "Question added.");
         return;
       }
       let saved = question;
@@ -154,7 +171,7 @@ export function QuestionEditor({
           body: { content: body },
         });
       }
-      onFinished(
+      onFinished?.(
         saved,
         contentDirty
           ? `Saved as version ${saved.latest_version}${topicsDirty ? ", with its topics" : ""}.`
@@ -163,11 +180,18 @@ export function QuestionEditor({
     });
   }
 
-  const title = question ? "Edit question" : `Write a ${subject.name} question`;
+  const editing = Boolean(question || draft);
+  const title = draft ? "Correct the draft" : question ? "Edit question" : `Write a ${subject.name} question`;
 
   return (
     <Modal title={title} onClose={requestClose} wide>
       <form className="form" onSubmit={onSubmit}>
+        {draft && (
+          <div className="alert alert-info">
+            Your changes stay on the draft until you approve it. Its quotes from the material stay as they were
+            checked, so make sure the material still supports the answer you choose.
+          </div>
+        )}
         {question && (
           <div className="alert alert-info">
             Changing the question saves it as version {question.latest_version + 1}. Earlier versions stay as
@@ -175,7 +199,7 @@ export function QuestionEditor({
           </div>
         )}
 
-        {passage ? (
+        {draft ? null : passage ? (
           <p className={styles.explain}>
             About the passage <strong>{passage.latest.title}</strong>.
             {!question && " Its questions stay together after it in an exam."}
@@ -421,8 +445,8 @@ export function QuestionEditor({
           <button type="button" className="btn btn-secondary" onClick={requestClose} disabled={busy}>
             Cancel
           </button>
-          <button type="submit" className="btn btn-primary" disabled={busy || (Boolean(question) && !dirty)}>
-            {busy ? "Saving…" : question ? "Save changes" : "Add question"}
+          <button type="submit" className="btn btn-primary" disabled={busy || (editing && !dirty)}>
+            {busy ? "Saving…" : editing ? "Save changes" : "Add question"}
           </button>
         </div>
       </form>

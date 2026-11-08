@@ -61,6 +61,36 @@ export async function api<T>(path: string, options: { method?: Method; body?: un
   return data as T;
 }
 
+/**
+ * Send a file with other form fields (multipart), as uploads need. The browser sets the content
+ * type with its boundary; the CSRF token goes in the header as for any change.
+ */
+export async function upload<T>(path: string, form: FormData): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
+  let response: Response;
+  try {
+    response = await fetch(`/api/v1${path}`, {
+      method: "POST",
+      headers,
+      body: form,
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError(0, "Can't reach the server. Check your connection and try again.");
+  }
+  const data: unknown = await response.json().catch(() => null);
+  if (!response.ok) {
+    const detail = (data as { detail?: unknown } | null)?.detail;
+    if (response.status === 413 && typeof detail !== "string") {
+      throw new ApiError(413, "That file is too large to upload.");
+    }
+    throw new ApiError(response.status, describe(response.status, detail), rowErrors(detail));
+  }
+  return data as T;
+}
+
 /** A readable message from FastAPI's `{"detail": ...}` error body. */
 function describe(status: number, detail: unknown): string {
   if (typeof detail === "string") return detail;

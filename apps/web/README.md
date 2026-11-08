@@ -110,6 +110,28 @@ Choices worth knowing:
 - **The editor checks what the API would refuse** (a right answer chosen, options all different) and says
   so in its own words; the API checks again.
 
+### Learning materials and AI drafts
+
+The same staff as the question bank (ADR 0004, ADR 0005). Both screens wait for work the API does in the
+background, and update themselves while it runs (`usePolling` in `src/lib/materials.ts`).
+
+| Screen | What staff do there |
+|---|---|
+| **Learning materials** (`/materials`) | List a subject's materials with their latest version's state and the version in use; upload a PDF with selectable text, Word or text file (`upload` in `src/lib/api.ts` sends the form with the CSRF token); open one (`/materials/view?id=`) to see each version, read the text extracted page by page (pages with no readable text are flagged), acknowledge warnings, approve or reject it, retry a file that couldn't be read, download the original, upload a new version, edit its details and topics, archive, restore, or delete one never approved |
+| **AI drafts** (`/drafting`) | Ask for questions on a subject's topics, documents and objective (types, how many, difficulty, marks), only once it has approved materials; follow each request (`/drafting/view?id=`) through to its report (what was used, why there may be fewer questions, usage and estimated cost); review each draft beside the evidence it quotes, with the source passage and the quote marked, and approve it into the bank, correct it (the bank's editor, in draft mode) or dismiss it; see the candidates that failed the checks with their reasons |
+
+Choices worth knowing:
+
+- **Evidence is shown, not summarised.** Each quote says whether it was found word for word, which document
+  and page it's from, and opens the passage the model was given with the quote marked (`quoteRanges` in
+  `src/lib/drafting.ts`, matching word by word as the server does).
+- **Failed candidates can't be rescued here.** They show why they failed and have no actions; a teacher who
+  disagrees writes the question in the bank by hand.
+- **Corrections stay on the draft** until it's approved, and the draft says it was corrected after the
+  checks ran. An approved AI question shows its evidence in the question bank.
+- **Without a provider set up** on the server, asking for questions shows the API's "isn't set up" message.
+  `AI_PROVIDER=fake` on the API gives mechanical questions for trying the screens without a key.
+
 ### Exam screens
 
 Exams follow the API's workflow (ADR 0003, decision 10): a draft is prepared, submitted (which freezes
@@ -189,3 +211,5 @@ The screens are being built in stages, each its own pull request:
    3. **Results** (built): releasing results, class results, item analysis and marked scripts.
 4. **Students** (built): sitting exams (timer, autosave, resume) and their results. Built before the
    staff results screens, so an exam can be run end to end in the browser.
+5. **Materials and AI drafts** (built): uploading and approving learning materials, asking for AI drafts
+   and reviewing them into the question bank.
