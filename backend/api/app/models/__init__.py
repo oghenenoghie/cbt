@@ -7,6 +7,7 @@ from app.models.academic import (
     Term,
     Topic,
 )
+from app.models.attempts import AnswerEvent, AttemptResponse, ExamAttempt
 from app.models.candidate import Candidate, CandidateExternalIdentity
 from app.models.classroom import Enrolment, TeachingAssignment
 from app.models.exams import Exam, ExamArm, ExamItem, ExamPaperItem
@@ -23,7 +24,9 @@ from app.models.tenant import AuditLog, Tenant
 
 __all__ = [
     "AcademicSession",
+    "AnswerEvent",
     "ApiCredential",
+    "AttemptResponse",
     "AuditLog",
     "AuthSession",
     "Candidate",
@@ -34,6 +37,7 @@ __all__ = [
     "Enrolment",
     "Exam",
     "ExamArm",
+    "ExamAttempt",
     "ExamItem",
     "ExamPaperItem",
     "Integration",
