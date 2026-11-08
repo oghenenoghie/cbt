@@ -1,6 +1,6 @@
 # ADR 0004: Learning materials
 
-- **Status:** Accepted. Stage A is built; stages B to D follow.
+- **Status:** Accepted. Stages A and D are built; stages B and C follow.
 - **Date:** 2026-11-08
 - **Implemented in:** `backend/api/app/models/documents.py`, `backend/api/app/documents/`, `backend/api/app/core/storage.py`, `backend/api/app/worker.py` (migration `0011_documents`)
 
@@ -15,7 +15,7 @@ The work is built in stages, each its own change:
 - **A. Upload, storage, extraction and review** for PDF (with a text layer), Word (.docx) and plain text, through the API. (Built.)
 - **B. PowerPoint, Excel and CSV**, with slide and sheet provenance.
 - **C. Scanned pages and images (OCR)**, with a confidence for each page.
-- **D. Web screens** for uploading, reviewing and approving.
+- **D. Web screens** for uploading, reviewing and approving. (Built: `apps/web`, `/materials`.)
 
 ## Decisions
 

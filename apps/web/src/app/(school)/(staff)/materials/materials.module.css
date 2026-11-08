@@ -1,0 +1,192 @@
+/* The learning materials screens (ADR 0004). */
+
+.explain {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.topicChecks {
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(180px, 100%), 1fr));
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.back:hover {
+  color: var(--primary);
+}
+
+/* A row's title opens it. */
+.open {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.open:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.cardHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 14px;
+}
+
+.cardHeader h2 {
+  margin: 0;
+}
+
+.cardHeader p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 20px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .facts dd {
+    margin-bottom: 8px;
+  }
+}
+
+/* Versions, newest first; the one being looked at is highlighted. */
+.versions {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+}
+
+.version {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.version[aria-current="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.versionName {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.versionName span {
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.warnings {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+/* The extracted text, part by part. */
+.segments {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+
+.segment {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.segmentHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.segmentHead span {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.segmentText {
+  margin: 0;
+  padding: 12px;
+  max-height: 420px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.flagged {
+  border-color: #fedf89;
+}
+
+.flagged .segmentHead {
+  background: var(--warning-soft);
+}
+
+.empty {
+  padding: 12px;
+  color: var(--warning);
+  font-size: 14px;
+}

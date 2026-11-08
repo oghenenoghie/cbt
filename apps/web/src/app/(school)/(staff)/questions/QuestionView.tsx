@@ -6,13 +6,14 @@ import { useState } from "react";
 import { QuestionBody } from "@/components/bank/QuestionBody";
 import styles from "@/components/bank/bank.module.css";
 import { VersionHistory } from "@/components/bank/VersionHistory";
-import { ErrorAlert } from "@/components/Feedback";
+import { ErrorAlert, Loaded } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
 import { DIFFICULTY_LABELS, TYPE_LABELS } from "@/lib/bank";
 import { count, formatDateTime } from "@/lib/format";
-import type { Passage, Question, QuestionVersion, Subject } from "@/lib/types";
+import type { Passage, Question, QuestionCitation, QuestionVersion, Subject } from "@/lib/types";
 import { useAction } from "@/lib/useAction";
+import { useApi } from "@/lib/useApi";
 
 export function QuestionMeta({ version, archived }: { version: QuestionVersion; archived?: boolean }) {
   return (
@@ -23,6 +24,40 @@ export function QuestionMeta({ version, archived }: { version: QuestionVersion; 
       <span className="badge">Version {version.version}</span>
       {archived && <span className="badge badge-warning">Archived</span>}
     </div>
+  );
+}
+
+/** The passages of approved material an AI question's first version was checked against. */
+function Evidence({ question }: { question: Question }) {
+  const citations = useApi<QuestionCitation[]>(`/questions/${question.id}/citations`);
+  return (
+    <Loaded value={citations}>
+      {(list) =>
+        list.length === 0 ? (
+          <p className={styles.explain}>No evidence was kept for this question.</p>
+        ) : (
+          <div className="stack">
+            <p className={styles.explain}>
+              Drafted by AI from your approved materials and approved by staff. Version 1&apos;s answer is supported
+              by:
+            </p>
+            {list.map((c) => (
+              <div key={`${c.version}-${c.position}`} className={styles.explanation}>
+                <p style={{ marginTop: 0 }}>“{c.quote}”</p>
+                <span className="hint">
+                  {c.document_title} (version {c.document_version}), {c.location}
+                </span>
+              </div>
+            ))}
+            {question.latest_version > 1 && (
+              <p className={styles.explain}>
+                It has been edited since, so check the latest version still matches this evidence.
+              </p>
+            )}
+          </div>
+        )
+      }
+    </Loaded>
   );
 }
 
@@ -163,6 +198,12 @@ export function QuestionView({
           </button>
         </div>
       </div>
+      {question.source === "ai" && (
+        <section className={styles.section} aria-labelledby="question-evidence">
+          <h3 id="question-evidence">Evidence</h3>
+          <Evidence question={question} />
+        </section>
+      )}
       <section className={styles.section} aria-labelledby="question-history">
         <h3 id="question-history">Earlier versions</h3>
         <VersionHistory<QuestionVersion>

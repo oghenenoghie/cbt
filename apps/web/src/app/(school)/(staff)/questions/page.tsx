@@ -183,6 +183,7 @@ function SubjectBank({
                     {q.latest.difficulty && (
                       <span className="sub">{DIFFICULTY_LABELS[q.latest.difficulty]}</span>
                     )}
+                    {q.source === "ai" && <span className="sub">Drafted by AI</span>}
                   </td>
                   <td>{count(q.latest.marks, "mark")}</td>
                   <td>

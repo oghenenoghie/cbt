@@ -60,6 +60,8 @@ class SourceOut(BaseModel):
     location: str
     char_count: int
     score: float
+    # The text the model was given, so reviewers can read each draft beside its evidence.
+    text: str
 
 
 class CitationOut(BaseModel):

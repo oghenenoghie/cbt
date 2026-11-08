@@ -1,6 +1,6 @@
 # Assessment pipeline: materials → questions → exams → results
 
-The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) have started: stage A is built (ADR 0004). AI drafts (section 2) have started: stage A is built through the API (ADR 0005). Authoritative sources:
+The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) have started: the API (stage A) and web screens (stage D) are built (ADR 0004). AI drafts (section 2) are built through the API and the web app (ADR 0005, stages A and B). Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`

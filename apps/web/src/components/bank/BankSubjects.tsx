@@ -36,14 +36,22 @@ export function SubjectSelect({
   );
 }
 
-/** Shown when there's no subject whose question bank you can use. */
-export function NoBankSubjects() {
+/** Shown when there's no subject whose question bank (or materials) you can use. */
+export function NoBankSubjects({
+  what = "Questions",
+  doing = "write questions for",
+}: {
+  /** What belongs to a subject, e.g. "Learning materials". */
+  what?: string;
+  /** What teachers can do for the subjects they teach, e.g. "upload materials for". */
+  doing?: string;
+} = {}) {
   const { user } = useSignedIn();
   if (user.role === "school_admin") {
     return (
       <div className="card">
         <h2>No subjects yet</h2>
-        <p className="card-intro">Questions belong to a subject. Add your school&apos;s subjects first.</p>
+        <p className="card-intro">{what} belong to a subject. Add your school&apos;s subjects first.</p>
         <Link className="btn btn-primary" href="/school/subjects">
           Set up subjects
         </Link>
@@ -54,7 +62,7 @@ export function NoBankSubjects() {
     <div className="card">
       <h2>You don&apos;t teach any subjects yet</h2>
       <p className="card-intro">
-        You can write questions for the subjects you teach. A school admin assigns teachers to classes and
+        You can {doing} the subjects you teach. A school admin assigns teachers to classes and
         subjects; ask them to add you.
       </p>
     </div>

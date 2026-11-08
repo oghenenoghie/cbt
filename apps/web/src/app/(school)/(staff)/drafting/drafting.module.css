@@ -1,0 +1,215 @@
+/* The AI drafting screens (ADR 0005). */
+
+.explain {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.checks {
+  display: grid;
+  gap: 10px 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.back:hover {
+  color: var(--primary);
+}
+
+.open {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.open:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.more {
+  display: flex;
+  justify-content: center;
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 20px;
+  margin: 0;
+  font-size: 14px;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+
+  .facts dd {
+    margin-bottom: 8px;
+  }
+}
+
+.notes {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.usage summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.usage dl {
+  margin-top: 10px;
+}
+
+/* Filter buttons above the drafts. */
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tabs button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-strong);
+}
+
+.drafts {
+  list-style: none;
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+.draftHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.draftHead h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.evidence {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.evidence h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.citation {
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--success);
+  background: var(--success-soft);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  font-size: 14px;
+}
+
+.citation blockquote {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.citation.missing {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.where {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.source {
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.source mark {
+  background: #fef0c7;
+  color: inherit;
+  border-radius: 2px;
+}
+
+.check {
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-muted);
+  font-size: 14px;
+}
+
+.check p {
+  margin: 4px 0 0;
+}
+
+.reasons {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.draftActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
