@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
 
-**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, a basic exam workflow is complete through the API, and the web app has started):** `backend/api` has:
+**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, a basic exam workflow is complete through the API and the web app, and Phase 3, learning materials, has started):** `backend/api` has:
 - tenant and integration persistence, with API-key authentication and `GET /api/v1/integrations/me`;
 - the identity tables (users, platform admins, sessions, candidates);
 - sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
@@ -16,9 +16,10 @@ Intelligent CBT: a computer-based testing platform for schools, with two clients
 - the question bank (`/api/v1/questions`, `/api/v1/passages`): single-answer multiple-choice and true/false questions with immutable versions and topic tags, and reading passages that questions can follow;
 - the exam builder (`/api/v1/exams`): drafts for one or more classes, a frozen paper on submission, approval by exam coordinators (a designation on staff accounts) or school admins, publishing, withdrawing and copying;
 - sitting exams (`/api/v1/me/exams`, `/api/v1/me/attempts`): start or resume within the window, a server-side clock, append-only answers, submission or time-up, automatic marking, and `GET /api/v1/exams/{id}/attempts` for staff;
-- results: release by the teacher after closing (or immediately), students' own scores and right/wrong review (`/api/v1/me/results`), and for staff class results, item analysis and marked scripts.
+- results: release by the teacher after closing (or immediately), students' own scores and right/wrong review (`/api/v1/me/results`), and for staff class results, item analysis and marked scripts;
+- learning materials (`/api/v1/documents`, Phase 3 stage A): upload of PDF (with a text layer), Word and text files, extraction into segments that record their page or section, warnings, review and approval of each version, processed by `python -m app.worker` (or inline in development).
 
-The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results (built). The web app (`apps/web`) so far has sign-in, the signed-in shell, a dashboard, the account page, the school setup screens for school admins (accounts, sessions and terms, classes, subjects, enrolment, teaching) and, for staff, the question bank and passages, the exam builder, approvals, who has started an exam, releasing results, class results, item analysis and marked scripts, and for students their exams, sitting an exam (`/sit`, outside the app shell) and their results. The basic exam workflow is complete in the browser (`apps/web/README.md`). `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank; ADR 0004: learning materials). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results (built). The web app (`apps/web`) so far has sign-in, the signed-in shell, a dashboard, the account page, the school setup screens for school admins (accounts, sessions and terms, classes, subjects, enrolment, teaching) and, for staff, the question bank and passages, the exam builder, approvals, who has started an exam, releasing results, class results, item analysis and marked scripts, and for students their exams, sitting an exam (`/sit`, outside the app shell) and their results. The basic exam workflow is complete in the browser (`apps/web/README.md`). Phase 3 (learning materials) has started (ADR 0004): stage A is built in the API; PowerPoint, Excel and CSV, then OCR with Tesseract, then the web screens follow. `backend/ai-engine` and `diagram-engine` are README-only specs, and `document-engine`'s spec is implemented inside the API (`app/documents/`). `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -33,6 +34,7 @@ pip install -e ".[dev]"            # Python >= 3.11
 cp .env.example .env               # optional; defaults work without it
 alembic upgrade head
 uvicorn app.main:app --reload      # docs at /docs, liveness at /health
+python -m app.worker               # processes uploaded materials when DOCUMENT_PROCESSING=worker
 
 ruff check .                       # lint (add --fix for autofixable issues)
 pytest                             # all tests
@@ -125,6 +127,14 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - Release permission is `Viewer.can_release` (author, teachers of the subject in the exam's classes, school admins). Exam coordinators see results but don't release unless they also teach it.
 - Tests for results reuse the classroom setup from `tests/test_attempts.py` through its `build_school()` helper.
 
+**Learning materials** (`app/models/documents.py`, `app/documents/`, `/api/v1/documents`; ADR 0004).
+- Same access as the question bank (`can_use_question_bank`): school admins and the subject's teachers upload, review and approve, including their own uploads. Students get 403.
+- `Document` (subject, title, topics, active/archived) → `DocumentVersion` (one uploaded file; its file fields never change, enforced by an ORM listener) → `DocumentSegment` (extracted text with `kind` page/section/lines, `number`, `label`, `flags`; never changes). The newest approved version is the one used as evidence.
+- `app/documents/extract.py`: `identify` (kind from content; refuses unsupported, macro, oversized or zip-bomb files with a message) and `extract` (pypdfium2 for PDF, python-docx for Word; pages with no text are kept and flagged `no_text`, never treated as read).
+- `app/documents/processing.py`: the queue is `DocumentVersion.status`; `claim` is one conditional update, `process_queued`/`recover_stuck` serve `app/worker.py`. `DOCUMENT_PROCESSING=inline` (default) processes after the response using a new session on the request's engine.
+- Originals go through `app/core/storage.py` (`get_storage`, a FastAPI dependency; `LocalStorage` under `STORAGE_DIR`). Keys are made from ids, never from the upload's name.
+- Approving needs `acknowledge_warnings` when there are warnings, and some readable text; deleting is refused once a version was approved (archive instead).
+
 `app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
 
 **Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures:
@@ -135,6 +145,7 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 - `password_hash_for(password)`: a cached hash, e.g. for a platform admin.
 - `sign_in(school, username, password=...)`: signs someone in on their own browser and returns `.client` and CSRF `.headers`.
 - `admin`: a signed-in school admin at a fresh school, with `.school`, `.user`, `.client` and `.headers`.
+- `storage`: this test's own `LocalStorage` (the `client` uses it for uploads). `tests/samples.py` builds synthetic PDFs (`make_pdf`, with blank "scanned" pages and bookmarks) and Word files (`make_docx`).
 
 The `client` uses `https://testserver`, so Secure cookies flow as in a browser. To test time-based behaviour (session expiry, throttle windows), move the stored timestamps through `db` instead of waiting. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
 

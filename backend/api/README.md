@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -173,6 +173,34 @@ A student's result is their latest finished attempt. Students see their score on
 | `GET /api/v1/exams/{id}/results` | Staff: every student the exam is set for, including those who didn't sit, and a summary |
 | `GET /api/v1/exams/{id}/item-analysis` | Staff: per question, how many answered and got it right (facility), and how many chose each option |
 | `GET /api/v1/exams/{id}/attempts/{attempt_id}` | Staff: one student's marked script, with the answer key |
+
+### Learning materials
+
+School admins, and teachers who teach the subject, can upload, review and approve a subject's materials, including their own uploads; changes need `X-CSRF-Token`. Students can't reach them. Only approved versions will be used as evidence for AI-drafted questions. See [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md).
+
+| Endpoint | What it does |
+|---|---|
+| `POST /api/v1/documents` | Upload (multipart form): `file`, `subject_id`, `title`, optional `description`, `topic_ids` (repeat the field), `note`. PDF with a text layer, Word (.docx) or text, up to 25 MB; the kind is decided from the content. 422 with a reason for anything else, 409 for a file already uploaded in the subject |
+| `GET /api/v1/documents` | Newest first. Filters: `subject_id`, `topic_id`, `status` (`active` or `archived`); paging with `limit` and `after`. Teachers see only subjects they teach |
+| `GET` / `PATCH /api/v1/documents/{id}` | The document with every version (newest first) and its `approved_version`; or change its `title` and `description` |
+| `PUT /api/v1/documents/{id}/topics` | Replace the topic tags |
+| `POST /api/v1/documents/{id}/versions` | Upload a new version (`file`, optional `note`). Earlier versions, and anything approved, stay as they are |
+| `GET /api/v1/documents/{id}/versions/{n}/segments` | The extracted text in order: each segment's `kind` (`page`, `section` or `lines`), `number`, `label` (chapter or heading), `text` and `flags` (`no_text`). Paging with `limit` and `after` |
+| `GET /api/v1/documents/{id}/versions/{n}/file` | The original file, as uploaded, as a download |
+| `POST /api/v1/documents/{id}/versions/{n}/approve` | Approve an extracted version; send `{"acknowledge_warnings": true}` when it has warnings. A version with no readable text can't be approved |
+| `POST /api/v1/documents/{id}/versions/{n}/reject` | Reject it with a `note` |
+| `POST /api/v1/documents/{id}/versions/{n}/retry` | Process a failed version again |
+| `POST /api/v1/documents/{id}/archive`, `.../restore` | Stop or resume using it |
+| `DELETE /api/v1/documents/{id}` | Delete it and its files; only if no version was ever approved (archive instead) |
+
+A version's `status` goes `queued → processing → extracted` (or `failed`, with an `error`), then `approved` or `rejected`. With `DOCUMENT_PROCESSING=inline` (the default, for development) the API processes each upload right after responding. In production set `DOCUMENT_PROCESSING=worker` and run the worker beside the API, with the same `DATABASE_URL` and `STORAGE_DIR`:
+
+```bash
+python -m app.worker          # keeps processing the queue
+python -m app.worker --once   # processes what's queued, then stops
+```
+
+Uploaded originals are kept under `STORAGE_DIR` (default `./storage`), which must be on a persistent disk until the S3-compatible adapter exists.
 
 ### Creating the first accounts
 

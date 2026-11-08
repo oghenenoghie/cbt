@@ -10,6 +10,7 @@ from app.models.academic import (
 from app.models.attempts import AnswerEvent, AttemptResponse, ExamAttempt
 from app.models.candidate import Candidate, CandidateExternalIdentity
 from app.models.classroom import Enrolment, TeachingAssignment
+from app.models.documents import Document, DocumentSegment, DocumentTopic, DocumentVersion
 from app.models.exams import Exam, ExamArm, ExamItem, ExamPaperItem
 from app.models.identity import AuthSession, LoginThrottle, PlatformAdmin, User
 from app.models.integration import ApiCredential, Integration, IntegrationScope
@@ -34,6 +35,10 @@ __all__ = [
     "ClassArm",
     "ClassLevel",
     "ClassLevelSubject",
+    "Document",
+    "DocumentSegment",
+    "DocumentTopic",
+    "DocumentVersion",
     "Enrolment",
     "Exam",
     "ExamArm",
