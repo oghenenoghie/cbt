@@ -7,7 +7,9 @@ from app.core.config import get_settings
 from app.db.base import Base
 from app.models import (  # noqa: F401
     AcademicSession,
+    AnswerEvent,
     ApiCredential,
+    AttemptResponse,
     AuditLog,
     AuthSession,
     Candidate,
@@ -18,6 +20,7 @@ from app.models import (  # noqa: F401
     Enrolment,
     Exam,
     ExamArm,
+    ExamAttempt,
     ExamItem,
     ExamPaperItem,
     Integration,

@@ -199,6 +199,10 @@ class ExamPaperItem(Base):
     __tablename__ = "exam_paper_items"
     __table_args__ = (
         UniqueConstraint("exam_id", "position", name="uq_exam_paper_items_exam_id_position"),
+        # Target for students' answers, which must be on their own exam's paper (Exams C).
+        UniqueConstraint(
+            "id", "exam_id", "tenant_id", name="uq_exam_paper_items_id_exam_id_tenant_id"
+        ),
         _exam_fk("fk_exam_paper_items_exam_same_tenant"),
         # No ondelete: a question version on a paper can't be deleted, so neither can its question.
         ForeignKeyConstraint(

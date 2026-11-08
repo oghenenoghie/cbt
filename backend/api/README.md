@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, and `0008_exams` adds exams, their frozen papers and the exam coordinator designation (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, and `0009_attempts` adds students' attempts, answer events and marked responses (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -145,6 +145,21 @@ A teacher (for classes they teach the subject to) or a school admin prepares a d
 | `POST /api/v1/exams/{id}/publish`, `.../return` | Approve it, or send it back as a draft with a `note` |
 | `POST /api/v1/exams/{id}/withdraw` | Withdraw a published exam before it opens, with a `note` giving the reason |
 | `POST /api/v1/exams/{id}/copy` | A new draft with the same settings and items; optionally another `term_id` with its `arm_ids` |
+| `GET /api/v1/exams/{id}/attempts` | Follow an exam: each attempt's student, status, times, answered count and score |
+
+### Sitting exams (students)
+
+Students sit published exams set for their classes. These endpoints never return answer keys, explanations or scores; results wait for release. Changes need `X-CSRF-Token`. See [ADR 0003](../../docs/architecture/decisions/0003-exams.md), decision 11.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/me/exams` | Your exams: `state` (`upcoming`, `open`, `closed`), attempts used and allowed, `can_start`, and any `attempt_in_progress_id` |
+| `POST /api/v1/me/exams/{id}/attempts` | Start an attempt (201), or resume the one in progress (200) |
+| `GET /api/v1/me/attempts/{id}` | The paper in your order with your saved answers, `ends_at`, `server_now` and `seconds_left`; only the status once submitted |
+| `PUT /api/v1/me/attempts/{id}/answers/{item_id}` | Save an answer: `{"selected_option_ids": ["b"]}`, or `[]` to clear it |
+| `POST /api/v1/me/attempts/{id}/submit` | Hand in the attempt (safe to repeat) |
+
+An attempt ends at its start plus the duration, or at closing time if sooner. Saves are accepted for 10 seconds after that; then the attempt is submitted with what was saved.
 
 ### Creating the first accounts
 
