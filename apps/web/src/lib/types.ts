@@ -164,7 +164,7 @@ export interface Question {
   subject_id: string;
   passage_id: string | null;
   status: BankStatus;
-  /** "manual" for now; AI drafts will add their own source. */
+  /** "manual", or "ai" for an approved AI draft (ADR 0005). */
   source: string;
   topic_ids: string[];
   latest_version: number;

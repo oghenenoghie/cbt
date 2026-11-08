@@ -1,6 +1,6 @@
 # Assessment pipeline: materials → questions → exams → results
 
-The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) have started: stage A is built (ADR 0004). Authoritative sources:
+The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) have started: stage A is built (ADR 0004). AI drafts (section 2) have started: stage A is built through the API (ADR 0005). Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`
@@ -35,7 +35,9 @@ Chunks carry school, document, version, page, chapter, topic and access metadata
 
 ## 2. Retrieval and question generation (Phase 4)
 
-Retrieval uses PostgreSQL + pgvector, constrained to the **requesting school's approved document versions** and, when selected, the subject/topic/chapter. There's no internet search and no unrestricted model knowledge.
+**Built (AI A, `app/ai/`, `/api/v1/ai`; ADR 0005):** subject staff ask for drafts (subject, optional topics, documents, objective, types, count, difficulty, marks). The evidence is chosen when the request is made and stored as `AiSource` rows (S1, S2, ...): the newest approved version of each active document in the subject and school, readable segments only, ranked by BM25 on topic names and the objective, within size limits. The provider (`AI_PROVIDER`: `anthropic` for Claude, `fake`, or `off` by default) writes candidates with quotes; `app/ai/checks.py` checks format, quotes found word for word, repeats and count, then a second model pass checks answer support, single answer, clarity and scope. Passing candidates become pending `QuestionDraft`s; the rest are kept as rejected with reasons. Each request records a shortfall report and usage (tokens, estimated cost, latency). Approving a draft creates a bank question (`source="ai"`) whose first version keeps `QuestionCitation`s.
+
+Retrieval is constrained to the **requesting school's approved document versions** and, when selected, the subject/topic/documents. There's no internet search and no unrestricted model knowledge. It is lexical (BM25) for now; pgvector embeddings can replace the ranking later without changing what is permitted.
 
 **Generation request** (scoped): school, subject, topic, approved document IDs, question types, count, difficulty, marks, learning objective.
 

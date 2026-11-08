@@ -7,6 +7,8 @@ from app.core.config import get_settings
 from app.db.base import Base
 from app.models import (  # noqa: F401
     AcademicSession,
+    AiRequest,
+    AiSource,
     AnswerEvent,
     ApiCredential,
     AttemptResponse,
@@ -21,6 +23,7 @@ from app.models import (  # noqa: F401
     DocumentSegment,
     DocumentTopic,
     DocumentVersion,
+    DraftCitation,
     Enrolment,
     Exam,
     ExamArm,
@@ -34,6 +37,8 @@ from app.models import (  # noqa: F401
     PassageVersion,
     PlatformAdmin,
     Question,
+    QuestionCitation,
+    QuestionDraft,
     QuestionTopic,
     QuestionVersion,
     Subject,

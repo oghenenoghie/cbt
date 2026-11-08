@@ -202,6 +202,26 @@ python -m app.worker --once   # processes what's queued, then stops
 
 Uploaded originals are kept under `STORAGE_DIR` (default `./storage`), which must be on a persistent disk until the S3-compatible adapter exists.
 
+### AI question drafts
+
+The same people as the question bank (school admins, and teachers of the subject) ask for questions drafted from the subject's **approved** materials, then review them; changes need `X-CSRF-Token`. Students can't reach any of it. Nothing the model writes is trusted: the server checks the format, that every draft quotes the material word for word, repeats, and (with a second model pass) that the quotes establish the answer. See [ADR 0005](../../docs/architecture/decisions/0005-ai-question-drafts.md).
+
+Drafting is off until you choose a provider: `AI_PROVIDER=anthropic` with `ANTHROPIC_API_KEY` in the environment (Claude; model `AI_MODEL`, default `claude-opus-5-5`), or `AI_PROVIDER=fake` to try the flow with mechanical questions and no key. The other settings and their defaults are in `.env.example`.
+
+| Endpoint | What it does |
+|---|---|
+| `POST /api/v1/ai/requests` | Ask for drafts: `subject_id`, optional `topic_ids`, `document_ids`, `objective`, `question_types` (`mcq_single`, `true_false`), `count` (up to 20), `difficulty`, `marks`. The evidence is chosen and recorded at once (422 if nothing approved matches); drafting follows in the background (202). 503 when drafting isn't set up, 429 over the school's limits |
+| `GET /api/v1/ai/requests` | Newest first. Filters: `subject_id`, `status` (`queued`, `processing`, `done`, `failed`); paging with `limit` and `after` |
+| `GET /api/v1/ai/requests/{id}` | The request, its `sources` (S1, S2, ...: document, version, page or section), every candidate in order (pending, approved, dismissed, or rejected with `reasons`), the shortfall report (`notes`) and `usage` (model, tokens, estimated cost, latency) |
+| `POST /api/v1/ai/requests/{id}/retry` | Draft a failed request again from the same evidence |
+| `GET /api/v1/ai/drafts` | Drafts with a `status` (default `pending`), newest first. Filters: `subject_id`, `request_id` |
+| `GET` / `PATCH /api/v1/ai/drafts/{id}` | A draft with its citations (each quote, where it is, and whether it was `found`); or change a pending draft's `content` (the bank's question format) and `topic_ids` |
+| `POST /api/v1/ai/drafts/{id}/approve` | Add a pending draft to the bank (`source: "ai"`) with its found citations. Refused if it has none or the bank already has a question very like it |
+| `POST /api/v1/ai/drafts/{id}/dismiss` | Turn it down, with an optional `note` |
+| `GET /api/v1/questions/{id}/citations` | The evidence kept with an AI question's versions |
+
+With `AI_PROCESSING=inline` (the default) the API drafts right after responding; in production set `AI_PROCESSING=worker` and run `python -m app.worker`, which serves both queues. Tests never call a live model: they script `app.ai.fake.FakeProvider` with `use_provider`, and run the Claude provider through the SDK with a mocked transport.
+
 ### Creating the first accounts
 
 Account management needs a signed-in school admin, so create the first accounts from the command line (it prompts for the password):

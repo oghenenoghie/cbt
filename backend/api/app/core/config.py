@@ -36,6 +36,34 @@ class Settings(BaseSettings):
     # and tests). "worker": leave it queued for `python -m app.worker` (production).
     document_processing: str = "inline"
 
+    # AI question drafts (ADR 0005).
+    # "off" (drafting unavailable), "anthropic" (Claude; the SDK reads ANTHROPIC_API_KEY from
+    # the environment) or "fake" (deterministic questions, for trying the flow without a key).
+    ai_provider: str = "off"
+    ai_model: str = "claude-opus-5-5"
+    # How hard the model works: low, medium, high, xhigh or max. Empty leaves the model's default.
+    ai_effort: str = "high"
+    # Let the API retry on a suitable model if the configured one's safeguards decline.
+    ai_fallbacks: bool = True
+    ai_max_output_tokens: int = 32000
+    ai_timeout_seconds: float = 600.0
+    # The second pass that checks each answer against its quotes. Leave on: without it only the
+    # teacher's review checks that the material supports the answer.
+    ai_check_answers: bool = True
+    # "inline" or "worker", as for document processing.
+    ai_processing: str = "inline"
+    # Limits: questions per request, evidence per request, and requests per school.
+    ai_max_questions: int = 20
+    ai_max_sources: int = 30
+    ai_max_source_chars: int = 60000
+    ai_monthly_requests: int = 200
+    ai_max_open_requests: int = 3
+    # US dollars per million tokens, for the cost estimate on each request.
+    ai_price_input: float = 4.0
+    ai_price_output: float = 20.0
+    ai_price_cache_read: float = 0.2
+    ai_price_cache_write: float = 5.0
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

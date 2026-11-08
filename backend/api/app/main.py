@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.accounts.router import router as accounts_router
+from app.ai.router import router as ai_router
 from app.attempts.staff import router as attempts_staff_router
 from app.attempts.student import router as attempts_student_router
 from app.auth.dependencies import CSRF_HEADER
@@ -52,6 +53,7 @@ app.include_router(me_router, prefix=settings.api_v1_prefix)
 app.include_router(questions_router, prefix=settings.api_v1_prefix)
 app.include_router(passages_router, prefix=settings.api_v1_prefix)
 app.include_router(documents_router, prefix=settings.api_v1_prefix)
+app.include_router(ai_router, prefix=settings.api_v1_prefix)
 app.include_router(exams_router, prefix=settings.api_v1_prefix)
 app.include_router(attempts_staff_router, prefix=settings.api_v1_prefix)
 app.include_router(attempts_student_router, prefix=settings.api_v1_prefix)
