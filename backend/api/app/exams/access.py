@@ -7,15 +7,19 @@
 - **Approve** (publish or send back): never the author. An exam coordinator can approve any exam;
   a school admin can approve a teacher's exam. An admin's own exam needs a coordinator.
 - **Withdraw** a published exam before it opens: whoever could approve it, or its author.
+- **Release results** once it has closed: its author, teachers who teach its subject to any of its
+  classes, and school admins (ADR 0003, decision 1).
 """
 
 from dataclasses import dataclass, field
 
+from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.sessions import SessionPrincipal
-from app.models import Exam, TeachingAssignment, User
+from app.models import Exam, ExamArm, TeachingAssignment, User
+from app.school.common import get_owned
 
 
 @dataclass
@@ -46,6 +50,13 @@ class Viewer:
     def is_author(self, exam: Exam) -> bool:
         return exam.created_by_id == self.user_id
 
+    def can_release(self, exam: Exam, arm_ids: list[str]) -> bool:
+        return (
+            self.is_admin
+            or exam.created_by_id == self.user_id
+            or any((arm_id, exam.subject_id) in self.teaching for arm_id in arm_ids)
+        )
+
     def can_approve(self, exam: Exam, author_role: str) -> bool:
         if self.is_author(exam):
             return False
@@ -68,3 +79,15 @@ def viewer_for(db: Session, principal: SessionPrincipal) -> Viewer:
         is_coordinator=bool(user and user.is_exam_coordinator),
         teaching={(arm_id, subject_id) for arm_id, subject_id in teaching},
     )
+
+
+def visible_exam(db: Session, viewer: Viewer, exam_id: str) -> tuple[Exam, list[str]]:
+    """The exam and its classes if the caller may see it: 404 for another school's, 403 otherwise."""
+    exam = get_owned(db, Exam, exam_id, viewer.principal, "Exam")
+    arm_ids = list(db.scalars(select(ExamArm.arm_id).where(ExamArm.exam_id == exam.id)))
+    if not viewer.can_see(exam, arm_ids):
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            detail="You don't teach this exam's subject to any of its classes.",
+        )
+    return exam, arm_ids

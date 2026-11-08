@@ -5,7 +5,7 @@ started, who has finished, how many questions each has answered, and each finish
 score. Students see their scores only when results are released (Exams D).
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,10 +14,9 @@ from app.attempts.schemas import AttemptList, AttemptSummary
 from app.auth.dependencies import require_school_role
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
-from app.exams.access import viewer_for
-from app.models import Candidate, Exam, ExamArm, ExamAttempt
+from app.exams.access import viewer_for, visible_exam
+from app.models import Candidate, ExamAttempt
 from app.models.tenant import as_utc
-from app.school.common import get_owned
 
 router = APIRouter(prefix="/exams", tags=["sitting exams"])
 
@@ -29,14 +28,7 @@ def list_attempts(
     exam_id: str, principal: SessionPrincipal = Depends(staff_read), db: Session = Depends(get_db)
 ) -> AttemptList:
     """Every attempt at the exam, by student name. Attempts whose time is up are finished first."""
-    viewer = viewer_for(db, principal)
-    exam = get_owned(db, Exam, exam_id, principal, "Exam")
-    arm_ids = list(db.scalars(select(ExamArm.arm_id).where(ExamArm.exam_id == exam.id)))
-    if not viewer.can_see(exam, arm_ids):
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            detail="You don't teach this exam's subject to any of its classes.",
-        )
+    exam, _ = visible_exam(db, viewer_for(db, principal), exam_id)
     attempts = list(db.scalars(select(ExamAttempt).where(ExamAttempt.exam_id == exam.id)))
     if service.finish_overdue(db, attempts, service.now()):
         db.commit()

@@ -1,11 +1,12 @@
 # ADR 0003: Exams and the question bank
 
-- **Status:** Accepted (the question bank, exam builder and sitting exams are built; results follow)
+- **Status:** Accepted (all four stages are built)
 - **Date:** 2026-11-07 (decision 2 revised 2026-11-08: exam coordinators approve exams)
 - **Implemented in:**
   - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migrations `0006_question_bank` and `0007_passages`)
   - exam builder and publishing: `backend/api/app/models/exams.py`, `backend/api/app/exams/`; the coordinator designation in `backend/api/app/accounts/` (migration `0008_exams`)
   - sitting exams: `backend/api/app/models/attempts.py`, `backend/api/app/attempts/` (migration `0009_attempts`)
+  - results: `backend/api/app/results/` (migration `0010_results`)
 
 ## Context
 
@@ -16,7 +17,7 @@ The work is built in four stages, each its own change:
 - **A. Question bank:** single-answer multiple-choice and true/false questions, and reading passages with the questions that follow them, all versioned. (Built.)
 - **B. Exam builder and publishing:** a teacher or school admin prepares an exam for one or more arms and submits it; an exam coordinator (or, for a teacher's exam, a school admin) approves and publishes it, freezing a snapshot. (Built.)
 - **C. Sitting an exam:** start and resume, a server-side timer, append-only answer events, submission and auto-grading. (Built.)
-- **D. Results:** release, students' own results, and item analysis.
+- **D. Results:** release, students' own results, and item analysis. (Built.)
 
 ## Decisions
 
@@ -87,6 +88,16 @@ The work is built in four stages, each its own change:
    - **What staff see:** anyone who can see the exam can follow its attempts: who started, who finished and how, answered counts and scores.
    - The database ties every answer and response to its attempt's own exam paper, keeps one attempt in progress per student, and refuses changes to an attempt's deadline, order and submitted state, and to any answer event or response.
 
+12. **Results (Exams D).**
+   - **The latest finished attempt counts** when a student has more than one. An attempt still in progress never counts.
+   - **Releasing:** for an exam set to release results by the teacher, the exam's author, teachers who teach its subject to any of its classes, or a school admin release them, once. Only after the exam has closed and the last attempts' 10-second grace has passed, so students still sitting learn nothing from those who have finished. Releasing finishes any attempt still marked in progress. Exams set to show results immediately need no release: each score shows as soon as the attempt ends.
+   - **What students see:** their score, the maximum and the percentage. Once the exam has closed, they also see each question marked right or wrong next to their own answer, in the order they sat it. They never see the correct options: answer keys never reach students (decided 2026-11-08 with the user, who chose right/wrong over score-only). A true/false answer marked wrong does reveal the right one.
+   - **What staff see**, whether or not results are released, for anyone who can see the exam:
+     - class results for every student the exam is set for, including those who didn't sit, with each one's class, status, attempts and counted score, plus a summary (sat, not sat, average, highest and lowest percentage);
+     - item analysis over the counted attempts: answered, correct, facility (the percentage of students who sat and got it right) and how many chose each option;
+     - each student's marked script, with the answer key.
+   - The exam records when results were released and by whom, and `allowed_actions` offers `release_results` when it's possible. Releasing writes an `exam.results_released` audit entry.
+
 ## Consequences
 
 - Every bank change writes an audit entry (`question.created`, `revised`, `topics_set`, `archived`, `restored`, `deleted`, and the same `passage.*` actions apart from topics). Entries never copy question text, passage text or answers.
@@ -99,7 +110,7 @@ The work is built in four stages, each its own change:
 
 ## Still open
 
-- Which attempt counts when a student has several (best, latest or first), decided with results (Exams D).
+- Taking a release back, or re-marking after a wrong answer key (for example by releasing a corrected paper).
 - Extra time or an extra attempt for one student (for example after a power cut), and ending an attempt early by staff.
 
 - Importing questions in bulk (for example from a spreadsheet).

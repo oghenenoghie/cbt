@@ -49,6 +49,7 @@ from app.models import (
 )
 from app.models.tenant import as_utc
 from app.questions.common import newest_first
+from app.results.service import can_release_results
 from app.school.common import audit, flush_or_conflict, get_owned, invalid
 
 router = APIRouter(prefix="/exams", tags=["exams"])
@@ -107,6 +108,8 @@ def _actions(viewer: Viewer, exam: Exam, arm_ids: list[str], author_role: str) -
     elif exam.status == "published" and _now() < as_utc(exam.opens_at):
         if author or viewer.can_approve(exam, author_role):
             actions.append("withdraw")
+    elif can_release_results(exam, _now()) and viewer.can_release(exam, arm_ids):
+        actions.append("release_results")
     if viewer.can_prepare(exam.subject_id, arm_ids):
         actions.append("copy")
     return actions
@@ -151,6 +154,7 @@ def _outs(db: Session, viewer: Viewer, exams: list[Exam]) -> list[ExamOut]:
             submitted_at=e.submitted_at,
             published_at=e.published_at,
             withdrawn_at=e.withdrawn_at,
+            results_released_at=e.results_released_at,
             copied_from_id=e.copied_from_id,
             items=items[e.id],
             allowed_actions=_actions(viewer, e, arms[e.id], roles.get(e.created_by_id, "")),

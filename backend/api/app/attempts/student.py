@@ -39,6 +39,7 @@ from app.models import (
     Subject,
 )
 from app.models.tenant import as_utc
+from app.results.service import score_visible
 from app.school.common import flush_or_conflict, invalid
 
 router = APIRouter(prefix="/me", tags=["sitting exams"])
@@ -199,6 +200,7 @@ def my_exams(
                 attempt_in_progress_id=current.id if current else None,
                 can_start=state == "open"
                 and (current is not None or len(mine) < exam.max_attempts),
+                result_available=score_visible(exam) and any(a.status == "submitted" for a in mine),
             )
         )
     return MyExamList(exams=out)

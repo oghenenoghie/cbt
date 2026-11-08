@@ -86,6 +86,11 @@ class Exam(Base):
             ["users.id", "users.tenant_id"],
             name="fk_exams_reviewed_by_same_tenant",
         ),
+        ForeignKeyConstraint(
+            ["results_released_by_id", "tenant_id"],
+            ["users.id", "users.tenant_id"],
+            name="fk_exams_results_released_by_same_tenant",
+        ),
         CheckConstraint("closes_at > opens_at", name="ck_exams_window"),
         CheckConstraint(
             f"duration_minutes >= 1 AND duration_minutes <= {MAX_DURATION_MINUTES}",
@@ -130,6 +135,11 @@ class Exam(Base):
     withdrawn_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     # The exam this was copied from, if any. Informational, so no foreign key.
     copied_from_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
+    # When a teacher released the results to students (results_release "teacher"), and who.
+    results_released_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    results_released_by_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now, nullable=False
     )
