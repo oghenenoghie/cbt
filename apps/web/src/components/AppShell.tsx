@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const groups = navFor(user.role);
+  const groups = navFor(user);
 
   // Close the phone menu after navigating.
   useEffect(() => setMenuOpen(false), [pathname]);

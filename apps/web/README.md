@@ -50,10 +50,10 @@ npm run build
 | `src/app/(school)/dashboard/` | Greeting, your classes (`/me/classes`), and for admins a checklist of setup still to do |
 | `src/app/(school)/account/` | Your details and changing your password |
 | `src/app/(school)/school/` | School setup, for school admins only (the layout explains this to anyone else) |
-| `src/app/(school)/(staff)/` | Screens for staff, school admins and teachers: the question bank (`/questions`) and passages (`/passages`). Students get an explanation instead |
+| `src/app/(school)/(staff)/` | Screens for staff, school admins and teachers: the question bank (`/questions`), passages (`/passages`), exams (`/exams`, one exam at `/exams/view?id=…`) and approvals (`/approvals`). Students get an explanation instead |
 | `src/app/integrations/` | A static design preview, not connected to the API yet |
 | `src/components/AppShell.tsx` | Top bar, sign out, and role-based navigation (`src/lib/navigation.ts`) |
-| `src/components/` | Shared pieces: `Modal` and `ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, `SessionSelect`, `PasswordField`; `bank/` holds the question editor and other question bank pieces |
+| `src/components/` | Shared pieces: `Modal` and `ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, `SessionSelect`, `PasswordField`; `bank/` holds the question editor and other question bank pieces; `exams/` the exam settings fields, class picker and exam table |
 | `src/lib/` | The API client (`api`, and `listAll` for every page of a listing), session context, `useApi` and `useLoader` (loading), `usePagedList` (newest-first lists with "Show more"), `useAction` (changes), shared types and helpers |
 
 ### School setup screens
@@ -108,6 +108,33 @@ Choices worth knowing:
 - **The editor checks what the API would refuse** (a right answer chosen, options all different) and says
   so in its own words; the API checks again.
 
+### Exam screens
+
+Exams follow the API's workflow (ADR 0003, decision 10): a draft is prepared, submitted (which freezes
+its paper), then published or sent back by an approver; a published exam can be withdrawn before it
+opens, and copied into a new draft. Which buttons show comes from the exam's `allowed_actions`, which
+the API works out for the signed-in person and checks again on every action.
+
+| Screen | What staff do there |
+|---|---|
+| **Exams** (`/exams`) | Every exam you can see, newest first, by status and subject; start a **New exam** (subject, term, classes, times and settings) |
+| **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** |
+| **Approvals** (`/approvals`) | For exam coordinators and school admins: the exams waiting for them. The dashboard shows how many |
+
+Choices worth knowing:
+
+- **The paper is the review.** A draft's paper shows the bank's latest versions; once submitted it's the
+  frozen paper, exactly what students get, so approvers review it on the same page.
+- **Classes**: the picker offers only classes at a level that takes the subject, in the term's session,
+  and for teachers only those they teach the subject to. Once one is ticked, other levels are disabled,
+  because an exam is for one level.
+- **Times** are entered and shown in the browser's time zone and sent to the API with it.
+- **Who has started** refreshes every 30 seconds while the exam is open (until closing plus its
+  duration, the latest an attempt can end). It shows staff each attempt's progress and, once finished,
+  its score; students see scores only through results.
+- The page addresses an exam as `/exams/view?id=…` rather than a dynamic route, so the screens stay
+  compatible with a static export for the desktop app.
+
 Pages under `(school)` are client components that fetch from the API, so they stay compatible with
 a static export for the offline desktop app later. Styling is plain CSS: design tokens and shared
 classes in `src/app/globals.css`, and CSS modules beside each page or component. System fonts only,
@@ -122,7 +149,7 @@ The screens are being built in stages, each its own pull request:
    import), sessions and terms, classes, subjects and topics, enrolment and teaching assignments.
 3. **Teaching**, in three parts:
    1. **Question bank** (built): questions and passages.
-   2. **Exams**: the exam builder, submitting, approvals, publishing, and who has started.
+   2. **Exams** (built): the exam builder, submitting, approvals, publishing, and who has started.
    3. **Results**: releasing results, class results, item analysis and marked scripts.
 4. **Students**: sitting exams (timer, autosave, resume) and their results. This may come before the
    results screens, so the whole loop works in the browser sooner.

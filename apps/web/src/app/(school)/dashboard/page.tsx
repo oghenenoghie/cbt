@@ -1,9 +1,10 @@
 "use client";
 
-import { BookOpen, GraduationCap } from "lucide-react";
+import { BookOpen, ClipboardCheck, GraduationCap } from "lucide-react";
+import Link from "next/link";
 
 import { useSignedIn } from "@/lib/session";
-import type { MyClasses } from "@/lib/types";
+import type { Exam, MyClasses } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
 
 import styles from "./dashboard.module.css";
@@ -99,6 +100,31 @@ function ClassesCard() {
   );
 }
 
+/** For exam coordinators and school admins: how many exams wait for their approval. */
+function ApprovalsCard() {
+  const waiting = useApi<{ exams: Exam[]; next_after: string | null }>(
+    "/exams?awaiting_my_approval=true&limit=50",
+  );
+  if (waiting.status !== "ready") return null;
+  const n = waiting.data.exams.length;
+  return (
+    <section className="card">
+      <h2>
+        <ClipboardCheck size={18} aria-hidden="true" style={{ verticalAlign: "-3px", marginRight: 6 }} />
+        Approvals
+      </h2>
+      <p className="card-intro">
+        {n === 0
+          ? "No exams are waiting for your approval."
+          : `${n}${waiting.data.next_after ? "+" : ""} exam${n === 1 ? " is" : "s are"} waiting for your approval.`}
+      </p>
+      <Link className={`btn ${n ? "btn-primary" : "btn-secondary"}`} href="/approvals">
+        {n ? "Review them" : "Open approvals"}
+      </Link>
+    </section>
+  );
+}
+
 export default function DashboardPage() {
   const { user, school } = useSignedIn();
   return (
@@ -108,6 +134,7 @@ export default function DashboardPage() {
       </h1>
       <p className="page-intro">{school.name}</p>
       <div className={styles.grid}>
+        {(user.role === "school_admin" || user.is_exam_coordinator) && <ApprovalsCard />}
         {user.role === "school_admin" && <SetupChecklist />}
         <ClassesCard />
       </div>

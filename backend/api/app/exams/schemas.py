@@ -122,7 +122,11 @@ class ExamOut(BaseModel):
     # The approver's note when it was last sent back, or the reason it was withdrawn.
     review_note: str | None
     created_by_id: str
+    # Names of the author and the last reviewer, so staff can see who prepared and approved an
+    # exam without access to the school's account list.
+    created_by_name: str
     reviewed_by_id: str | None
+    reviewed_by_name: str | None
     reviewed_at: datetime | None
     submitted_at: datetime | None
     published_at: datetime | None
