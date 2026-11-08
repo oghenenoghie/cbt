@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, and `0008_exams` adds exams, their frozen papers and the exam coordinator designation (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -64,15 +64,15 @@ People sign in with a server-side session cookie. Integrations use API keys inst
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/v1/school/users` | Accounts at your school, ordered by username. Filters: `role`, `status`; paging: `limit`, `after` (the previous page's `next_after`) |
+| `GET /api/v1/school/users` | Accounts at your school, ordered by username. Filters: `role`, `status`, `exam_coordinator`; paging: `limit`, `after` (the previous page's `next_after`) |
 | `POST /api/v1/school/users` | Create an account: `username`, `display_name`, `role`, optional `email` and `password` |
-| `GET` / `PATCH /api/v1/school/users/{id}` | Read, or change `display_name`, `email`, `role`, `status` (`active` or `disabled`) |
+| `GET` / `PATCH /api/v1/school/users/{id}` | Read, or change `display_name`, `email`, `role`, `status` (`active` or `disabled`) and `is_exam_coordinator` (staff only) |
 | `POST /api/v1/school/users/{id}/password` | Set a new password (ends the user's sessions and lifts any sign-in block) |
 | `POST /api/v1/school/users/{id}/unblock` | Lift a sign-in block after repeated failed attempts |
 | `POST /api/v1/school/users/import` | Up to 200 accounts at once, all or nothing. `generate_passwords: true` returns a generated password once per row that has none |
 | `POST /api/v1/auth/password` | Anyone signed in: change your own password with `current_password` and `new_password` |
 
-All changes need the `X-CSRF-Token` header. Another school's accounts return 404. You can't change your own role or status.
+All changes need the `X-CSRF-Token` header. Another school's accounts return 404. You can't change your own role, status or exam coordinator designation.
 
 ### School structure
 
@@ -101,7 +101,7 @@ Duplicate names, and deleting something still in use, return 409 with a message.
 | `GET` / `POST /api/v1/school/assignments`, `DELETE .../assignments/{id}` | Assign staff to arm + subject pairs (the arm's level must take the subject). Listing is for school admins |
 | `GET /api/v1/me/classes` | Anyone signed in: the arms you're enrolled in (with their subjects) and what you teach |
 
-Future exam and marking endpoints check `require_teaching(...)` in `app/school/access.py`: school admins, or teachers assigned to that arm and subject.
+Exam and marking endpoints check that the caller teaches the class and subject (`require_teaching(...)` in `app/school/access.py`, or the exam rules in `app/exams/access.py`).
 
 ### Question bank
 
@@ -127,7 +127,24 @@ Reading passages ("read the passage and answer the questions that follow") follo
 | `GET /api/v1/passages/{id}` | The passage with its latest version and `question_ids`: its active questions in the order written |
 | `GET` / `POST /api/v1/passages/{id}/versions` | Every version, or edit the passage by adding one |
 | `POST /api/v1/passages/{id}/archive`, `.../restore` | An archived passage takes no new questions |
-| `DELETE /api/v1/passages/{id}` | Refused (409) while any question belongs to it |
+| `DELETE /api/v1/passages/{id}` | Refused (409) while any question belongs to it or an exam uses it |
+
+### Exams
+
+A teacher (for classes they teach the subject to) or a school admin prepares a draft and submits it. An exam coordinator, or a school admin for a teacher's exam, publishes it or sends it back. Nobody approves their own exam. See [ADR 0003](../../docs/architecture/decisions/0003-exams.md), decisions 2 and 10. Every change needs `X-CSRF-Token`, and each exam's `allowed_actions` lists what you can do with it now.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/v1/exams` | Newest first. Filters: `status`, `subject_id`, `term_id`, `awaiting_my_approval=true`; paging with `limit` and `after`. Teachers see their own exams and those for classes they teach the subject to |
+| `POST /api/v1/exams` | Start a draft: `subject_id`, `term_id`, `arm_ids` (one level, the term's session), `title`, `instructions`, `duration_minutes` (1 to 600), `opens_at` and `closes_at` (with a timezone), and optional `max_attempts` (1), `shuffle_questions` (true), `shuffle_options` (true), `results_release` (`teacher` or `immediate`) |
+| `GET` / `PATCH` / `DELETE /api/v1/exams/{id}` | Read; change a draft's settings (author only); delete a draft (author or school admin) |
+| `PUT /api/v1/exams/{id}/arms` | Replace a draft's classes |
+| `PUT /api/v1/exams/{id}/items` | Replace a draft's ordered items: `[{"question_id": ...} or {"passage_id": ...}]`, up to 200. A passage brings all its active questions |
+| `GET /api/v1/exams/{id}/paper` | The paper with answers, total marks and, for a draft, `problems` that block submission |
+| `POST /api/v1/exams/{id}/submit` | Freeze the paper and send it for approval |
+| `POST /api/v1/exams/{id}/publish`, `.../return` | Approve it, or send it back as a draft with a `note` |
+| `POST /api/v1/exams/{id}/withdraw` | Withdraw a published exam before it opens, with a `note` giving the reason |
+| `POST /api/v1/exams/{id}/copy` | A new draft with the same settings and items; optionally another `term_id` with its `arm_ids` |
 
 ### Creating the first accounts
 

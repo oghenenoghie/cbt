@@ -86,7 +86,11 @@ def _session_info(db: Session, principal: SessionPrincipal) -> SessionInfo:
             csrf_token=principal.csrf_token,
             expires_at=principal.expires_at,
             user=UserSummary(
-                id=user.id, username=user.username, display_name=user.display_name, role=user.role
+                id=user.id,
+                username=user.username,
+                display_name=user.display_name,
+                role=user.role,
+                is_exam_coordinator=user.is_exam_coordinator,
             ),
             school=SchoolSummary(id=tenant.id, name=tenant.name, code=tenant.slug),
         )

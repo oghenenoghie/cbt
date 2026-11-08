@@ -9,6 +9,7 @@ from app.models.academic import (
 )
 from app.models.candidate import Candidate, CandidateExternalIdentity
 from app.models.classroom import Enrolment, TeachingAssignment
+from app.models.exams import Exam, ExamArm, ExamItem, ExamPaperItem
 from app.models.identity import AuthSession, LoginThrottle, PlatformAdmin, User
 from app.models.integration import ApiCredential, Integration, IntegrationScope
 from app.models.questions import (
@@ -31,6 +32,10 @@ __all__ = [
     "ClassLevel",
     "ClassLevelSubject",
     "Enrolment",
+    "Exam",
+    "ExamArm",
+    "ExamItem",
+    "ExamPaperItem",
     "Integration",
     "IntegrationScope",
     "LoginThrottle",

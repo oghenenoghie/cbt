@@ -82,6 +82,8 @@ class PassageVersion(Base):
     __tablename__ = "passage_versions"
     __table_args__ = (
         UniqueConstraint("passage_id", "version", name="uq_passage_versions_passage_id_version"),
+        # Target for exam papers, which pin passage versions (ADR 0003).
+        UniqueConstraint("id", "tenant_id", name="uq_passage_versions_id_tenant_id"),
         # Deleted with its passage, which can't happen while questions belong to it.
         ForeignKeyConstraint(
             ["passage_id", "tenant_id"],

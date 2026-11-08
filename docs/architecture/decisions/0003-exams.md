@@ -1,9 +1,10 @@
 # ADR 0003: Exams and the question bank
 
-- **Status:** Accepted (the question bank is built; exams follow in stages)
+- **Status:** Accepted (the question bank and exam builder are built; sitting exams and results follow)
 - **Date:** 2026-11-07 (decision 2 revised 2026-11-08: exam coordinators approve exams)
 - **Implemented in:**
   - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migrations `0006_question_bank` and `0007_passages`)
+  - exam builder and publishing: `backend/api/app/models/exams.py`, `backend/api/app/exams/`; the coordinator designation in `backend/api/app/accounts/` (migration `0008_exams`)
 
 ## Context
 
@@ -12,7 +13,7 @@ With the school foundation in place (ADRs 0001 and 0002), the next product step 
 The work is built in four stages, each its own change:
 
 - **A. Question bank:** single-answer multiple-choice and true/false questions, and reading passages with the questions that follow them, all versioned. (Built.)
-- **B. Exam builder and publishing:** a teacher or school admin prepares an exam for one or more arms and submits it; an exam coordinator (or, for a teacher's exam, a school admin) approves and publishes it, freezing a snapshot.
+- **B. Exam builder and publishing:** a teacher or school admin prepares an exam for one or more arms and submits it; an exam coordinator (or, for a teacher's exam, a school admin) approves and publishes it, freezing a snapshot. (Built.)
 - **C. Sitting an exam:** start and resume, a server-side timer, append-only answer events, submission and auto-grading.
 - **D. Results:** release, students' own results, and item analysis.
 
@@ -60,13 +61,27 @@ The work is built in four stages, each its own change:
    - A published exam (Exams B) pins the passage version current at publishing, alongside its question versions, so later edits to the passage don't reach it.
 9. **Archive rather than delete.**
    - An archived question isn't offered for new exams but stays for exams that already use it. It can be restored.
-   - Deleting removes a question and all its versions and tags. It will be refused (409) once an exam uses it.
+   - Deleting removes a question and all its versions and tags. It's refused (409) once an exam uses it.
    - A subject with questions can't be deleted, and nor can a topic that questions are tagged with.
+
+10. **How an exam moves from draft to published (Exams B).**
+   - An exam has one subject, one term, and one or more classes at one level in that term's session. The level must take the subject. Subject and term are fixed once created; copy the exam to change them.
+   - Its items are an ordered list of questions and passages. A passage brings all its active questions, in the order they were written. A question that belongs to a passage can't be added on its own. Only active items of the exam's subject can be added, each once.
+   - **Submitting freezes the paper**: every question is pinned to its current version (and its passage's version), with its marks, in order. The approver reviews exactly that paper. Changes to the bank afterwards don't reach it. Submission is refused, with the reasons, while an item is archived, a passage has no active questions, the exam is empty, the author no longer teaches every class, or the closing time has passed.
+   - **Returning** an exam needs a note, discards the frozen paper and makes it a draft again. **Publishing** makes the paper final; it's refused once the closing time has passed.
+   - **Withdrawing** needs a reason and is only possible before the exam opens. The author or anyone who could approve it can withdraw it. The withdrawn paper is kept for the record. **Copying** makes a new draft with the same settings and items, authored by whoever copies it, optionally for another term and its classes.
+   - Only drafts can be deleted, by their author or a school admin.
+   - **Who sees an exam:** school admins, exam coordinators, its author, and teachers who teach its subject to any of its classes. Students never see this side of an exam.
+   - The database backs this up. A published paper's rows can't be changed or removed. A submitted or published exam's settings, classes and items can't change. A question, passage, subject, term, level or class that an exam uses can't be deleted.
+   - A school admin can't change their own coordinator designation, just as they can't change their own role, so nobody grants themselves the right to approve exams.
 
 ## Consequences
 
 - Every bank change writes an audit entry (`question.created`, `revised`, `topics_set`, `archived`, `restored`, `deleted`, and the same `passage.*` actions apart from topics). Entries never copy question text, passage text or answers.
 - Questions and passages list newest first, with cursor paging (`next_after`). A teacher's list covers only subjects they teach.
+- Every exam change writes an audit entry (`exam.created`, `updated`, `arms_set`, `items_set`, `submitted`, `returned`, `published`, `withdrawn`, `copied`, `deleted`). Notes and reasons aren't copied into the audit log.
+- `allowed_actions` on each exam tells the interface what the signed-in person can do with it now. The server checks every action again.
+- Exams C will read the frozen paper, never the editable exam, so what students sit is always what was approved.
 - AI drafts (Phase 4) will arrive as drafts outside the bank. Approving one creates a question with its own `source`, so the bank only ever holds teacher-approved content.
 
 ## Still open

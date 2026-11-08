@@ -38,6 +38,8 @@ class UserSummary(BaseModel):
     username: str
     display_name: str
     role: str
+    # Can approve exams for publishing (ADR 0003).
+    is_exam_coordinator: bool
 
 
 class PlatformAdminSummary(BaseModel):
