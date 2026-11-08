@@ -51,6 +51,8 @@ npm run build
 | `src/app/(school)/account/` | Your details and changing your password |
 | `src/app/(school)/school/` | School setup, for school admins only (the layout explains this to anyone else) |
 | `src/app/(school)/(staff)/` | Screens for staff, school admins and teachers: the question bank (`/questions`), passages (`/passages`), exams (`/exams`, one exam at `/exams/view?id=…`) and approvals (`/approvals`). Students get an explanation instead |
+| `src/app/(school)/(student)/` | Screens for students: their exams (`/my-exams`) and results (`/my-results`, one at `/my-results/view?exam=…`). Staff get an explanation instead |
+| `src/app/(exam)/sit/` | Sitting an exam (`/sit?attempt=…`), outside the app shell so there's nothing to wander off to. Its own layout checks the person is a signed-in student |
 | `src/app/integrations/` | A static design preview, not connected to the API yet |
 | `src/components/AppShell.tsx` | Top bar, sign out, and role-based navigation (`src/lib/navigation.ts`) |
 | `src/components/` | Shared pieces: `Modal` and `ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, `SessionSelect`, `PasswordField`; `bank/` holds the question editor and other question bank pieces; `exams/` the exam settings fields, class picker and exam table |
@@ -135,6 +137,31 @@ Choices worth knowing:
 - The page addresses an exam as `/exams/view?id=…` rather than a dynamic route, so the screens stay
   compatible with a static export for the desktop app.
 
+### Student screens
+
+| Screen | What students do there |
+|---|---|
+| **My exams** (`/my-exams`) | Their published exams, open now, coming up and done; start one after a short briefing (time, questions, instructions, how the clock works), carry on with one already started, or open its result. Checks again every minute, so an exam that opens appears |
+| **Sitting** (`/sit?attempt=…`) | One question at a time, with its passage beside it, a numbered navigator showing what's answered, a countdown, and Hand in |
+| **My results** (`/my-results`) | Released scores, newest first; open one for the question-by-question review once the exam has closed |
+
+How sitting an exam behaves:
+
+- **The server owns the clock.** The countdown starts from the server's `seconds_left` and is measured
+  with the browser's monotonic clock, so a wrong computer clock or a sleeping tab doesn't change it. The
+  server refuses late answers whatever the screen shows.
+- **Answers save as they're chosen** (`useAnswerSaver`), one request at a time, the latest choice per
+  question winning. A failed save retries every three seconds; the bar says how many answers aren't
+  saved yet, and the browser warns before leaving the page with unsaved answers. Handing in is refused
+  while anything is unsaved, so nothing shown as chosen is lost.
+- **Resuming**: reopening the attempt (a reload, another computer) shows the saved answers, opens at the
+  first unanswered question, and the clock has kept running.
+- **When time runs out** the page stops taking answers, lets the last saves through, and waits for the
+  server to finish the attempt, so it's recorded as time running out rather than handed in. If the page
+  is closed, the server finishes the attempt anyway the next time anything reads it.
+- **Students never see answer keys.** The review shows their own answer marked right or wrong and the
+  marks, never which option was correct: the API doesn't send it.
+
 Pages under `(school)` are client components that fetch from the API, so they stay compatible with
 a static export for the offline desktop app later. Styling is plain CSS: design tokens and shared
 classes in `src/app/globals.css`, and CSS modules beside each page or component. System fonts only,
@@ -151,5 +178,5 @@ The screens are being built in stages, each its own pull request:
    1. **Question bank** (built): questions and passages.
    2. **Exams** (built): the exam builder, submitting, approvals, publishing, and who has started.
    3. **Results**: releasing results, class results, item analysis and marked scripts.
-4. **Students**: sitting exams (timer, autosave, resume) and their results. This may come before the
-   results screens, so the whole loop works in the browser sooner.
+4. **Students** (built): sitting exams (timer, autosave, resume) and their results. Built before the
+   staff results screens, so an exam can be run end to end in the browser.

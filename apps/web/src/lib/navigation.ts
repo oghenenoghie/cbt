@@ -1,10 +1,12 @@
 import {
+  Award,
   BookOpen,
   CalendarDays,
   ClipboardCheck,
   ClipboardList,
   FileQuestion,
   LayoutDashboard,
+  PencilLine,
   Presentation,
   School,
   ScrollText,
@@ -34,12 +36,19 @@ export interface NavGroup {
 
 const EVERYONE: SchoolRole[] = ["school_admin", "teacher", "student"];
 const STAFF: SchoolRole[] = ["school_admin", "teacher"];
+const STUDENTS: SchoolRole[] = ["student"];
 const ADMINS: SchoolRole[] = ["school_admin"];
 
 // Each role sees only the screens it can use. The API still checks every request: hiding a link
 // is a convenience, not access control.
 export const NAV_GROUPS: NavGroup[] = [
   { items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: EVERYONE }] },
+  {
+    items: [
+      { href: "/my-exams", label: "My exams", icon: PencilLine, roles: STUDENTS },
+      { href: "/my-results", label: "My results", icon: Award, roles: STUDENTS },
+    ],
+  },
   {
     label: "Exams",
     items: [

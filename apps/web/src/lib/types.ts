@@ -319,3 +319,97 @@ export interface AttemptSummary {
   score: number | null;
   max_score: number;
 }
+
+// --- Students: sitting exams and results -----------------------------------------------------
+// None of these carry answer keys or explanations: the API never sends them to students.
+
+export interface MyExam {
+  id: string;
+  title: string;
+  instructions: string | null;
+  subject_id: string;
+  subject_name: string;
+  opens_at: string;
+  closes_at: string;
+  duration_minutes: number;
+  question_count: number;
+  total_marks: number;
+  max_attempts: number;
+  attempts_used: number;
+  state: "upcoming" | "open" | "closed";
+  /** The attempt to resume, if one is under way. */
+  attempt_in_progress_id: string | null;
+  can_start: boolean;
+  /** Whether a result is available for you now. */
+  result_available: boolean;
+}
+
+export interface AttemptQuestion {
+  item_id: string;
+  number: number;
+  type: QuestionType;
+  stem: string;
+  /** In this student's order. */
+  options: QuestionOption[];
+  marks: number;
+  selected_option_ids: string[];
+}
+
+export interface AttemptBlock {
+  passage: { title: string; body: string } | null;
+  questions: AttemptQuestion[];
+}
+
+export interface Attempt {
+  id: string;
+  exam_id: string;
+  exam_title: string;
+  number: number;
+  status: "in_progress" | "submitted";
+  started_at: string;
+  ends_at: string;
+  /** The server's clock when it answered. */
+  server_now: string;
+  seconds_left: number;
+  submitted_at: string | null;
+  /** "student" or "time_up". */
+  submitted_reason: string | null;
+  question_count: number;
+  answered_count: number;
+  /** The paper while the attempt is in progress; empty once it's submitted. */
+  blocks: AttemptBlock[];
+}
+
+export interface MyResult {
+  exam_id: string;
+  exam_title: string;
+  subject_id: string;
+  subject_name: string;
+  closes_at: string;
+  attempt_id: string;
+  attempt_number: number;
+  attempts_used: number;
+  submitted_at: string;
+  submitted_reason: string;
+  score: number;
+  max_score: number;
+  percentage: number;
+  /** Whether the question-by-question review is available (results visible and the exam closed). */
+  review_available: boolean;
+}
+
+/** One of the student's own answers, marked right or wrong. Never the correct option. */
+export interface ReviewQuestion {
+  number: number;
+  type: QuestionType;
+  stem: string;
+  options: QuestionOption[];
+  selected_option_ids: string[];
+  is_correct: boolean;
+  score: number;
+  marks: number;
+}
+
+export interface MyResultDetail extends MyResult {
+  blocks: { passage: { title: string; body: string } | null; questions: ReviewQuestion[] }[];
+}
