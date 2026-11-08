@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const capabilities = [
   {
     title: "Learning materials",
@@ -42,6 +44,9 @@ export default function HomePage() {
         </div>
         <strong>Intelligent CBT</strong>
         <span style={{ color: "#667085", fontSize: 13 }}>Platform foundation</span>
+        <Link href="/sign-in" className="btn btn-primary" style={{ marginLeft: "auto" }}>
+          Sign in
+        </Link>
       </div>
 
       <section style={{ maxWidth: 760, marginBottom: 44 }}>

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
 
-**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, and a basic exam workflow is complete through the API):** only `backend/api` contains working code. It has:
+**Current state (Phase 2 of the delivery plan in `docs/product/requirements.md` is nearly done, a basic exam workflow is complete through the API, and the web app has started):** `backend/api` has:
 - tenant and integration persistence, with API-key authentication and `GET /api/v1/integrations/me`;
 - the identity tables (users, platform admins, sessions, candidates);
 - sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
@@ -18,7 +18,7 @@ Intelligent CBT: a computer-based testing platform for schools, with two clients
 - sitting exams (`/api/v1/me/exams`, `/api/v1/me/attempts`): start or resume within the window, a server-side clock, append-only answers, submission or time-up, automatic marking, and `GET /api/v1/exams/{id}/attempts` for staff;
 - results: release by the teacher after closing (or immediately), students' own scores and right/wrong review (`/api/v1/me/results`), and for staff class results, item analysis and marked scripts.
 
-The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results (built). There are no web screens for any of it yet: the API is the only way in. `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank). Apart from integration management, Phase 2's school foundation is in place. The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results (built). The web app (`apps/web`) so far has sign-in, the signed-in shell, a dashboard and the account page; the remaining screens are being built in stages (`apps/web/README.md`). `backend/ai-engine`, `document-engine` and `diagram-engine` are README-only specs. `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The web Integrations page is a static design preview, and the desktop app is a bare window.
 
 For domain detail on each area (tenancy and roles, the materials → questions → exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
 
@@ -52,7 +52,9 @@ New migration: with the database at head, `alembic revision --autogenerate --rev
 
 ### Web and desktop
 
-`apps/web`: `npm run dev | build | lint | typecheck`. `apps/desktop`: `npm run build` (tsc to `dist/`), then `npm run dev` loads `WEB_APP_URL` (default `http://localhost:3000`). No lockfiles are committed and neither app is built in CI, so these scripts are unverified. A packaged desktop build loads `../../web/out/index.html`, which nothing produces yet: Next.js is not configured for static export, and that path is outside electron-builder's `files`.
+`apps/web` (Node 22; `npm ci` from the committed lockfile): `npm run dev | build | start | lint | typecheck`. CI (`.github/workflows/web.yml`) runs lint, typecheck and build. The web server forwards `/api/*` to the API at `API_ORIGIN` (default `http://localhost:8000`), so run the API on port 8000 alongside `npm run dev`. The browser only talks to the web app's origin: keep it that way, so the HttpOnly session cookie stays first-party. The CSRF token lives in memory only (`src/lib/api.ts`, `src/lib/session.tsx`). Signed-in pages live under `src/app/(school)/` as client components that fetch from the API; the API is still the access control. Details: `apps/web/README.md`.
+
+`apps/desktop`: `npm run build` (tsc to `dist/`), then `npm run dev` loads `WEB_APP_URL` (default `http://localhost:3000`). It has no lockfile and isn't built in CI, so those scripts are unverified. A packaged desktop build loads `../../web/out/index.html`, which nothing produces yet: Next.js is not configured for static export (and the `/api` rewrite only works with `next dev`/`next start`), and that path is outside electron-builder's `files`.
 
 ## Backend architecture
 
