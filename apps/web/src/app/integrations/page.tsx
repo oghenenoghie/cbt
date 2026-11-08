@@ -1,5 +1,7 @@
 import "./integrations.css";
 
+import Link from "next/link";
+
 import {
   Activity,
   ArrowDownToLine,
@@ -36,9 +38,9 @@ export default function IntegrationsPage() {
       <aside className="integration-sidebar">
         <div className="brand-lockup"><span className="brand-mark">C</span><span>Intelligent CBT</span></div>
         <p className="sidebar-label">WORKSPACE</p>
-        <a className="sidebar-link" href="/">Overview</a>
+        <Link className="sidebar-link" href="/">Overview</Link>
         <a className="sidebar-link" href="#connected-apps">Connected apps</a>
-        <a className="sidebar-link active" href="/integrations"><Cable size={17} /> Integrations</a>
+        <Link className="sidebar-link active" href="/integrations"><Cable size={17} /> Integrations</Link>
         <a className="sidebar-link" href="#developer-tools"><Code2 size={17} /> Developer tools</a>
         <div className="sidebar-bottom"><span className="avatar">SC</span><div><strong>School workspace</strong><small>Administrator view</small></div></div>
       </aside>

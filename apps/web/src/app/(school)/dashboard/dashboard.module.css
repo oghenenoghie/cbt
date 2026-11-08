@@ -1,0 +1,40 @@
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.row:first-child {
+  border-top: none;
+}
+
+.row :global(.badge) {
+  margin-left: 8px;
+}
+
+.icon {
+  flex: none;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+.subjects {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}

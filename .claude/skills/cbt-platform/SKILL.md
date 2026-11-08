@@ -24,12 +24,12 @@ Positioning (web landing page): *examinations built from your school's learning 
 | Phase (from `docs/product/requirements.md`) | Status |
 |---|---|
 | 1. Repository foundation, contracts, local dev | Mostly done: tenant/integration tables, API-key auth, `/api/v1/integrations/me`, CI on SQLite and PostgreSQL, Docker Compose PostgreSQL 17 + pgvector. Missing: `packages/` |
-| 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1); sign-in with cookie sessions, CSRF, role checks and throttling (part 2); account management (part 3); school structure, meaning sessions, terms, levels, arms, subjects and topics (part 4); enrolment and teaching assignments (part 5); see ADRs 0001 and 0002. Remaining: school profile editing, departments, integration management |
+| 2. Authentication, school tenancy, academic setup | **In progress.** Done: identity tables (part 1); sign-in with cookie sessions, CSRF, role checks and throttling (part 2); account management (part 3); school structure, meaning sessions, terms, levels, arms, subjects and topics (part 4); enrolment and teaching assignments (part 5); see ADRs 0001 and 0002. Web: sign-in, the signed-in shell, dashboard and account (`apps/web`, Web A). Remaining: the school setup screens, school profile editing, departments, integration management |
 | 3. Document upload, extraction, OCR, approval | Not started (spec: `backend/document-engine/README.md`) |
 | 4. Retrieval and evidence-grounded AI drafts | Not started (spec: `backend/ai-engine/README.md`) |
 | 5. Question bank, teacher review, exam builder | **Done** (ADR 0003): the question bank and passages (Exams A), and the exam builder with coordinator-approved publishing (Exams B) |
 | 6. Diagram generation and visual question types | Not started (spec: `backend/diagram-engine/README.md`) |
-| 7. Online exam delivery, grading, reporting | **Done through the API** (ADR 0003): sitting exams with automatic marking (Exams C), results release, students' results and staff reports (Exams D). No web screens yet |
+| 7. Online exam delivery, grading, reporting | **Done through the API** (ADR 0003): sitting exams with automatic marking (Exams C), results release, students' results and staff reports (Exams D). Web screens for these follow the school setup screens (`apps/web/README.md`) |
 | 8. Electron desktop shell and offline exam package | Bare window only (`apps/desktop/src/main.ts`) |
 | 9. Synchronization, school LAN mode, packaging, hardening | Not started |
 
