@@ -133,3 +133,73 @@ export interface Assignment {
   subject_id: string;
   subject_name: string;
 }
+
+// --- Question bank (school admins, and teachers of the subject) ---------------------------------
+
+export type QuestionType = "mcq_single" | "true_false";
+export type Difficulty = "easy" | "medium" | "hard";
+export type BankStatus = "active" | "archived";
+
+export interface QuestionOption {
+  id: string;
+  text: string;
+}
+
+/** One version of a question, as staff see it: the answer key is included. */
+export interface QuestionVersion {
+  version: number;
+  type: QuestionType;
+  stem: string;
+  options: QuestionOption[];
+  correct_option_ids: string[];
+  explanation: string | null;
+  marks: number;
+  difficulty: Difficulty | null;
+  created_by_id: string | null;
+  created_at: string;
+}
+
+export interface Question {
+  id: string;
+  subject_id: string;
+  passage_id: string | null;
+  status: BankStatus;
+  /** "manual" for now; AI drafts will add their own source. */
+  source: string;
+  topic_ids: string[];
+  latest_version: number;
+  latest: QuestionVersion;
+  created_at: string;
+  updated_at: string;
+}
+
+/** What a teacher writes: `correct` is the right option's position, or true/false. */
+export interface QuestionContent {
+  type: QuestionType;
+  stem: string;
+  options: string[] | null;
+  correct: number | boolean;
+  explanation: string | null;
+  marks: number;
+  difficulty: Difficulty | null;
+}
+
+export interface PassageVersion {
+  version: number;
+  title: string;
+  body: string;
+  created_by_id: string | null;
+  created_at: string;
+}
+
+export interface Passage {
+  id: string;
+  subject_id: string;
+  status: BankStatus;
+  latest_version: number;
+  latest: PassageVersion;
+  /** Its active questions, in the order they were written. */
+  question_ids: string[];
+  created_at: string;
+  updated_at: string;
+}

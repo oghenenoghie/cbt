@@ -19,3 +19,22 @@ export function formatRange(start: string | null, end: string | null): string {
 export function count(n: number, singular: string, plural = `${singular}s`): string {
   return `${n} ${n === 1 ? singular : plural}`;
 }
+
+/**
+ * An API timestamp as a Date. The API keeps every time in UTC, but on SQLite (local development) it
+ * can send one without its zone, which the browser would otherwise read as local time.
+ */
+export function parseTimestamp(iso: string): Date {
+  return new Date(/(Z|[+-]\d\d:?\d\d)$/i.test(iso) ? iso : `${iso}Z`);
+}
+
+/** "3 Nov 2026, 14:05" from an API timestamp, in the reader's time zone. */
+export function formatDateTime(iso: string): string {
+  return parseTimestamp(iso).toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

@@ -50,10 +50,11 @@ npm run build
 | `src/app/(school)/dashboard/` | Greeting, your classes (`/me/classes`), and for admins a checklist of setup still to do |
 | `src/app/(school)/account/` | Your details and changing your password |
 | `src/app/(school)/school/` | School setup, for school admins only (the layout explains this to anyone else) |
+| `src/app/(school)/(staff)/` | Screens for staff, school admins and teachers: the question bank (`/questions`) and passages (`/passages`). Students get an explanation instead |
 | `src/app/integrations/` | A static design preview, not connected to the API yet |
 | `src/components/AppShell.tsx` | Top bar, sign out, and role-based navigation (`src/lib/navigation.ts`) |
-| `src/components/` | Shared pieces: `Modal` and `ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, `SessionSelect`, `PasswordField` |
-| `src/lib/` | The API client, session context, `useApi` (loading) and `useAction` (changes), shared types and helpers |
+| `src/components/` | Shared pieces: `Modal` and `ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, `SessionSelect`, `PasswordField`; `bank/` holds the question editor and other question bank pieces |
+| `src/lib/` | The API client (`api`, and `listAll` for every page of a listing), session context, `useApi` and `useLoader` (loading), `usePagedList` (newest-first lists with "Show more"), `useAction` (changes), shared types and helpers |
 
 ### School setup screens
 
@@ -81,6 +82,32 @@ Choices worth knowing:
 - **All-or-nothing errors** (`{"detail": {"message", "errors": [{row, message}]}}`) become an `ApiError` with
   `rows`, which `ErrorAlert` lists.
 
+### Question bank screens
+
+School admins can use every subject's question bank; teachers can use the subjects they're assigned to
+teach, in any session (`useBankSubjects` in `src/lib/bank.ts` follows the API's rule, and the API checks
+it again). The subject, topic, passage and active/archived filters are kept in the address.
+
+| Screen | What staff do there |
+|---|---|
+| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write multiple-choice (2 to 6 options, one right answer) and true/false questions with marks, difficulty, topics and an explanation; open one to see its answer, edit it, see earlier versions, archive, restore or delete it |
+| **Passages** (`/passages`) | List a subject's reading passages; add and edit them; see the questions about one and write more; archive, restore or delete |
+
+Choices worth knowing:
+
+- **Editing a question or passage saves a new version**; the editor says which, and earlier versions are
+  listed under the item. Changing only a question's topics doesn't add a version. Saving with nothing
+  changed is disabled.
+- **The answer key is on screen.** These screens show the right answer and explanation, so they are for
+  staff only. Nothing here is reused for students: their screens, built later, get their own components.
+- **A question's passage is chosen when it's written** and can't change later (the API's rule). Writing a
+  question from a passage fixes it; from the question bank it's a choice among the subject's active passages.
+- **Closing an editor with unsaved changes asks first**, so pressing Escape doesn't lose a question.
+- **Changes update the list in place** (`usePagedList`'s `replace` and `remove`), so archiving something on
+  the third page doesn't send you back to the first.
+- **The editor checks what the API would refuse** (a right answer chosen, options all different) and says
+  so in its own words; the API checks again.
+
 Pages under `(school)` are client components that fetch from the API, so they stay compatible with
 a static export for the offline desktop app later. Styling is plain CSS: design tokens and shared
 classes in `src/app/globals.css`, and CSS modules beside each page or component. System fonts only,
@@ -93,5 +120,9 @@ The screens are being built in stages, each its own pull request:
 1. **Foundation** (built): sign-in, the signed-in shell, dashboard and account.
 2. **School setup** (built) for school admins: accounts (including exam coordinators and bulk
    import), sessions and terms, classes, subjects and topics, enrolment and teaching assignments.
-3. **Teaching**: the question bank and passages, the exam builder, approvals, and results reports.
-4. **Students**: sitting exams (timer, autosave, resume) and their results.
+3. **Teaching**, in three parts:
+   1. **Question bank** (built): questions and passages.
+   2. **Exams**: the exam builder, submitting, approvals, publishing, and who has started.
+   3. **Results**: releasing results, class results, item analysis and marked scripts.
+4. **Students**: sitting exams (timer, autosave, resume) and their results. This may come before the
+   results screens, so the whole loop works in the browser sooner.
