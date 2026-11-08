@@ -140,6 +140,37 @@ def test_list_shows_own_school_filtered_and_paged(admin, make_tenant, make_user)
     assert second["next_after"] is None
 
 
+def test_search_matches_username_or_name_ignoring_case(admin, make_tenant, make_user) -> None:
+    make_user(tenant=admin.school, username="jss1a-001", display_name="Amaka Obi", role="student")
+    make_user(tenant=admin.school, username="jss1a-002", display_name="Tunde Bello", role="student")
+    make_user(tenant=admin.school, username="mrs.obi", display_name="Grace Obi", role="teacher")
+    make_user(tenant=make_tenant(), username="obi", display_name="Obi Elsewhere")
+
+    def found(**params) -> list[str]:
+        return [u["username"] for u in admin.client.get(USERS, params=params).json()["users"]]
+
+    assert found(q="OBI") == ["jss1a-001", "mrs.obi"]  # name or username, any case
+    assert found(q="  jss1a ") == ["jss1a-001", "jss1a-002"]  # trimmed
+    assert found(q="obi", role="teacher") == ["mrs.obi"]  # combines with filters
+    assert found(q="obi", limit=1) == ["jss1a-001"]
+    page = admin.client.get(USERS, params={"q": "obi", "limit": 1}).json()
+    after = admin.client.get(USERS, params={"q": "obi", "after": page["next_after"]}).json()
+    assert [u["username"] for u in after["users"]] == ["mrs.obi"]
+    assert found(q="   ") == ["head", "jss1a-001", "jss1a-002", "mrs.obi"]  # blank: no filter
+
+
+def test_search_treats_wildcards_as_plain_characters(admin, make_user) -> None:
+    make_user(tenant=admin.school, username="ada_lovelace", display_name="Ada", role="teacher")
+    make_user(tenant=admin.school, username="adaxlovelace", display_name="Ada X", role="teacher")
+
+    def found(q: str) -> list[str]:
+        return [u["username"] for u in admin.client.get(USERS, params={"q": q}).json()["users"]]
+
+    assert found("a_l") == ["ada_lovelace"]
+    assert found("%") == []
+    assert admin.client.get(USERS, params={"q": "x" * 101}).status_code == 422
+
+
 def test_responses_never_include_password_hashes(admin, make_user) -> None:
     make_user(tenant=admin.school, username="amy", password=TEST_PASSWORD)
 

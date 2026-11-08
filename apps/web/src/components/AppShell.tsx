@@ -18,7 +18,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const items = navFor(user.role);
+  const groups = navFor(user.role);
 
   // Close the phone menu after navigating.
   useEffect(() => setMenuOpen(false), [pathname]);
@@ -71,20 +71,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           aria-label="Main"
           className={`${styles.nav} ${menuOpen ? styles.navOpen : ""}`}
         >
-          {items.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(`${href}/`);
-            return (
-              <Link
-                key={href}
-                href={href}
-                className={`${styles.navLink} ${active ? styles.active : ""}`}
-                aria-current={active ? "page" : undefined}
-              >
-                <Icon size={18} aria-hidden="true" />
-                {label}
-              </Link>
-            );
-          })}
+          {groups.map((group, index) => (
+            <div key={group.label ?? index} className={styles.navGroup}>
+              {group.label && <span className={styles.navLabel}>{group.label}</span>}
+              {group.items.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(`${href}/`);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`${styles.navLink} ${active ? styles.active : ""}`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <Icon size={18} aria-hidden="true" />
+                    {label}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
         <main className={styles.content}>{children}</main>
       </div>

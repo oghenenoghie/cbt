@@ -7,6 +7,7 @@ import type { MyClasses } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
 
 import styles from "./dashboard.module.css";
+import { SetupChecklist } from "./SetupChecklist";
 
 function greeting(): string {
   const hour = new Date().getHours();
@@ -27,7 +28,7 @@ function ClassesCard() {
   const { user } = useSignedIn();
   const classes = useApi<MyClasses>("/me/classes");
 
-  if (classes.status === "loading") {
+  if (classes.status === "loading" || classes.status === "idle") {
     return (
       <section className="card" aria-busy="true">
         <h2>Your classes</h2>
@@ -68,8 +69,7 @@ function ClassesCard() {
             <li key={row.arm_id} className={styles.row}>
               <GraduationCap size={20} className={styles.icon} aria-hidden="true" />
               <div>
-                <strong>{row.arm_name}</strong>{" "}
-                <span className="muted">· {row.session.name}</span>
+                <strong>{row.arm_name}</strong> <span className="muted">· {row.session.name}</span>
                 {row.session.is_current && <span className="badge badge-primary">Current</span>}
                 <p className={styles.subjects}>
                   {row.subjects.length
@@ -108,6 +108,7 @@ export default function DashboardPage() {
       </h1>
       <p className="page-intro">{school.name}</p>
       <div className={styles.grid}>
+        {user.role === "school_admin" && <SetupChecklist />}
         <ClassesCard />
       </div>
     </>

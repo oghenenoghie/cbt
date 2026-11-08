@@ -64,7 +64,7 @@ People sign in with a server-side session cookie. Integrations use API keys inst
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/v1/school/users` | Accounts at your school, ordered by username. Filters: `role`, `status`, `exam_coordinator`; paging: `limit`, `after` (the previous page's `next_after`) |
+| `GET /api/v1/school/users` | Accounts at your school, ordered by username. Filters: `role`, `status`, `exam_coordinator`, and `q` (username or name contains, ignoring case); paging: `limit`, `after` (the previous page's `next_after`) |
 | `POST /api/v1/school/users` | Create an account: `username`, `display_name`, `role`, optional `email` and `password` |
 | `GET` / `PATCH /api/v1/school/users/{id}` | Read, or change `display_name`, `email`, `role`, `status` (`active` or `disabled`) and `is_exam_coordinator` (staff only) |
 | `POST /api/v1/school/users/{id}/password` | Set a new password (ends the user's sessions and lifts any sign-in block) |
