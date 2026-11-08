@@ -47,11 +47,39 @@ npm run build
 | `src/app/page.tsx` | The public landing page |
 | `src/app/sign-in/` | Sign-in with school code, username and password (`?next=` returns you to the page you wanted) |
 | `src/app/(school)/layout.tsx` | Everything signed-in: redirects to sign-in when there's no session, and wraps pages in `AppShell` |
-| `src/app/(school)/dashboard/` | Greeting and your classes (`/me/classes`) |
+| `src/app/(school)/dashboard/` | Greeting, your classes (`/me/classes`), and for admins a checklist of setup still to do |
 | `src/app/(school)/account/` | Your details and changing your password |
+| `src/app/(school)/school/` | School setup, for school admins only (the layout explains this to anyone else) |
 | `src/app/integrations/` | A static design preview, not connected to the API yet |
 | `src/components/AppShell.tsx` | Top bar, sign out, and role-based navigation (`src/lib/navigation.ts`) |
-| `src/lib/` | The API client, session context, `useApi` loader and shared types |
+| `src/components/` | Shared pieces: `Modal` and `ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, `SessionSelect`, `PasswordField` |
+| `src/lib/` | The API client, session context, `useApi` (loading) and `useAction` (changes), shared types and helpers |
+
+### School setup screens
+
+| Screen | What admins do there |
+|---|---|
+| **Accounts** (`/school/accounts`) | Search and filter accounts; add one; manage one (details, exam coordinator, password, sign-in block, disable); import up to 200 from a CSV |
+| **Sessions and terms** (`/school/calendar`) | Create sessions (the first becomes current), mark one current, edit and delete sessions and terms |
+| **Classes** (`/school/classes`) | Class levels in order, and each level's arms per session; copy last session's arms into a new one |
+| **Subjects** (`/school/subjects`) | Subjects with codes, the levels that take them, and their topics in order |
+| **Enrolment** (`/school/enrolment`) | A class's students: add (search and pick), move to another arm, remove |
+| **Teaching** (`/school/teaching`) | Assign a teacher to a class and subject (only subjects the class's level takes), filter and remove |
+
+Choices worth knowing:
+
+- **Passwords an admin sets** are shown in plain text, with a "Suggest" button that follows the API's own
+  generator (`src/lib/passwords.ts`). After a password is set, it is shown once with the school code and
+  username, then not again. Imports with generated passwords offer a CSV download of them and warn
+  before the dialog closes without one.
+- **CSV import** is parsed in the browser (`src/lib/csv.ts`) and previewed first. It accepts a header row in
+  any column order, or no header in the order `username, name, role, email, password`. Downloaded files guard
+  against spreadsheet formulas. Nothing is created unless every row is valid (the API's rule), and the API's
+  row errors are shown against the row and username.
+- **Selections are kept in the address** (`?session=…&arm=…`, `src/lib/useQueryParams.ts`), so a link or a
+  reload opens the same class.
+- **All-or-nothing errors** (`{"detail": {"message", "errors": [{row, message}]}}`) become an `ApiError` with
+  `rows`, which `ErrorAlert` lists.
 
 Pages under `(school)` are client components that fetch from the API, so they stay compatible with
 a static export for the offline desktop app later. Styling is plain CSS: design tokens and shared
@@ -62,8 +90,8 @@ so pages render on school networks without internet access.
 
 The screens are being built in stages, each its own pull request:
 
-1. **Foundation** (this stage): sign-in, the signed-in shell, dashboard and account.
-2. **School setup** for school admins: accounts (including exam coordinators and bulk import),
-   sessions and terms, classes, subjects and topics, enrolment and teaching assignments.
+1. **Foundation** (built): sign-in, the signed-in shell, dashboard and account.
+2. **School setup** (built) for school admins: accounts (including exam coordinators and bulk
+   import), sessions and terms, classes, subjects and topics, enrolment and teaching assignments.
 3. **Teaching**: the question bank and passages, the exam builder, approvals, and results reports.
 4. **Students**: sitting exams (timer, autosave, resume) and their results.

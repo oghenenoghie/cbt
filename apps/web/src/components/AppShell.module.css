@@ -79,6 +79,25 @@
   gap: 2px;
 }
 
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navGroup + .navGroup {
+  margin-top: 14px;
+}
+
+.navLabel {
+  padding: 0 12px 4px;
+  color: var(--subtle);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .navLink {
   display: flex;
   align-items: center;
@@ -123,6 +142,8 @@
     border-right: none;
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow);
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
   }
 
   .navOpen {

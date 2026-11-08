@@ -175,12 +175,13 @@ def make_user(db: Session, make_tenant: Callable[..., Tenant]) -> Callable[..., 
         role: str = "teacher",
         status: str = "active",
         password: str | None = None,
+        display_name: str = "Synthetic User",
     ) -> User:
         tenant = tenant or make_tenant()
         user = User(
             tenant_id=tenant.id,
             username=username or f"user-{uuid4().hex[:8]}",
-            display_name="Synthetic User",
+            display_name=display_name,
             role=role,
             status=status,
             password_hash=cached_password_hash(password) if password else None,

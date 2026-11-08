@@ -5,7 +5,7 @@ at another school is treated as not found (404), so IDs can't be probed across s
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from app.accounts.schemas import (
@@ -117,6 +117,11 @@ def list_users(
     role: SchoolRole | None = None,
     account_status: AccountStatus | None = Query(default=None, alias="status"),
     exam_coordinator: bool | None = None,
+    q: str | None = Query(
+        default=None,
+        max_length=100,
+        description="Only accounts whose username or name contains this, ignoring case.",
+    ),
     after: str | None = Query(default=None, description="The `next_after` of the previous page."),
     limit: int = Query(default=50, ge=1, le=200),
     principal: SessionPrincipal = Depends(read_access),
@@ -130,6 +135,15 @@ def list_users(
         query = query.where(User.status == account_status)
     if exam_coordinator is not None:
         query = query.where(User.is_exam_coordinator == exam_coordinator)
+    if q and q.strip():
+        term = q.strip()
+        # autoescape: a typed % or _ matches itself, not any characters.
+        query = query.where(
+            or_(
+                User.username.icontains(term, autoescape=True),
+                User.display_name.icontains(term, autoescape=True),
+            )
+        )
     if after:
         query = query.where(User.username > normalize_username(after))
     users = db.scalars(query.order_by(User.username).limit(limit + 1)).all()

@@ -1,0 +1,97 @@
+.levels {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.levels li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.addInline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  max-width: 420px;
+}
+
+.addInline input {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.armsHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.armsHead :global(.field) {
+  min-width: 200px;
+}
+
+.copy {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface-muted);
+}
+
+.copy select {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.levelBlocks {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr));
+}
+
+.levelBlock {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+}
+
+.levelBlock h3 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.arms {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.arms li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+  padding: 4px 0;
+}
+
+.armName {
+  font-weight: 600;
+}
