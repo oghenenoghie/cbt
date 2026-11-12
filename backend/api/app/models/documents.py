@@ -34,9 +34,9 @@ from app.models.tenant import utc_now
 # queued → processing → extracted (or failed); extracted → approved or rejected.
 VERSION_STATUSES = ("queued", "processing", "extracted", "failed", "approved", "rejected")
 # What the file turned out to be, from its content (not its name).
-FILE_KINDS = ("pdf", "docx", "txt")
+FILE_KINDS = ("pdf", "docx", "pptx", "xlsx", "csv", "txt", "jpeg", "png")
 # Where a segment of text came from.
-SEGMENT_KINDS = ("page", "section", "lines")
+SEGMENT_KINDS = ("page", "section", "slide", "sheet", "rows", "lines", "image")
 
 
 class Document(Base):
@@ -107,7 +107,10 @@ class DocumentVersion(Base):
             "status IN ('queued', 'processing', 'extracted', 'failed', 'approved', 'rejected')",
             name="ck_document_versions_status",
         ),
-        CheckConstraint("kind IN ('pdf', 'docx', 'txt')", name="ck_document_versions_kind"),
+        CheckConstraint(
+            "kind IN ('pdf', 'docx', 'pptx', 'xlsx', 'csv', 'txt', 'jpeg', 'png')",
+            name="ck_document_versions_kind",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
@@ -168,7 +171,10 @@ class DocumentSegment(Base):
             name="fk_document_segments_version_same_tenant",
         ),
         CheckConstraint("position >= 1", name="ck_document_segments_position"),
-        CheckConstraint("kind IN ('page', 'section', 'lines')", name="ck_document_segments_kind"),
+        CheckConstraint(
+            "kind IN ('page', 'section', 'slide', 'sheet', 'rows', 'lines', 'image')",
+            name="ck_document_segments_kind",
+        ),
         CheckConstraint("method IN ('text', 'ocr')", name="ck_document_segments_method"),
     )
 
@@ -179,18 +185,21 @@ class DocumentSegment(Base):
     version_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
     # Order within the version, from 1.
     position: Mapped[int] = mapped_column(Integer, nullable=False)
-    # "page" (PDF page `number`), "section" (Word section `number`, headed `label`) or "lines"
-    # (a text file from line `number`).
+    # Where it is: "page" (PDF page `number`), "section" (Word section `number`, headed `label`),
+    # "slide" (PowerPoint slide `number`, titled `label`), "sheet" (Excel sheet `number`, named in
+    # `label` with its rows when split), "rows" (CSV from row `number`), "lines" (a text file
+    # from line `number`) or "image" (a photo).
     kind: Mapped[str] = mapped_column(String(10), nullable=False)
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     # The heading or chapter it falls under, when the file has one.
     label: Mapped[str | None] = mapped_column(String(300), nullable=True)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     char_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    # "text" from the file's own text; "ocr" read from an image (later, with a confidence).
+    # "text" from the file's own text; "ocr" read from a picture, with Tesseract's confidence (0-1).
     method: Mapped[str] = mapped_column(String(10), default="text", nullable=False)
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
-    # Problems with this part, e.g. ["no_text"] for a page that looks scanned.
+    # Problems with this part: "no_text" (nothing readable, so never used) or "low_confidence"
+    # (read by OCR with low confidence: shown for review, never used as AI evidence).
     flags: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
 
 

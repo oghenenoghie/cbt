@@ -7,7 +7,7 @@ import { ErrorAlert } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
 import { count, formatDateTime } from "@/lib/format";
-import { FILE_KINDS, formatBytes, VERSION_STATES } from "@/lib/materials";
+import { FILE_KINDS, formatBytes, PART_NAMES, VERSION_STATES } from "@/lib/materials";
 import { useSignedIn } from "@/lib/session";
 import type { DocumentVersion, LearningDocumentDetail } from "@/lib/types";
 import { useAction } from "@/lib/useAction";
@@ -145,7 +145,7 @@ export function VersionReview({
             <>
               <dt>Text read</dt>
               <dd>
-                {count(version.segment_count, version.kind === "pdf" ? "page" : "part")},{" "}
+                {count(version.segment_count, PART_NAMES[version.kind] ?? "part")},{" "}
                 {count(version.char_count ?? 0, "character")}
               </dd>
             </>

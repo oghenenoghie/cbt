@@ -1,6 +1,6 @@
 # Assessment pipeline: materials → questions → exams → results
 
-The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) have started: the API (stage A) and web screens (stage D) are built (ADR 0004). AI drafts (section 2) are built through the API and the web app (ADR 0005, stages A and B). Authoritative sources:
+The question bank, exam builder (section 3), sitting exams and results (section 5) are built, through the API and the web app. Learning materials (section 1) are built, OCR included (ADR 0004, stages A to D). AI drafts (section 2) are built through the API and the web app (ADR 0005, stages A and B). Authoritative sources:
 - `docs/architecture/overview.md` §2 (AI pipeline), §3 (diagrams), §5 (entity separation)
 - `docs/product/requirements.md`: "Learning material management", "AI-assisted question authoring", "Visual assessment", "Examination", "Acceptance rule for AI questions"
 - `backend/document-engine/README.md`, `backend/ai-engine/README.md`, `backend/diagram-engine/README.md`
@@ -16,9 +16,9 @@ The question bank, exam builder (section 3), sitting exams and results (section 
 
 ## 1. Learning materials (Phase 3)
 
-**Inputs:** PDF (including scanned), DOCX, PPTX, XLSX, CSV, TXT, JPG/JPEG, PNG. Tooling: pypdfium2 for PDF (not PyMuPDF: its AGPL licence), python-docx, then python-pptx and openpyxl, and Tesseract for OCR (ADR 0004).
+**Inputs:** PDF (including scanned), DOCX, PPTX, XLSX, CSV, TXT, JPG/JPEG, PNG. Tooling: pypdfium2 for PDF (not PyMuPDF: its AGPL licence), python-docx, python-pptx, openpyxl (with defusedxml), Pillow, and Tesseract for OCR (ADR 0004).
 
-**Built (Docs A, `app/documents/`, `/api/v1/documents`; ADR 0004):** subject staff (admins, and teachers of the subject) upload, review and approve, including their own uploads; materials are shared within the subject. PDF with a text layer, Word and text are extracted into immutable `DocumentSegment`s with `kind`/`number`/`label` provenance and `no_text` flags; versions carry warnings, and approving needs them acknowledged. Processing is queued on `DocumentVersion.status` and run by `python -m app.worker` (or inline in development). The newest approved version of an active document is the evidence Phase 4 may use.
+**Built (Docs A, `app/documents/`, `/api/v1/documents`; ADR 0004):** subject staff (admins, and teachers of the subject) upload, review and approve, including their own uploads; materials are shared within the subject. PDF, Word, PowerPoint (with speaker notes), Excel (visible sheets only), CSV, text and photos are extracted into immutable `DocumentSegment`s with `kind`/`number`/`label` provenance and `no_text` flags; scanned pages, photos and picture-only slides are read by Tesseract with a `confidence`, and `low_confidence` parts are shown for review but never used as AI evidence; versions carry warnings, and approving needs them acknowledged. Processing is queued on `DocumentVersion.status` and run by `python -m app.worker` (or inline in development). The newest approved version of an active document is the evidence Phase 4 may use.
 
 **Stages**, in order:
 1. Validate file type, size (configurable limits), malware and upload ownership.

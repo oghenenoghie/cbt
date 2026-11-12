@@ -2,7 +2,8 @@
 
 Only the newest approved version of each active document in the request's subject, in the
 requester's school, is ever searched; a request can narrow that to some documents. Parts with no
-readable text are left out. When the request names topics or a learning objective, the parts are
+readable text are left out, and so are parts read from a picture (OCR) with low confidence: the
+reviewer saw them, but they may be misread, so they are never evidence. When the request names topics or a learning objective, the parts are
 ranked by how well they match those words (BM25, the ranking classic search engines use) and
 only parts that match are used; otherwise the documents are used in order. Either way the
 evidence stops at a size limit, so a request's cost stays predictable.
@@ -40,9 +41,11 @@ class Evidence:
 @dataclass
 class Retrieval:
     sources: list[Evidence]
-    # Readable parts in scope, and parts left out because they had no readable text.
+    # Readable parts in scope, and parts left out because they had no readable text or were read
+    # from a picture with low confidence.
     searched: int = 0
     unreadable: int = 0
+    uncertain: int = 0
     # Parts that matched the search but didn't fit within the size limit.
     left_out: int = 0
     searched_for: list[str] = field(default_factory=list)
@@ -51,12 +54,17 @@ class Retrieval:
 
 def location(segment: DocumentSegment) -> str:
     """Where a part is, in words a teacher would use: "page 12 (Chapter 3: Cells)"."""
-    if segment.kind == "page":
-        where = f"page {segment.number}"
-    elif segment.kind == "section":
-        where = f"section {segment.number}"
-    else:
-        where = f"from line {segment.number}"
+    where = {
+        "page": f"page {segment.number}",
+        "section": f"section {segment.number}",
+        "slide": f"slide {segment.number}",
+        "sheet": f"sheet {segment.number}",
+        "rows": f"from row {segment.number}",
+        "lines": f"from line {segment.number}",
+        "image": "the photo",
+    }.get(segment.kind, f"part {segment.number}")
+    if segment.kind == "rows":
+        return where
     return f"{where} ({segment.label})" if segment.label else where
 
 
@@ -90,7 +98,12 @@ def approved_versions(
 
 
 def readable(segment: DocumentSegment) -> bool:
-    return "no_text" not in (segment.flags or []) and segment.char_count >= MIN_SEGMENT_CHARS
+    flags = segment.flags or []
+    return (
+        "no_text" not in flags
+        and "low_confidence" not in flags
+        and segment.char_count >= MIN_SEGMENT_CHARS
+    )
 
 
 def rank(texts: list[str], query: list[str]) -> list[float]:
@@ -145,6 +158,7 @@ def retrieve(
         sources=[],
         searched=len(usable),
         unreadable=sum(1 for s in segments if "no_text" in (s.flags or [])),
+        uncertain=sum(1 for s in segments if "low_confidence" in (s.flags or [])),
     )
     query = [t for phrase in search for t in terms(phrase)]
     result.searched_for = sorted(set(query))
@@ -180,7 +194,13 @@ def retrieve(
 
     if result.unreadable:
         result.notes.append(
-            f"{_parts(result.unreadable)} of the materials had no readable text and weren't used."
+            f"{_parts(result.unreadable)} of the materials had no readable text and "
+            f"{_were(result.unreadable)} used."
+        )
+    if result.uncertain:
+        result.notes.append(
+            f"{_parts(result.uncertain)} read from pictures with low confidence "
+            f"{_were(result.uncertain)} used."
         )
     if result.left_out:
         what = "matched" if query else "were in scope"
@@ -193,3 +213,7 @@ def retrieve(
 
 def _parts(n: int) -> str:
     return "1 part" if n == 1 else f"{n} parts"
+
+
+def _were(n: int) -> str:
+    return "wasn't" if n == 1 else "weren't"

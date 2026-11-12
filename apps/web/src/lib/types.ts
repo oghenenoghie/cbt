@@ -555,16 +555,18 @@ export interface LearningDocumentDetail extends LearningDocument {
 
 export interface DocumentSegment {
   position: number;
-  /** "page" (PDF), "section" (Word) or "lines" (text). */
-  kind: "page" | "section" | "lines";
+  /** "page" (PDF), "section" (Word), "slide", "sheet", "rows" (CSV), "lines" (text) or "image". */
+  kind: "page" | "section" | "slide" | "sheet" | "rows" | "lines" | "image";
   number: number;
   /** The chapter or heading it falls under. */
   label: string | null;
   text: string;
   char_count: number;
+  /** "text" from the file itself, or "ocr" read from a picture. */
   method: string;
+  /** OCR's confidence, from 0 to 1. */
   confidence: number | null;
-  /** e.g. ["no_text"]: nothing readable on this part. */
+  /** "no_text" (nothing readable) or "low_confidence" (OCR unsure: never used for AI drafts). */
   flags: string[];
 }
 
