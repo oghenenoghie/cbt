@@ -161,10 +161,11 @@ def test_a_teacher_uploads_a_pdf_and_its_pages_are_extracted(school, storage, db
         len(NOTES_PDF),
     )
     assert latest["segment_count"] == 3
-    assert latest["warnings"] == [
+    # (A server without OCR adds a second warning saying scanned pages can't be read.)
+    assert latest["warnings"][0] == (
         "Page 2 has no readable text (it may be a scanned picture or a diagram). "
         "Anything on it won't be used."
-    ]
+    )
     pages = segments(school.teacher, created["id"])["segments"]
     assert [(p["kind"], p["number"], p["label"], p["flags"]) for p in pages] == [
         ("page", 1, "Living things", []),
@@ -223,10 +224,11 @@ def test_text_files_are_read_and_odd_encodings_are_flagged(school) -> None:
 @pytest.mark.parametrize(
     ("filename", "data", "message"),
     [
-        ("photo.jpg", b"\xff\xd8\xff\xe0 synthetic", "OCR"),
+        ("animation.gif", b"GIF89a synthetic", "isn't supported"),
         ("program.exe", b"MZ\x90\x00 synthetic", "isn't supported"),
         ("empty.pdf", b"", "empty"),
-        ("old.doc", b"\xd0\xcf\x11\xe0 synthetic", ".docx or PDF"),
+        ("old.doc", b"\xd0\xcf\x11\xe0 synthetic", "Older Office files"),
+        ("old.xls", b"\xd0\xcf\x11\xe0 synthetic", ".xlsx"),
     ],
 )
 def test_files_we_cant_read_are_refused_up_front(school, db: Session, filename, data, message):
@@ -252,7 +254,9 @@ def _office(content_type: str) -> bytes:
     ("content_type", "message"),
     [
         ("application/vnd.ms-word.document.macroEnabled.main+xml", "macros"),
-        ("application/vnd.openxmlformats-officedocument.presentationml.slide+xml", "PowerPoint"),
+        ("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml", "macros"),
+        ("application/vnd.openxmlformats-officedocument.presentationml.template.main+xml", "Templates"),
+        ("application/vnd.openxmlformats-officedocument.presentationml.slide+xml", "isn't supported"),
     ],
 )
 def test_macro_files_and_unsupported_office_files_are_refused(school, content_type, message):
@@ -403,11 +407,14 @@ def test_warnings_must_be_acknowledged_before_approving(school) -> None:
     assert response.json()["approved_version"] == 1
 
 
-def test_a_version_with_no_readable_text_cant_be_approved(school) -> None:
+def test_a_version_with_no_readable_text_cant_be_approved(school, monkeypatch) -> None:
+    # Without OCR on the server, a scanned PDF has nothing to read.
+    monkeypatch.setattr(get_settings(), "ocr_enabled", False)
     created = uploaded(school.teacher, school.science, data=make_pdf([None, None]))
 
     latest = get(school.teacher, created["id"])["latest"]
     assert "looks scanned" in latest["warnings"][0]
+    assert "isn't set up on this server" in latest["warnings"][0]
     response = act(
         school.teacher, created["id"], "versions/1/approve", {"acknowledge_warnings": True}
     )

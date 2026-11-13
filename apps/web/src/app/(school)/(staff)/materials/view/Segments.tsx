@@ -69,12 +69,30 @@ export function Segments({ documentId, version }: { documentId: string; version:
       <ol className={styles.segments} aria-label="Text read from the file">
         {segments.map((segment) => {
           const unreadable = segment.flags.includes("no_text");
+          const uncertain = segment.flags.includes("low_confidence");
+          const confidence =
+            segment.confidence === null ? null : `${Math.round(segment.confidence * 100)}% sure`;
           return (
-            <li key={segment.position} className={`${styles.segment} ${unreadable ? styles.flagged : ""}`}>
+            <li
+              key={segment.position}
+              className={`${styles.segment} ${unreadable || uncertain ? styles.flagged : ""}`}
+            >
               <div className={styles.segmentHead}>
                 {segmentPlace(segment)}
-                <span>{unreadable ? "No readable text" : count(segment.char_count, "character")}</span>
+                <span>
+                  {unreadable
+                    ? "No readable text"
+                    : segment.method === "ocr"
+                      ? `Read from a picture (OCR)${confidence ? `, ${confidence}` : ""}`
+                      : count(segment.char_count, "character")}
+                </span>
               </div>
+              {uncertain && (
+                <p className={styles.empty}>
+                  <TriangleAlert size={14} aria-hidden="true" /> OCR wasn&apos;t sure of this text, so it
+                  won&apos;t be used for AI drafts. Upload a clearer copy to use it.
+                </p>
+              )}
               {unreadable ? (
                 <p className={styles.empty}>
                   <TriangleAlert size={14} aria-hidden="true" /> Nothing could be read here. It may be a

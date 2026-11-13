@@ -35,6 +35,20 @@ class Settings(BaseSettings):
     # "inline": process each upload in the API process right after it's received (development
     # and tests). "worker": leave it queued for `python -m app.worker` (production).
     document_processing: str = "inline"
+    # Reading scanned pages and photos (OCR) with Tesseract, when it's installed on the server.
+    ocr_enabled: bool = True
+    tesseract_cmd: str = "tesseract"
+    # Tesseract language packs, joined with "+", e.g. "eng+fra" (each must be installed).
+    ocr_languages: str = "eng"
+    # How finely scanned PDF pages are rendered for reading, in dots per inch.
+    ocr_dpi: int = 300
+    # Text read with less confidence than this (0 to 1) is flagged and not used for AI drafts.
+    ocr_min_confidence: float = 0.6
+    # At most this many scanned pages are read per file, and each may take this long.
+    ocr_max_pages: int = 200
+    ocr_timeout_seconds: int = 120
+    # The largest photo accepted, in millions of pixels.
+    image_max_megapixels: int = 40
 
     # AI question drafts (ADR 0005).
     # "off" (drafting unavailable), "anthropic" (Claude; the SDK reads ANTHROPIC_API_KEY from

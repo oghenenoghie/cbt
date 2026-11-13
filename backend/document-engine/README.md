@@ -22,8 +22,9 @@ Never silently treat failed or low-quality OCR as complete content.
 
 ## Status
 
-Stage A is built inside the API (`backend/api/app/documents/`, ADR 0004): upload, storage,
-extraction for PDF with a text layer, Word (.docx) and text files, review and approval, with
-`python -m app.worker` processing uploads in the background. PowerPoint, Excel and CSV come next,
-then OCR with Tesseract for scanned pages and images. It stays a module of the API (a modular
-monolith) until there's a measured need to split it out.
+Built inside the API (`backend/api/app/documents/`, ADR 0004): upload, storage, and extraction
+for PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), CSV and text files, with OCR by
+Tesseract (`ocr.py`) for scanned PDF pages, JPEG and PNG photos and picture-only slides, each OCR'd
+part carrying a confidence; review and approval; and `python -m app.worker` processing uploads in
+the background. It stays a module of the API (a modular monolith) until there's a measured need to
+split it out.

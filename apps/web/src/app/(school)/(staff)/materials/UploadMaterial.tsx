@@ -70,8 +70,8 @@ export function UploadMaterial({
     >
       <form className="form" onSubmit={onSubmit}>
         <p className={styles.explain}>
-          PDF with selectable text, Word (.docx) or a text file, up to 25 MB. Scanned pages, PowerPoint and
-          Excel can&apos;t be read yet.
+          PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), CSV or text files, or a photo (JPEG or PNG),
+          up to 25 MB. Scanned pages and photos are read with OCR, so check their text carefully.
           {document && " The approved version stays in use until you approve this one."}
         </p>
         <div className="field">

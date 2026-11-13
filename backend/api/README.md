@@ -180,7 +180,7 @@ School admins, and teachers who teach the subject, can upload, review and approv
 
 | Endpoint | What it does |
 |---|---|
-| `POST /api/v1/documents` | Upload (multipart form): `file`, `subject_id`, `title`, optional `description`, `topic_ids` (repeat the field), `note`. PDF with a text layer, Word (.docx) or text, up to 25 MB; the kind is decided from the content. 422 with a reason for anything else, 409 for a file already uploaded in the subject |
+| `POST /api/v1/documents` | Upload (multipart form): `file`, `subject_id`, `title`, optional `description`, `topic_ids` (repeat the field), `note`. PDF, Word (.docx), PowerPoint (.pptx), Excel (.xlsx), CSV, text, or a JPEG or PNG photo, up to 25 MB; the kind is decided from the content. 422 with a reason for anything else, 409 for a file already uploaded in the subject |
 | `GET /api/v1/documents` | Newest first. Filters: `subject_id`, `topic_id`, `status` (`active` or `archived`); paging with `limit` and `after`. Teachers see only subjects they teach |
 | `GET` / `PATCH /api/v1/documents/{id}` | The document with every version (newest first) and its `approved_version`; or change its `title` and `description` |
 | `PUT /api/v1/documents/{id}/topics` | Replace the topic tags |
@@ -201,6 +201,10 @@ python -m app.worker --once   # processes what's queued, then stops
 ```
 
 Uploaded originals are kept under `STORAGE_DIR` (default `./storage`), which must be on a persistent disk until the S3-compatible adapter exists.
+
+What each kind becomes: PDF pages, Word sections (at headings), PowerPoint slides (titles, text in reading order, tables and speaker notes), parts of each visible Excel sheet (hidden sheets are left out, with a warning), CSV rows, text lines, and a photo's text. A segment's `method` is `text`, or `ocr` with a `confidence` from 0 to 1.
+
+**OCR** reads PDF pages with no text layer, photos and picture-only slides with [Tesseract](https://github.com/tesseract-ocr/tesseract), which must be installed on the server running the API and worker (`apt-get install tesseract-ocr`, plus a language pack such as `tesseract-ocr-fra` for each extra language in `OCR_LANGUAGES`). Text read with less than `OCR_MIN_CONFIDENCE` (60%) is flagged `low_confidence` and never used for AI drafts. Without Tesseract, scanned pages are flagged as unreadable and photos are refused. The OCR tests run when Tesseract is installed; set `REQUIRE_OCR=1` (as CI does) to make them fail instead of skipping when it isn't.
 
 ### AI question drafts
 
