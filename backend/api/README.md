@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)), and `0013_more_material_kinds` allows slides, spreadsheets, CSV and photos. `0012_ai_drafts` adds AI requests, their sources, drafts and citations (see [ADR 0005](../../docs/architecture/decisions/0005-ai-question-drafts.md)). `0014_question_types_marking` adds the new question types' answer keys, text answers and teachers' marks (see [ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -117,7 +117,18 @@ School admins, and teachers who teach the subject, can use a subject's questions
 | `POST /api/v1/questions/{id}/archive`, `.../restore` | Stop or resume offering it for new exams |
 | `DELETE /api/v1/questions/{id}` | Delete it with its history; archive instead once an exam uses it |
 
-`content` for a multiple-choice question is `{"type": "mcq_single", "stem": ..., "options": [2 to 6 strings], "correct": <0-based index>}`; for true/false it's `{"type": "true_false", "stem": ..., "correct": true}`. Both take optional `explanation`, `marks` (1 to 100, default 1) and `difficulty` (`easy`, `medium`, `hard`). Responses give options ids (`a` to `f`, or `true`/`false`) and the answer as `correct_option_ids`.
+`content` depends on the question's `type` ([ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md)):
+
+| `type` | Content | Marked |
+|---|---|---|
+| `mcq_single` | `options` (2 to 6 strings), `correct`: the 0-based position of the right one | Automatically |
+| `mcq_multiple` | `options` (2 to 6), `correct`: the positions of every right one | Automatically, all or nothing |
+| `true_false` | `correct`: `true` or `false` | Automatically |
+| `short_answer` | `accepted_answers`: 1 to 10 (case, spacing and surrounding punctuation are ignored) | Automatically; teachers can re-mark |
+| `numeric` | `value` and optional `tolerance` (default 0) | Automatically; teachers can re-mark |
+| `essay` | optional `guide`: the model answer or marking guide | By a teacher |
+
+All take `stem` and optional `explanation`, `marks` (1 to 100, default 1) and `difficulty` (`easy`, `medium`, `hard`); a field the type doesn't use is refused. Responses give option ids (`a` to `f`, or `true`/`false`), the answer as `correct_option_ids` for choice questions, and `answer_key` (`accepted_answers`, `value` and `tolerance`, or `guide`) for the others. Students never see either.
 
 Reading passages ("read the passage and answer the questions that follow") follow the same rules:
 
@@ -156,23 +167,28 @@ Students sit published exams set for their classes. These endpoints never return
 | `GET /api/v1/me/exams` | Your exams: `state` (`upcoming`, `open`, `closed`), attempts used and allowed, `can_start`, and any `attempt_in_progress_id` |
 | `POST /api/v1/me/exams/{id}/attempts` | Start an attempt (201), or resume the one in progress (200) |
 | `GET /api/v1/me/attempts/{id}` | The paper in your order with your saved answers, `ends_at`, `server_now` and `seconds_left`; only the status once submitted |
-| `PUT /api/v1/me/attempts/{id}/answers/{item_id}` | Save an answer: `{"selected_option_ids": ["b"]}`, or `[]` to clear it |
+| `PUT /api/v1/me/attempts/{id}/answers/{item_id}` | Save an answer: `{"selected_option_ids": ["b"]}` for choice questions (several for `mcq_multiple`), `{"text": "..."}` for the others (up to 500 characters, or 20,000 for an essay); `[]` or blank text clears it |
 | `POST /api/v1/me/attempts/{id}/submit` | Hand in the attempt (safe to repeat) |
 
-An attempt ends at its start plus the duration, or at closing time if sooner. Saves are accepted for 10 seconds after that; then the attempt is submitted with what was saved.
+An attempt ends at its start plus the duration, or at closing time if sooner. Saves are accepted for 10 seconds after that; then the attempt is submitted with what was saved. Submitting marks everything but essays, which wait for a teacher.
 
 ### Results
 
-A student's result is their latest finished attempt. Students see their score once results are released (or straight away, for exams set to `immediate`), and after the exam closes, each answer marked right or wrong. They never see the correct options. See [ADR 0003](../../docs/architecture/decisions/0003-exams.md), decision 12.
+A student's result is their latest finished attempt. Students see their score once results are released (or straight away, for exams set to `immediate`), and after the exam closes, each answer marked right or wrong, with their written answers and teachers' comments. They never see the correct options, accepted answers or marking guides. See [ADR 0003](../../docs/architecture/decisions/0003-exams.md), decision 12, and [ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md).
 
 | Endpoint | Purpose |
 |---|---|
 | `GET /api/v1/me/results` | Students: your released results, most recent exam first |
 | `GET /api/v1/me/exams/{id}/result` | Students: one result, with the right/wrong review once the exam has closed (409 until released) |
-| `POST /api/v1/exams/{id}/release-results` | The exam's author, its subject teachers or a school admin: release results once the exam has closed |
-| `GET /api/v1/exams/{id}/results` | Staff: every student the exam is set for, including those who didn't sit, and a summary |
-| `GET /api/v1/exams/{id}/item-analysis` | Staff: per question, how many answered and got it right (facility), and how many chose each option |
-| `GET /api/v1/exams/{id}/attempts/{attempt_id}` | Staff: one student's marked script, with the answer key |
+| `POST /api/v1/exams/{id}/release-results` | The exam's author, its subject teachers or a school admin: release results once the exam has closed and every written answer is marked |
+| `GET /api/v1/exams/{id}/results` | Staff: every student the exam is set for, including those who didn't sit, a summary, and answers still to mark (`pending_marking`) |
+| `GET /api/v1/exams/{id}/item-analysis` | Staff: per question, how many answered and got full marks, the share of its marks scored (facility), and how many chose each option |
+| `GET /api/v1/exams/{id}/attempts/{attempt_id}` | Staff: one student's marked script, with the answer key, written answers and teachers' marks |
+| `GET /api/v1/exams/{id}/marking` | Staff: the exam's written questions (short answer, number, essay), with how many answers are marked and how many wait, `can_mark` and any `locked_reason` |
+| `GET /api/v1/exams/{id}/marking/{item_id}` | Staff: every counted attempt's answer to one written question, by student name |
+| `PUT /api/v1/exams/{id}/marking/answers/{response_id}` | The same people as releasing: `{"score": 0..marks, "comment": "..."}` (comment optional, up to 2,000 characters, seen by the student). Replaces the automatic mark; every mark is kept. Refused once students can see the scores |
+
+An exam with essays must release results by the teacher, and results can't be released while any answer waits for marking.
 
 ### Learning materials
 

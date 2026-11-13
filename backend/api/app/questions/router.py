@@ -54,6 +54,7 @@ def _version_out(v: QuestionVersion) -> VersionOut:
         stem=v.stem,
         options=v.options,
         correct_option_ids=v.correct_option_ids,
+        answer_key=v.answer_key,
         explanation=v.explanation,
         marks=v.marks,
         difficulty=v.difficulty,
@@ -153,7 +154,7 @@ def _check_passage(
 def _new_version(
     principal: SessionPrincipal, question: Question, number: int, content: QuestionContent
 ) -> QuestionVersion:
-    options, correct = content.to_storage()
+    options, correct, answer_key = content.to_storage()
     return QuestionVersion(
         tenant_id=principal.tenant_id,
         question_id=question.id,
@@ -162,6 +163,7 @@ def _new_version(
         stem=content.stem,
         options=options,
         correct_option_ids=correct,
+        answer_key=answer_key,
         explanation=content.explanation,
         marks=content.marks,
         difficulty=content.difficulty,

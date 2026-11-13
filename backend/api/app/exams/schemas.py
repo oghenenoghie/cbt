@@ -164,6 +164,8 @@ class PaperQuestion(BaseModel):
     stem: str
     options: list[OptionOut]
     correct_option_ids: list[str]
+    # Staff only, like the bank's: accepted answers, a number, or a marking guide.
+    answer_key: dict | None = None
     marks: int
 
 

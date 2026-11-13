@@ -6,7 +6,9 @@
 - The answer key is a separate column (`correct_option_ids`), so candidate-facing code can leave
   it out explicitly. Students never reach the bank at all.
 
-Question types so far: single-answer multiple choice (`mcq_single`) and `true_false`.
+Question types: single- and multiple-answer multiple choice (`mcq_single`, `mcq_multiple`),
+`true_false`, `short_answer` and `numeric` (marked automatically), and `essay` (marked by a
+teacher; ADR 0006).
 
 A passage is a reading text ("Read the passage and answer the questions that follow"). Questions
 can belong to a passage of the same subject. Passage text is versioned the same way as questions.
@@ -32,7 +34,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.models.tenant import utc_now
 
-QUESTION_TYPES = ("mcq_single", "true_false")
+QUESTION_TYPES = ("mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay")
 DIFFICULTIES = ("easy", "medium", "hard")
 
 
@@ -170,7 +172,11 @@ class QuestionVersion(Base):
         ),
         CheckConstraint("marks >= 1", name="ck_question_versions_marks"),
         CheckConstraint("version >= 1", name="ck_question_versions_version"),
-        CheckConstraint("type IN ('mcq_single', 'true_false')", name="ck_question_versions_type"),
+        CheckConstraint(
+            "type IN ('mcq_single', 'mcq_multiple', 'true_false', 'short_answer', 'numeric', "
+            "'essay')",
+            name="ck_question_versions_type",
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
@@ -185,6 +191,9 @@ class QuestionVersion(Base):
     options: Mapped[list] = mapped_column(JSON, nullable=False)
     # The answer key: the correct option ids. Never sent to candidates.
     correct_option_ids: Mapped[list] = mapped_column(JSON, nullable=False)
+    # The answer key of text answers: {"accepted_answers": [...]} (short answer),
+    # {"value": n, "tolerance": t} (numeric) or {"guide": "..."} (essay). Never sent to candidates.
+    answer_key: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     marks: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)

@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.attempts import service
 from app.attempts.schemas import (
+    MAX_SHORT_ANSWER_CHARS,
     AnswerIn,
     AnswerOut,
     AttemptBlock,
@@ -39,6 +40,7 @@ from app.models import (
     Subject,
 )
 from app.models.tenant import as_utc
+from app.questions.schemas import CHOICE_TYPES
 from app.results.service import score_visible
 from app.school.common import flush_or_conflict, invalid
 
@@ -110,7 +112,8 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
                     for option_id in attempt.option_orders[item_id]
                 ],
                 marks=item.marks,
-                selected_option_ids=answers.get(item_id, []),
+                selected_option_ids=answers[item_id].selected if item_id in answers else [],
+                text=answers[item_id].text if item_id in answers else None,
             )
             if item.block != last_block:
                 blocks.append(
@@ -138,7 +141,7 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
         submitted_at=as_utc(attempt.submitted_at) if attempt.submitted_at else None,
         submitted_reason=attempt.submitted_reason,
         question_count=len(attempt.question_order),
-        answered_count=sum(1 for chosen in answers.values() if chosen),
+        answered_count=sum(1 for answer in answers.values() if answer.given),
         blocks=blocks,
     )
 
@@ -292,7 +295,8 @@ def save_answer(
     principal: SessionPrincipal = Depends(student_write),
     db: Session = Depends(get_db),
 ) -> AnswerOut:
-    """Save your answer to one question (an empty list clears it). Every save is kept."""
+    """Save your answer to one question: options for a choice question, text for the others.
+    An empty list or blank text clears it. Every save is kept."""
     attempt = _own_attempt(db, principal, attempt_id)
     if service.finish_overdue(db, [attempt], service.now()):
         db.commit()
@@ -300,11 +304,12 @@ def save_answer(
         raise _conflict("This attempt has ended, and your saved answers were submitted.")
     if item_id not in attempt.option_orders:
         raise _not_found("Question")
-    chosen = list(dict.fromkeys(body.selected_option_ids))
-    if any(option_id not in attempt.option_orders[item_id] for option_id in chosen):
-        raise invalid("That isn't one of this question's options.")
-    if len(chosen) > 1:
-        raise invalid("Choose one option.")
+    question_type = db.scalar(
+        select(QuestionVersion.type)
+        .join(ExamPaperItem, ExamPaperItem.question_version_id == QuestionVersion.id)
+        .where(ExamPaperItem.id == item_id, ExamPaperItem.exam_id == attempt.exam_id)
+    )
+    chosen, text = _checked_answer(question_type, attempt.option_orders[item_id], body)
 
     latest = db.scalar(
         select(AnswerEvent)
@@ -312,9 +317,12 @@ def save_answer(
         .order_by(AnswerEvent.sequence.desc())
         .limit(1)
     )
-    if latest is not None and latest.selected_option_ids == chosen:
+    if latest is not None and latest.selected_option_ids == chosen and latest.text == text:
         return AnswerOut(
-            item_id=item_id, selected_option_ids=chosen, saved_at=as_utc(latest.created_at)
+            item_id=item_id,
+            selected_option_ids=chosen,
+            text=text,
+            saved_at=as_utc(latest.created_at),
         )
     sequence = (
         db.scalar(
@@ -329,11 +337,35 @@ def save_answer(
         paper_item_id=item_id,
         sequence=sequence,
         selected_option_ids=chosen,
+        text=text,
     )
     db.add(saved)
     flush_or_conflict(db, "Another save happened at the same moment. Try again.")
     db.commit()
-    return AnswerOut(item_id=item_id, selected_option_ids=chosen, saved_at=as_utc(saved.created_at))
+    return AnswerOut(
+        item_id=item_id, selected_option_ids=chosen, text=text, saved_at=as_utc(saved.created_at)
+    )
+
+
+def _checked_answer(
+    question_type: str | None, option_ids: list[str], body: AnswerIn
+) -> tuple[list[str], str | None]:
+    """The answer to store for this question type: (chosen options, text)."""
+    if question_type in CHOICE_TYPES:
+        if body.text is not None and body.text.strip():
+            raise invalid("Choose an option for this question; it isn't answered with text.")
+        chosen = list(dict.fromkeys(body.selected_option_ids))
+        if any(option_id not in option_ids for option_id in chosen):
+            raise invalid("That isn't one of this question's options.")
+        if question_type != "mcq_multiple" and len(chosen) > 1:
+            raise invalid("Choose one option.")
+        return chosen, None
+    if body.selected_option_ids:
+        raise invalid("Type your answer for this question; it has no options to choose.")
+    text = body.text if body.text is not None and body.text.strip() else None
+    if text is not None and question_type != "essay" and len(text) > MAX_SHORT_ANSWER_CHARS:
+        raise invalid(f"Keep this answer to {MAX_SHORT_ANSWER_CHARS} characters or fewer.")
+    return [], text
 
 
 @router.post("/attempts/{attempt_id}/submit", response_model=AttemptOut)

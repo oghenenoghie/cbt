@@ -4,9 +4,12 @@ explanations or scores: results wait for the school's release policy (Exams D)."
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 OptionId = str
+# Longest written answer a student can save; short answers and numbers have a lower limit.
+MAX_ANSWER_CHARS = 20000
+MAX_SHORT_ANSWER_CHARS = 500
 
 
 class MyExam(BaseModel):
@@ -41,7 +44,9 @@ class AttemptOption(BaseModel):
 
 
 class AttemptQuestion(BaseModel):
-    """A question as this student sees it: their order, no answer key."""
+    """A question as this student sees it: their order, no answer key. Choice questions
+    (`mcq_single`, `mcq_multiple`, `true_false`) have options; `short_answer`, `numeric` and
+    `essay` are answered with `text`."""
 
     item_id: str
     number: int
@@ -50,6 +55,7 @@ class AttemptQuestion(BaseModel):
     options: list[AttemptOption]
     marks: int
     selected_option_ids: list[str]
+    text: str | None
 
 
 class AttemptPassage(BaseModel):
@@ -84,15 +90,25 @@ class AttemptOut(BaseModel):
 
 
 class AnswerIn(BaseModel):
+    """The chosen options for a choice question, or `text` for the others. An empty list, or
+    blank or null text, clears the answer."""
+
     model_config = ConfigDict(extra="forbid")
 
-    # The chosen option, or an empty list to clear the answer.
-    selected_option_ids: list[OptionId] = Field(max_length=6)
+    selected_option_ids: list[OptionId] = Field(default_factory=list, max_length=10)
+    text: str | None = Field(default=None, max_length=MAX_ANSWER_CHARS)
+
+    @model_validator(mode="after")
+    def _one_kind(self) -> "AnswerIn":
+        if self.selected_option_ids and self.text is not None and self.text.strip():
+            raise ValueError("Give `selected_option_ids` or `text`, not both.")
+        return self
 
 
 class AnswerOut(BaseModel):
     item_id: str
     selected_option_ids: list[str]
+    text: str | None
     saved_at: datetime
 
 
@@ -110,8 +126,11 @@ class AttemptSummary(BaseModel):
     submitted_reason: str | None
     answered_count: int
     question_count: int
+    # With teachers' marks, once submitted.
     score: int | None
     max_score: int
+    # Written answers waiting for a teacher's mark.
+    pending_marking: int
 
 
 class AttemptList(BaseModel):

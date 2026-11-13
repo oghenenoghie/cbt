@@ -115,4 +115,4 @@ The work is built in four stages, each its own change:
 
 - Importing questions in bulk (for example from a spreadsheet).
 - Images and diagrams in questions, which wait for the diagram engine.
-- Other question types: multiple-answer, short answer, and essays with manual marking.
+- Other question types: multiple-answer, short answer, numbers and essays with teacher marking are decided in [ADR 0006](0006-question-types-and-marking.md).

@@ -16,6 +16,7 @@ from app.ai.processing import process_soon
 from app.ai.provider import drafting_enabled
 from app.ai.retrieval import approved_versions, location, retrieve
 from app.ai.schemas import (
+    AI_QUESTION_TYPES,
     AiRequestCreate,
     AiRequestDetail,
     AiRequestList,
@@ -546,7 +547,9 @@ def edit_draft(
     draft = _draft_for(db, principal, draft_id)
     _require_pending(draft)
     if body.content is not None:
-        options, correct = body.content.to_storage()
+        if body.content.type not in AI_QUESTION_TYPES:
+            raise invalid("AI drafts can be multiple choice (one answer) or true/false for now.")
+        options, correct, _ = body.content.to_storage()
         draft.type = body.content.type
         draft.stem = body.content.stem
         draft.options = options
@@ -623,7 +626,7 @@ def approve_draft(
     )
     db.add(question)
     db.flush()
-    options, correct = content.to_storage()
+    options, correct, _ = content.to_storage()
     version = QuestionVersion(
         tenant_id=principal.tenant_id,
         question_id=question.id,

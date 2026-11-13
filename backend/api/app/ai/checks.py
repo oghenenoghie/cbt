@@ -181,7 +181,7 @@ def _read_content(candidate: Reviewed, raw: dict, question_types: list[str]) -> 
             ]
         return
 
-    candidate.options, candidate.correct_option_ids = content.to_storage()
+    candidate.options, candidate.correct_option_ids, _ = content.to_storage()
     if content.type == "mcq_single":
         if len(candidate.options) < MIN_AI_OPTIONS:
             candidate.reject(FEW_OPTIONS)

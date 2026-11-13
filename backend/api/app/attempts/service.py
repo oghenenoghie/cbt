@@ -13,6 +13,7 @@ from fastapi import Request
 from sqlalchemy import Select, exists, select
 from sqlalchemy.orm import Session
 
+from app.attempts.marking import Answer, mark
 from app.auth.sessions import SessionPrincipal
 from app.core.audit import record_audit
 from app.models import (
@@ -73,6 +74,7 @@ def new_orders(db: Session, exam: Exam) -> tuple[list[str], dict[str, list[str]]
     """A fresh question order, option orders and maximum score for one attempt.
 
     Passage blocks move as one and keep their questions in order. True/false options never move.
+    Questions answered with text have no options (an empty list).
     """
     rows = db.execute(
         select(ExamPaperItem, QuestionVersion.type, QuestionVersion.options)
@@ -94,35 +96,41 @@ def new_orders(db: Session, exam: Exam) -> tuple[list[str], dict[str, list[str]]
     option_orders: dict[str, list[str]] = {}
     for item, question_type, options in rows:
         ids = [option["id"] for option in options]
-        if exam.shuffle_options and question_type != "true_false":
+        if exam.shuffle_options and question_type in ("mcq_single", "mcq_multiple"):
             shuffler.shuffle(ids)
         option_orders[item.id] = ids
     order = [item_id for block in blocks for item_id in block]
     return order, option_orders, sum(item.marks for item, _, _ in rows)
 
 
-def latest_answers(db: Session, attempt_ids: list[str]) -> dict[str, dict[str, list[str]]]:
+def latest_answers(db: Session, attempt_ids: list[str]) -> dict[str, dict[str, Answer]]:
     """Each attempt's current answers: the latest saved event per question."""
-    answers: dict[str, dict[str, list[str]]] = {attempt_id: {} for attempt_id in attempt_ids}
-    for attempt_id, item_id, chosen in db.execute(
-        select(AnswerEvent.attempt_id, AnswerEvent.paper_item_id, AnswerEvent.selected_option_ids)
+    answers: dict[str, dict[str, Answer]] = {attempt_id: {} for attempt_id in attempt_ids}
+    for attempt_id, item_id, chosen, text in db.execute(
+        select(
+            AnswerEvent.attempt_id,
+            AnswerEvent.paper_item_id,
+            AnswerEvent.selected_option_ids,
+            AnswerEvent.text,
+        )
         .where(AnswerEvent.attempt_id.in_(attempt_ids))
         .order_by(AnswerEvent.attempt_id, AnswerEvent.sequence)
     ):
-        answers[attempt_id][item_id] = chosen
+        answers[attempt_id][item_id] = Answer(chosen, text)
     return answers
 
 
-def final_answers(db: Session, attempt_ids: list[str]) -> dict[str, dict[str, list[str]]]:
-    answers: dict[str, dict[str, list[str]]] = {attempt_id: {} for attempt_id in attempt_ids}
-    for attempt_id, item_id, chosen in db.execute(
+def final_answers(db: Session, attempt_ids: list[str]) -> dict[str, dict[str, Answer]]:
+    answers: dict[str, dict[str, Answer]] = {attempt_id: {} for attempt_id in attempt_ids}
+    for attempt_id, item_id, chosen, text in db.execute(
         select(
             AttemptResponse.attempt_id,
             AttemptResponse.paper_item_id,
             AttemptResponse.selected_option_ids,
+            AttemptResponse.text,
         ).where(AttemptResponse.attempt_id.in_(attempt_ids))
     ):
-        answers[attempt_id][item_id] = chosen
+        answers[attempt_id][item_id] = Answer(chosen, text)
     return answers
 
 
@@ -139,28 +147,36 @@ def finish(
     by: SessionPrincipal | None = None,
     request: Request | None = None,
 ) -> None:
-    """Store the final answers, mark them, and close the attempt."""
+    """Store the final answers, mark what can be marked automatically, and close the attempt.
+    Written answers wait for a teacher (`needs_marking`); `score` is the automatic total."""
     answers = latest_answers(db, [attempt.id])[attempt.id]
     rows = db.execute(
-        select(ExamPaperItem.id, ExamPaperItem.marks, QuestionVersion.correct_option_ids)
+        select(
+            ExamPaperItem.id,
+            ExamPaperItem.marks,
+            QuestionVersion.type,
+            QuestionVersion.correct_option_ids,
+            QuestionVersion.answer_key,
+        )
         .join(QuestionVersion, QuestionVersion.id == ExamPaperItem.question_version_id)
         .where(ExamPaperItem.exam_id == attempt.exam_id)
     ).all()
     total = 0
-    for item_id, marks, correct in rows:
-        chosen = answers.get(item_id, [])
-        right = bool(chosen) and sorted(chosen) == sorted(correct)
-        score = marks if right else 0
-        total += score
+    for item_id, marks, question_type, correct, answer_key in rows:
+        answer = answers.get(item_id, Answer([], None))
+        marked = mark(question_type, correct, answer_key, marks, answer)
+        total += marked.score
         db.add(
             AttemptResponse(
                 tenant_id=attempt.tenant_id,
                 exam_id=attempt.exam_id,
                 attempt_id=attempt.id,
                 paper_item_id=item_id,
-                selected_option_ids=chosen,
-                is_correct=right,
-                score=score,
+                selected_option_ids=answer.selected,
+                text=answer.text,
+                is_correct=marked.is_correct,
+                score=marked.score,
+                needs_marking=marked.needs_marking,
             )
         )
     attempt.status = "submitted"
@@ -179,7 +195,7 @@ def finish(
         details={
             "exam": attempt.exam_id,
             "reason": reason,
-            "answered": sum(1 for a in answers.values() if a),
+            "answered": sum(1 for a in answers.values() if a.given),
         },
     )
 

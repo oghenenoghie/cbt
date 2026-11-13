@@ -106,6 +106,13 @@ def draft_paper(db: Session, exam: Exam) -> tuple[list[Block], list[str]]:
         blocks.append(block)
     if not blocks:
         problems.append("Add at least one question or passage.")
+    if exam.results_release == "immediate" and any(
+        entry.version.type == "essay" for block in blocks for entry in block.questions
+    ):
+        problems.append(
+            "Written answers are marked by a teacher, so set “Results” to “When a teacher "
+            "releases them”."
+        )
     return blocks, problems
 
 

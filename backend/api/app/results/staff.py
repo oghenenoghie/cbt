@@ -3,8 +3,9 @@ student's marked script, and item analysis.
 
 Anyone who can see an exam (`app/exams/access.py`) can read its results; staff see scores and
 answer keys whether or not results have been released to students. Releasing is for the exam's
-author, teachers of its subject in its classes, and school admins, once the exam has closed.
-Every report counts each student's latest finished attempt.
+author, teachers of its subject in its classes, and school admins, once the exam has closed and
+every written answer is marked. Every report counts each student's latest finished attempt, with
+teachers' marks in place of automatic ones (ADR 0006).
 """
 
 from collections import Counter
@@ -15,6 +16,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.attempts import service as attempts
+from app.attempts.marking import Answer
 from app.auth.dependencies import require_school_role
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
@@ -29,6 +31,8 @@ from app.models import (
     ExamPaperItem,
     PassageVersion,
     QuestionVersion,
+    ResponseMark,
+    User,
 )
 from app.models.tenant import as_utc
 from app.results import service
@@ -36,6 +40,7 @@ from app.results.schemas import (
     ExamResults,
     ItemAnalysis,
     ItemStat,
+    MarkOut,
     OptionText,
     ReleaseOut,
     ResultSummary,
@@ -57,6 +62,27 @@ def _attempts(db: Session, exam_id: str) -> list[ExamAttempt]:
     if attempts.finish_overdue(db, found, attempts.now()):
         db.commit()
     return found
+
+
+def mark_out(db: Session, marks: list[ResponseMark]) -> dict[str, MarkOut]:
+    """{response_id: the mark as staff see it, with the marker's name}."""
+    names = dict(
+        db.execute(
+            select(User.id, User.display_name).where(
+                User.id.in_({m.marked_by_id for m in marks if m.marked_by_id})
+            )
+        ).all()
+    )
+    return {
+        m.response_id: MarkOut(
+            score=m.score,
+            comment=m.comment,
+            marked_by_id=m.marked_by_id,
+            marked_by_name=names.get(m.marked_by_id),
+            marked_at=as_utc(m.created_at),
+        )
+        for m in marks
+    }
 
 
 @router.post("/{exam_id}/release-results", response_model=ReleaseOut)
@@ -89,6 +115,18 @@ def release_results(
             status.HTTP_409_CONFLICT, detail="Results can be released once the exam has closed."
         )
     _attempts(db, exam.id)  # finish any attempt still marked in progress
+    counted = list(service.counted_attempts(db, [exam.id]).values())
+    pending = sum(t.pending for t in service.totals(db, counted).values())
+    if pending:
+        waiting = (
+            "1 written answer still needs"
+            if pending == 1
+            else f"{pending} written answers still need"
+        )
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail=f"{waiting} marking. Mark them first, then release the results.",
+        )
     exam.results_released_at = at
     exam.results_released_by_id = principal.user_id
     audit(db, principal, request, "exam.results_released", "exam", exam.id)
@@ -124,6 +162,7 @@ def exam_results(
         ).all()
     )
     max_score = sum(db.scalars(select(ExamPaperItem.marks).where(ExamPaperItem.exam_id == exam.id)))
+    totals = service.totals(db, list(counted.values()))
 
     students = []
     for candidate_id in candidate_ids:
@@ -136,6 +175,7 @@ def exam_results(
         else:
             state = "not_sat"
         arm_id = enrolled.get(candidate_id)
+        total = totals[attempt.id] if attempt else None
         students.append(
             StudentResult(
                 candidate_id=candidate_id,
@@ -146,10 +186,9 @@ def exam_results(
                 attempts_used=len(theirs),
                 counted_attempt_id=attempt.id if attempt else None,
                 counted_attempt_number=attempt.number if attempt else None,
-                score=attempt.score if attempt else None,
-                percentage=service.percentage(attempt.score, attempt.max_score)
-                if attempt
-                else None,
+                score=total.score if total else None,
+                percentage=service.percentage(total.score, attempt.max_score) if total else None,
+                pending_marking=total.pending if total else 0,
             )
         )
     students.sort(key=lambda s: (s.arm_name or "~", s.candidate_name.casefold()))
@@ -167,6 +206,7 @@ def exam_results(
         results_release=exam.results_release,
         results_released_at=as_utc(exam.results_released_at) if exam.results_released_at else None,
         max_score=max_score,
+        pending_marking=sum(t.pending for t in totals.values()),
         summary=summary,
         students=students,
     )
@@ -176,10 +216,12 @@ def exam_results(
 def item_analysis(
     exam_id: str, principal: SessionPrincipal = Depends(staff_read), db: Session = Depends(get_db)
 ) -> ItemAnalysis:
-    """How each question did: how many got it right (facility) and how many chose each option."""
+    """How each question did: the share of its marks scored (facility), how many got full marks
+    and how many chose each option."""
     exam, _ = visible_exam(db, viewer_for(db, principal), exam_id)
     _attempts(db, exam.id)
     counted_ids = [a.id for a in service.counted_attempts(db, [exam.id]).values()]
+    teacher = service.latest_marks(db, counted_ids)
     by_item: dict[str, list[AttemptResponse]] = {}
     for response in db.scalars(
         select(AttemptResponse).where(AttemptResponse.attempt_id.in_(counted_ids))
@@ -195,8 +237,10 @@ def item_analysis(
     items = []
     for item, version, passage_title in rows:
         responses = by_item.get(item.id, [])
-        chosen = Counter(r.selected_option_ids[0] for r in responses if r.selected_option_ids)
-        correct = sum(1 for r in responses if r.is_correct)
+        chosen = Counter(o for r in responses for o in r.selected_option_ids)
+        marked = [service.mark_of(r, teacher.get(r.id), item.marks) for r in responses]
+        correct = sum(1 for m in marked if m.is_correct)
+        scored = sum(m.score for m in marked)
         items.append(
             ItemStat(
                 position=item.position,
@@ -208,10 +252,12 @@ def item_analysis(
                 passage_title=passage_title,
                 marks=item.marks,
                 correct_option_ids=version.correct_option_ids,
-                answered=sum(1 for r in responses if r.selected_option_ids),
+                answer_key=version.answer_key,
+                answered=sum(1 for r in responses if Answer(r.selected_option_ids, r.text).given),
                 correct=correct,
-                facility=service.percentage(correct, len(counted_ids)),
+                facility=service.percentage(scored, item.marks * len(counted_ids)),
                 option_counts={o["id"]: chosen.get(o["id"], 0) for o in version.options},
+                pending_marking=sum(1 for m in marked if m.pending),
             )
         )
     return ItemAnalysis(exam_id=exam.id, attempts_counted=len(counted_ids), items=items)
@@ -224,7 +270,8 @@ def attempt_script(
     principal: SessionPrincipal = Depends(staff_read),
     db: Session = Depends(get_db),
 ) -> Script:
-    """One student's finished attempt, marked, in paper order, with the answer key."""
+    """One student's finished attempt, marked, in paper order, with the answer key and any
+    teacher's marks."""
     exam, _ = visible_exam(db, viewer_for(db, principal), exam_id)
     attempt = db.scalar(
         select(ExamAttempt).where(
@@ -250,6 +297,35 @@ def attempt_script(
         .order_by(ExamPaperItem.position)
     ).all()
     name = db.scalar(select(Candidate.display_name).where(Candidate.id == attempt.candidate_id))
+    teacher = service.latest_marks(db, [attempt.id])
+    shown = mark_out(db, list(teacher.values()))
+    total = service.totals(db, [attempt])[attempt.id]
+    questions = []
+    for item, version in rows:
+        response = responses[item.id]
+        counts = service.mark_of(response, teacher.get(response.id), item.marks)
+        questions.append(
+            ScriptQuestion(
+                position=item.position,
+                item_id=item.id,
+                response_id=response.id,
+                question_id=version.question_id,
+                version=version.version,
+                type=version.type,
+                stem=version.stem,
+                options=[OptionText(id=o["id"], text=o["text"]) for o in version.options],
+                correct_option_ids=version.correct_option_ids,
+                answer_key=version.answer_key,
+                selected_option_ids=response.selected_option_ids,
+                text=response.text,
+                is_correct=counts.is_correct,
+                score=counts.score,
+                marks=item.marks,
+                auto_score=response.score,
+                pending_marking=counts.pending,
+                mark=shown.get(response.id),
+            )
+        )
     return Script(
         attempt_id=attempt.id,
         exam_id=exam.id,
@@ -258,23 +334,9 @@ def attempt_script(
         number=attempt.number,
         submitted_at=as_utc(attempt.submitted_at),
         submitted_reason=attempt.submitted_reason,
-        score=attempt.score,
+        score=total.score,
         max_score=attempt.max_score,
-        percentage=service.percentage(attempt.score, attempt.max_score),
-        questions=[
-            ScriptQuestion(
-                position=item.position,
-                question_id=version.question_id,
-                version=version.version,
-                type=version.type,
-                stem=version.stem,
-                options=[OptionText(id=o["id"], text=o["text"]) for o in version.options],
-                correct_option_ids=version.correct_option_ids,
-                selected_option_ids=responses[item.id].selected_option_ids,
-                is_correct=responses[item.id].is_correct,
-                score=responses[item.id].score,
-                marks=item.marks,
-            )
-            for item, version in rows
-        ],
+        percentage=service.percentage(total.score, attempt.max_score),
+        pending_marking=total.pending,
+        questions=questions,
     )

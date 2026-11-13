@@ -58,7 +58,7 @@ PowerPoint, Excel, CSV and OCR (ADR 0004 stages B and C) are still to come. Unti
 
 8. **Limits and cost.** At most 20 questions per request (`AI_MAX_QUESTIONS`), three requests in progress per school (`AI_MAX_OPEN_REQUESTS`) and 200 requests per school per month (`AI_MONTHLY_REQUESTS`; a retry doesn't count as a new one). Each request records the model that answered, calls, input, output and cache tokens, the time spent waiting for the provider, and an estimated cost from configurable prices (`AI_PRICE_*`, US dollars per million tokens).
 
-9. **Question types: what the bank has.** Single-answer multiple choice and true/false. Other types (multiple-select, short answer, calculation and so on) come with the bank types that hold them.
+9. **Question types: what the bank has.** Single-answer multiple choice and true/false. The bank now holds more types (ADR 0006); drafting them, with checks that suit them, is ADR 0006's stage C.
 
 10. **The material is data, not instructions.** Sources are sent inside `<source>` tags that the material can't close, and both prompts tell the model to ignore instructions inside them. The checks above don't depend on the model obeying that.
 

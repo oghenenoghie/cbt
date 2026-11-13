@@ -532,6 +532,7 @@ def _paper_out(exam: Exam, blocks: list[Block], frozen: bool, problems: list[str
                     stem=v.stem,
                     options=v.options,
                     correct_option_ids=v.correct_option_ids,
+                    answer_key=v.answer_key,
                     marks=entry.marks,
                 )
             )

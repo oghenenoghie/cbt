@@ -1,8 +1,13 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.questions.schemas import Difficulty, OptionOut, QuestionContent, QuestionType
+from app.questions.schemas import Difficulty, OptionOut, QuestionContent
+
+# The types AI drafts are written in so far (ADR 0005, decision 9).
+AiQuestionType = Literal["mcq_single", "true_false"]
+AI_QUESTION_TYPES = ("mcq_single", "true_false")
 
 
 class _Input(BaseModel):
@@ -16,7 +21,7 @@ class AiRequestCreate(_Input):
     subject_id: str = Field(min_length=1, max_length=36)
     topic_ids: list[str] = Field(default_factory=list, max_length=10)
     document_ids: list[str] = Field(default_factory=list, max_length=50)
-    question_types: list[QuestionType] = Field(
+    question_types: list[AiQuestionType] = Field(
         default_factory=lambda: ["mcq_single"], min_length=1, max_length=2
     )
     count: int = Field(default=5, ge=1, le=50)
