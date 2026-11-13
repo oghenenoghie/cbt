@@ -8,7 +8,7 @@ from app.models.academic import (
     Topic,
 )
 from app.models.ai import AiRequest, AiSource, DraftCitation, QuestionCitation, QuestionDraft
-from app.models.attempts import AnswerEvent, AttemptResponse, ExamAttempt
+from app.models.attempts import AnswerEvent, AttemptResponse, ExamAttempt, ResponseMark
 from app.models.candidate import Candidate, CandidateExternalIdentity
 from app.models.classroom import Enrolment, TeachingAssignment
 from app.models.documents import Document, DocumentSegment, DocumentTopic, DocumentVersion
@@ -60,6 +60,7 @@ __all__ = [
     "QuestionDraft",
     "QuestionTopic",
     "QuestionVersion",
+    "ResponseMark",
     "Subject",
     "TeachingAssignment",
     "Tenant",

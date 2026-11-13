@@ -1,7 +1,8 @@
 """Students' own results (ADR 0003, decisions 1 and 12).
 
 A student sees their score once the school's release policy allows it, and, once the exam has
-closed, whether each of their answers was right. Never the correct options.
+closed, whether each of their answers was right, with teachers' marks and comments. Never the
+correct options, accepted answers or marking guides.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -38,7 +39,9 @@ router = APIRouter(prefix="/me", tags=["results"])
 student_read = require_school_role("student")
 
 
-def _result(exam: Exam, subject_name: str, attempt: ExamAttempt, attempts_used: int, at) -> dict:
+def _result(
+    exam: Exam, subject_name: str, attempt: ExamAttempt, score: int, attempts_used: int, at
+) -> dict:
     return {
         "exam_id": exam.id,
         "exam_title": exam.title,
@@ -50,9 +53,9 @@ def _result(exam: Exam, subject_name: str, attempt: ExamAttempt, attempts_used: 
         "attempts_used": attempts_used,
         "submitted_at": as_utc(attempt.submitted_at),
         "submitted_reason": attempt.submitted_reason,
-        "score": attempt.score,
+        "score": score,
         "max_score": attempt.max_score,
-        "percentage": service.percentage(attempt.score, attempt.max_score),
+        "percentage": service.percentage(score, attempt.max_score),
         "review_available": service.review_visible(exam, at),
     }
 
@@ -83,14 +86,21 @@ def my_results(
             select(Subject.id, Subject.name).where(Subject.id.in_({e.subject_id for e in exams}))
         ).all()
     )
+    shown = {
+        exam.id: counted[(exam.id, candidate.id)]
+        for exam in exams
+        if (exam.id, candidate.id) in counted and service.score_visible(exam)
+    }
+    totals = service.totals(db, list(shown.values()))
     results = []
     for exam in exams:
-        attempt = counted.get((exam.id, candidate.id))
-        if attempt is None or not service.score_visible(exam):
+        attempt = shown.get(exam.id)
+        if attempt is None:
             continue
         used = sum(1 for a in mine if a.exam_id == exam.id)
+        score = totals[attempt.id].score
         results.append(
-            MyResult(**_result(exam, subjects.get(exam.subject_id, ""), attempt, used, at))
+            MyResult(**_result(exam, subjects.get(exam.subject_id, ""), attempt, score, used, at))
         )
     results.sort(key=lambda r: r.closes_at, reverse=True)
     return MyResultList(results=results)
@@ -127,7 +137,8 @@ def my_result(
             status.HTTP_409_CONFLICT, detail="Results for this exam haven't been released yet."
         )
     subject_name = db.scalar(select(Subject.name).where(Subject.id == exam.subject_id)) or ""
-    detail = _result(exam, subject_name, attempt, len(mine), at)
+    score = service.totals(db, [attempt])[attempt.id].score
+    detail = _result(exam, subject_name, attempt, score, len(mine), at)
 
     blocks: list[ReviewBlock] = []
     if detail["review_available"]:
@@ -144,10 +155,12 @@ def my_result(
             .where(ExamPaperItem.exam_id == exam.id)
         ).all()
         by_id = {item.id: (item, version, passage) for item, version, passage in rows}
+        teacher = service.latest_marks(db, [attempt.id])
         last_block = None
         for number, item_id in enumerate(attempt.question_order, start=1):
             item, version, passage = by_id[item_id]
             response = responses[item_id]
+            counts = service.mark_of(response, teacher.get(response.id), item.marks)
             texts = {o["id"]: o["text"] for o in version.options}
             if item.block != last_block:
                 blocks.append(
@@ -168,9 +181,11 @@ def my_result(
                         OptionText(id=o, text=texts[o]) for o in attempt.option_orders[item_id]
                     ],
                     selected_option_ids=response.selected_option_ids,
-                    is_correct=response.is_correct,
-                    score=response.score,
+                    text=response.text,
+                    is_correct=counts.is_correct,
+                    score=counts.score,
                     marks=item.marks,
+                    comment=counts.teacher.comment if counts.teacher else None,
                 )
             )
     return MyResultDetail(**detail, blocks=blocks)

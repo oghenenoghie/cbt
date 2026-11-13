@@ -17,6 +17,7 @@ from app.db.session import get_db
 from app.exams.access import viewer_for, visible_exam
 from app.models import Candidate, ExamAttempt
 from app.models.tenant import as_utc
+from app.results.service import totals
 
 router = APIRouter(prefix="/exams", tags=["sitting exams"])
 
@@ -42,6 +43,7 @@ def list_attempts(
     live = service.latest_answers(db, [a.id for a in attempts if a.status == "in_progress"])
     final = service.final_answers(db, [a.id for a in attempts if a.status == "submitted"])
     answers = {**live, **final}
+    marked = totals(db, attempts)
     summaries = [
         AttemptSummary(
             id=a.id,
@@ -53,9 +55,10 @@ def list_attempts(
             ends_at=as_utc(a.ends_at),
             submitted_at=as_utc(a.submitted_at) if a.submitted_at else None,
             submitted_reason=a.submitted_reason,
-            answered_count=sum(1 for chosen in answers.get(a.id, {}).values() if chosen),
+            answered_count=sum(1 for answer in answers.get(a.id, {}).values() if answer.given),
             question_count=len(a.question_order),
-            score=a.score,
+            score=marked[a.id].score if a.id in marked else a.score,
+            pending_marking=marked[a.id].pending if a.id in marked else 0,
             max_score=a.max_score,
         )
         for a in attempts

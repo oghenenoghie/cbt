@@ -41,6 +41,7 @@ from app.models import (  # noqa: F401
     QuestionDraft,
     QuestionTopic,
     QuestionVersion,
+    ResponseMark,
     Subject,
     TeachingAssignment,
     Tenant,

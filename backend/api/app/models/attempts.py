@@ -8,6 +8,9 @@
 - Submitting (by the student, or when time runs out) stores one `AttemptResponse` per question:
   the final answer and its mark. Answer events and final responses are kept separate, as the
   product rules require.
+- A written answer (`essay`) can't be marked automatically: its response is stored with
+  `needs_marking`, and teachers mark it with `ResponseMark`s, which are append-only too (the
+  latest counts), so a submitted answer is never changed (ADR 0006).
 
 Composite foreign keys tie events and responses to the attempt's own exam and its frozen paper,
 so an answer can never point at another exam's question.
@@ -26,12 +29,14 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     UniqueConstraint,
     event,
     inspect,
     select,
     text,
 )
+from sqlalchemy import false as sa_false
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
@@ -148,8 +153,10 @@ class AnswerEvent(Base):
     attempt_id: Mapped[str] = mapped_column(String(36), nullable=False)
     paper_item_id: Mapped[str] = mapped_column(String(36), nullable=False)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
-    # Empty when the student cleared their answer.
+    # Empty when the student cleared their answer, or for questions answered with text.
     selected_option_ids: Mapped[list] = mapped_column(JSON, nullable=False)
+    # The answer to a short-answer, numeric or written question; None when cleared.
+    text: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = _created_at()
 
 
@@ -162,6 +169,8 @@ class AttemptResponse(Base):
         UniqueConstraint(
             "attempt_id", "paper_item_id", name="uq_attempt_responses_attempt_id_paper_item_id"
         ),
+        # Target for teachers' marks.
+        UniqueConstraint("id", "tenant_id", name="uq_attempt_responses_id_tenant_id"),
         CheckConstraint("score >= 0", name="ck_attempt_responses_score"),
     )
 
@@ -171,8 +180,45 @@ class AttemptResponse(Base):
     attempt_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
     paper_item_id: Mapped[str] = mapped_column(String(36), nullable=False)
     selected_option_ids: Mapped[list] = mapped_column(JSON, nullable=False)
+    text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The automatic mark. For a written answer it's 0 and `needs_marking` is set: its mark is
+    # the latest `ResponseMark`.
     is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
     score: Mapped[int] = mapped_column(Integer, nullable=False)
+    needs_marking: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=sa_false(), nullable=False
+    )
+    created_at: Mapped[datetime] = _created_at()
+
+
+class ResponseMark(Base):
+    """A teacher's mark for a written answer, with an optional comment. Append-only: marking
+    again adds the next `number`, and the highest counts, so every change is kept. Two markers
+    saving at once can't both add the same number."""
+
+    __tablename__ = "response_marks"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["response_id", "tenant_id"],
+            ["attempt_responses.id", "attempt_responses.tenant_id"],
+            name="fk_response_marks_response_same_tenant",
+        ),
+        ForeignKeyConstraint(
+            ["marked_by_id", "tenant_id"],
+            ["users.id", "users.tenant_id"],
+            name="fk_response_marks_marked_by_same_tenant",
+        ),
+        CheckConstraint("score >= 0", name="ck_response_marks_score"),
+        UniqueConstraint("response_id", "number", name="uq_response_marks_response_number"),
+    )
+
+    id: Mapped[str] = _id()
+    tenant_id: Mapped[str] = _tenant_id()
+    response_id: Mapped[str] = mapped_column(String(36), index=True, nullable=False)
+    number: Mapped[int] = mapped_column(Integer, nullable=False)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    comment: Mapped[str | None] = mapped_column(Text, nullable=True)
+    marked_by_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = _created_at()
 
 
@@ -208,6 +254,6 @@ def _never_changes(_mapper, _connection, row) -> None:
     raise ValueError(f"{type(row).__name__} rows are permanent and can't be changed or removed.")
 
 
-for _model in (AnswerEvent, AttemptResponse):
+for _model in (AnswerEvent, AttemptResponse, ResponseMark):
     event.listen(_model, "before_update", _never_changes)
     event.listen(_model, "before_delete", _never_changes)
