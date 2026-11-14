@@ -155,16 +155,6 @@ def test_invalid_content_for_the_new_types_is_refused(school, content, message) 
     assert message in response.text
 
 
-def test_ai_drafts_stay_on_two_types_for_now(school) -> None:
-    t = school.teacher
-    response = t.client.post(
-        "/api/v1/ai/requests",
-        json={"subject_id": school.science.id, "question_types": ["essay"]},
-        headers=t.headers,
-    )
-    assert response.status_code == 422
-
-
 # --- Sitting ------------------------------------------------------------------------------------
 
 

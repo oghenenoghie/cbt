@@ -427,7 +427,7 @@ def test_request_details_are_checked(school, ai, db: Session) -> None:
         response = ask(school.teacher, school.science, **body)
         assert response.status_code == 422, body
         assert response.json()["detail"] == message
-    assert ask(school.teacher, school.science, question_types=["essay"]).status_code == 422
+    assert ask(school.teacher, school.science, question_types=["matching"]).status_code == 422
     assert ask(school.teacher, school.science, question_types=[]).status_code == 422
     assert db.scalar(select(AiRequest.id)) is None
 

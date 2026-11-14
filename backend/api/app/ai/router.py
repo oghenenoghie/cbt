@@ -9,6 +9,7 @@ bank, with citations) or dismiss each draft that passed the checks.
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from pydantic import ValidationError
 from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
@@ -16,7 +17,6 @@ from app.ai.processing import process_soon
 from app.ai.provider import drafting_enabled
 from app.ai.retrieval import approved_versions, location, retrieve
 from app.ai.schemas import (
-    AI_QUESTION_TYPES,
     AiRequestCreate,
     AiRequestDetail,
     AiRequestList,
@@ -128,6 +128,7 @@ def _drafts_out(db: Session, drafts: list[QuestionDraft]) -> list[DraftOut]:
             stem=d.stem,
             options=d.options,
             correct_option_ids=d.correct_option_ids,
+            answer_key=d.answer_key,
             explanation=d.explanation,
             marks=d.marks,
             difficulty=d.difficulty,
@@ -517,21 +518,30 @@ def _subject_topics(
 
 
 def _content(draft: QuestionDraft) -> QuestionContent:
+    """A pending draft as bank content, which validates it again."""
+    key = draft.answer_key or {}
+    ids = [o["id"] for o in draft.options]
+    fields: dict = {}
     if draft.type == "true_false":
-        correct: bool | int = draft.correct_option_ids == ["true"]
-        options = None
+        fields["correct"] = draft.correct_option_ids == ["true"]
+    elif draft.type in ("mcq_single", "mcq_multiple"):
+        fields["options"] = [o["text"] for o in draft.options]
+        positions = [ids.index(i) for i in draft.correct_option_ids]
+        fields["correct"] = positions[0] if draft.type == "mcq_single" else positions
+    elif draft.type == "short_answer":
+        fields["accepted_answers"] = key.get("accepted_answers")
+    elif draft.type == "numeric":
+        fields["value"] = key.get("value")
+        fields["tolerance"] = key.get("tolerance")
     else:
-        ids = [o["id"] for o in draft.options]
-        correct = ids.index(draft.correct_option_ids[0])
-        options = [o["text"] for o in draft.options]
+        fields["guide"] = key.get("guide")
     return QuestionContent(
         type=draft.type,
         stem=draft.stem,
-        options=options,
-        correct=correct,
         explanation=draft.explanation,
         marks=draft.marks,
         difficulty=draft.difficulty,
+        **fields,
     )
 
 
@@ -547,13 +557,12 @@ def edit_draft(
     draft = _draft_for(db, principal, draft_id)
     _require_pending(draft)
     if body.content is not None:
-        if body.content.type not in AI_QUESTION_TYPES:
-            raise invalid("AI drafts can be multiple choice (one answer) or true/false for now.")
-        options, correct, _ = body.content.to_storage()
+        options, correct, answer_key = body.content.to_storage()
         draft.type = body.content.type
         draft.stem = body.content.stem
         draft.options = options
         draft.correct_option_ids = correct
+        draft.answer_key = answer_key
         draft.explanation = body.content.explanation
         draft.marks = body.content.marks
         draft.difficulty = body.content.difficulty
@@ -579,7 +588,13 @@ def approve_draft(
     """Add a pending draft to the question bank, keeping its verified citations."""
     draft = _draft_for(db, principal, draft_id)
     _require_pending(draft)
-    content = _content(draft)
+    try:
+        content = _content(draft)
+    except ValidationError as error:
+        message = error.errors()[0].get("msg", "it's incomplete").removeprefix("Value error, ")
+        raise invalid(
+            f"This draft doesn't fit the question format: {message} Edit it first."
+        ) from error
     citations = db.scalars(
         select(DraftCitation)
         .where(DraftCitation.draft_id == draft.id, DraftCitation.found.is_(True))
@@ -626,7 +641,7 @@ def approve_draft(
     )
     db.add(question)
     db.flush()
-    options, correct, _ = content.to_storage()
+    options, correct, answer_key = content.to_storage()
     version = QuestionVersion(
         tenant_id=principal.tenant_id,
         question_id=question.id,
@@ -635,6 +650,7 @@ def approve_draft(
         stem=content.stem,
         options=options,
         correct_option_ids=correct,
+        answer_key=answer_key,
         explanation=content.explanation,
         marks=content.marks,
         difficulty=content.difficulty,

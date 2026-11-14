@@ -1,13 +1,16 @@
 """Checking what the model wrote (ADR 0005, decision 4).
 
 Nothing the model says is taken on trust. Each candidate must:
-- fit the question bank's format, as one of the requested types, with at least three options
-  for multiple choice and no "all/none of the above";
+- fit the question bank's format, as one of the requested types (ADR 0006), with at least three
+  options for multiple choice and no "all/none of the above"; a multiple-answer question needs at
+  least two right options and one wrong one, a short answer must be a word or short phrase that
+  appears in the quoted material, and an essay needs a marking guide;
 - quote, word for word, at least one of the sources the request was given (`quote_found`);
 - not repeat a question already in the bank, a pending draft, or another candidate;
 - pass the answer check: a second model pass that sees only the quoted sources and says whether
-  they establish the marked answer, whether only one answer is right, whether the question is
-  clear and whether it is on the requested topics.
+  they establish the marked answer (or the accepted answers, the number, or the marking guide's
+  points), whether the answer is unambiguous, whether the question is clear and whether it is on
+  the requested topics.
 
 A candidate that fails any of these is kept as rejected, with every reason, and can't be approved.
 """
@@ -17,12 +20,14 @@ from dataclasses import dataclass, field
 from pydantic import ValidationError
 
 from app.ai.provider import Checked, CheckItem, SourceText, Verdict
-from app.ai.text import normalize, quote_found, same_question
+from app.ai.text import normalize, phrase_in, quote_found, same_question
 from app.questions.schemas import QuestionContent
 
 MAX_CITATIONS = 5
 MAX_QUOTE_CHARS = 2000
 MIN_AI_OPTIONS = 3
+# A short answer is a word or short phrase, so it can be matched fairly.
+MAX_SHORT_ANSWER_WORDS = 6
 BANNED_OPTIONS = ("all of the above", "none of the above", "all of these", "none of these")
 
 TOO_MANY = "More questions than were asked for."
@@ -33,6 +38,16 @@ NOT_FOUND = (
     "traced to the school's material."
 )
 FEW_OPTIONS = "Multiple-choice drafts need at least three options."
+FEW_RIGHT = "Multiple-answer drafts need at least two right options and at least one wrong one."
+LONG_ANSWER = (
+    f"A short answer must be a word or a short phrase (up to {MAX_SHORT_ANSWER_WORDS} words), "
+    "so it can be marked automatically."
+)
+ANSWER_NOT_QUOTED = (
+    "Its answer isn't in the material it quotes, so the answer can't be traced to the school's "
+    "material."
+)
+NO_GUIDE = "Essay drafts need a marking guide drawn from the material."
 BANNED = "It uses an option like “all of the above”, which makes the answer hard to check."
 NOT_CHECKED = "The answer check didn't return a result for it, so it can't be accepted."
 
@@ -67,6 +82,8 @@ class Reviewed:
     stem: str = ""
     options: list[dict] = field(default_factory=list)
     correct_option_ids: list[str] = field(default_factory=list)
+    # Accepted answers, the number and tolerance, or the marking guide (ADR 0006).
+    answer_key: dict | None = None
     explanation: str | None = None
     marks: int = 1
     difficulty: str | None = None
@@ -136,6 +153,11 @@ def screen(
 
         _read_content(candidate, raw, question_types)
         _read_citations(candidate, raw, sources)
+        if candidate.passed and candidate.type == "short_answer":
+            quotes = [c.quote for c in candidate.citations if c.found]
+            accepted = (candidate.answer_key or {}).get("accepted_answers", [])
+            if not any(phrase_in(answer, quote) for answer in accepted for quote in quotes):
+                candidate.reject(ANSWER_NOT_QUOTED)
 
         if candidate.passed:
             for stem, where in existing:
@@ -145,33 +167,41 @@ def screen(
     return reviewed
 
 
+def _stripped(value: object) -> object:
+    """A list from the model with its strings trimmed, or None when it isn't a list."""
+    if not isinstance(value, list):
+        return None
+    return [v.strip() if isinstance(v, str) else v for v in value]
+
+
+def _type_fields(kind: str, raw: dict) -> dict:
+    """The fields of the bank's format that this type uses, read from what the model wrote."""
+    if kind == "true_false":
+        return {"correct": raw.get("statement_is_true")}
+    if kind == "mcq_single":
+        return {"options": _stripped(raw.get("options")), "correct": raw.get("correct_option")}
+    if kind == "mcq_multiple":
+        return {"options": _stripped(raw.get("options")), "correct": raw.get("correct_options")}
+    if kind == "short_answer":
+        return {"accepted_answers": _stripped(raw.get("accepted_answers"))}
+    if kind == "numeric":
+        return {"value": raw.get("value"), "tolerance": raw.get("tolerance")}
+    return {"guide": _text(raw.get("guide"), 10000) or None}
+
+
 def _read_content(candidate: Reviewed, raw: dict, question_types: list[str]) -> None:
     if candidate.type not in question_types:
         candidate.reject(WRONG_TYPE)
         return
     try:
-        if candidate.type == "true_false":
-            content = QuestionContent(
-                type="true_false",
-                stem=candidate.stem,
-                correct=raw.get("statement_is_true"),
-                explanation=candidate.explanation,
-                marks=candidate.marks,
-                difficulty=candidate.difficulty,
-            )
-        else:
-            options = raw.get("options")
-            content = QuestionContent(
-                type="mcq_single",
-                stem=candidate.stem,
-                options=[o.strip() if isinstance(o, str) else o for o in options]
-                if isinstance(options, list)
-                else None,
-                correct=raw.get("correct_option"),
-                explanation=candidate.explanation,
-                marks=candidate.marks,
-                difficulty=candidate.difficulty,
-            )
+        content = QuestionContent(
+            type=candidate.type,
+            stem=candidate.stem,
+            explanation=candidate.explanation,
+            marks=candidate.marks,
+            difficulty=candidate.difficulty,
+            **_type_fields(candidate.type, raw),
+        )
     except ValidationError as error:
         candidate.reject(_format_error(error))
         options = raw.get("options")
@@ -181,12 +211,22 @@ def _read_content(candidate: Reviewed, raw: dict, question_types: list[str]) -> 
             ]
         return
 
-    candidate.options, candidate.correct_option_ids, _ = content.to_storage()
-    if content.type == "mcq_single":
+    candidate.options, candidate.correct_option_ids, candidate.answer_key = content.to_storage()
+    if content.type in ("mcq_single", "mcq_multiple"):
         if len(candidate.options) < MIN_AI_OPTIONS:
             candidate.reject(FEW_OPTIONS)
         if any(normalize(o["text"]).rstrip(".") in BANNED_OPTIONS for o in candidate.options):
             candidate.reject(BANNED)
+    if content.type == "mcq_multiple":
+        right = len(candidate.correct_option_ids)
+        if right < 2 or right >= len(candidate.options):
+            candidate.reject(FEW_RIGHT)
+    if content.type == "short_answer" and any(
+        len(answer.split()) > MAX_SHORT_ANSWER_WORDS for answer in content.accepted_answers or []
+    ):
+        candidate.reject(LONG_ANSWER)
+    if content.type == "essay" and not content.guide:
+        candidate.reject(NO_GUIDE)
 
 
 def _read_citations(candidate: Reviewed, raw: dict, sources: dict[str, SourceRef]) -> None:
@@ -219,32 +259,46 @@ def check_items(reviewed: list[Reviewed]) -> list[CheckItem]:
     for candidate in reviewed:
         if not candidate.passed:
             continue
-        if candidate.type == "true_false":
-            options: list[str] = []
-            answer = (
-                "The statement is true."
-                if candidate.correct_option_ids == ["true"]
-                else "The statement is false."
-            )
-        else:
-            options = [o["text"] for o in candidate.options]
-            answer = next(
-                f"Option {i}: {o['text']}"
-                for i, o in enumerate(candidate.options)
-                if o["id"] in candidate.correct_option_ids
-            )
+        options = [o["text"] for o in candidate.options] if candidate.type.startswith("mcq") else []
         items.append(
             CheckItem(
                 key=candidate.key,
                 type=candidate.type,
                 stem=candidate.stem,
                 options=options,
-                answer=answer,
+                answer=marked_answer(candidate),
                 explanation=candidate.explanation,
                 quotes=[(c.label, c.quote) for c in candidate.citations if c.found],
             )
         )
     return items
+
+
+def marked_answer(candidate: Reviewed) -> str:
+    """The answer the answer check is asked to confirm, in words."""
+    key = candidate.answer_key or {}
+    if candidate.type == "true_false":
+        return (
+            "The statement is true."
+            if candidate.correct_option_ids == ["true"]
+            else "The statement is false."
+        )
+    if candidate.type in ("mcq_single", "mcq_multiple"):
+        right = [
+            f"Option {i}: {o['text']}"
+            for i, o in enumerate(candidate.options)
+            if o["id"] in candidate.correct_option_ids
+        ]
+        if candidate.type == "mcq_single":
+            return right[0]
+        return "Every right option, and only these: " + "; ".join(right)
+    if candidate.type == "short_answer":
+        return "Accepted answers: " + "; ".join(key.get("accepted_answers", []))
+    if candidate.type == "numeric":
+        value, tolerance = key.get("value"), key.get("tolerance") or 0
+        margin = f", accepting anything within {tolerance:g} of it" if tolerance else ""
+        return f"The number {value:g}{margin}."
+    return "Marking guide: " + key.get("guide", "")
 
 
 def cited_sources(reviewed: list[Reviewed], sources: dict[str, SourceRef]) -> list[SourceText]:

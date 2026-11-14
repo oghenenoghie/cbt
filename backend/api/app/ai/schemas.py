@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.questions.schemas import Difficulty, OptionOut, QuestionContent
+from app.questions.schemas import Difficulty, OptionOut, QuestionContent, QuestionType
 
-# The types AI drafts are written in so far (ADR 0005, decision 9).
-AiQuestionType = Literal["mcq_single", "true_false"]
-AI_QUESTION_TYPES = ("mcq_single", "true_false")
+# AI drafts can be any of the bank's types (ADR 0005 decision 9, ADR 0006 stage C).
+AiQuestionType = QuestionType
 
 
 class _Input(BaseModel):
@@ -22,7 +20,7 @@ class AiRequestCreate(_Input):
     topic_ids: list[str] = Field(default_factory=list, max_length=10)
     document_ids: list[str] = Field(default_factory=list, max_length=50)
     question_types: list[AiQuestionType] = Field(
-        default_factory=lambda: ["mcq_single"], min_length=1, max_length=2
+        default_factory=lambda: ["mcq_single"], min_length=1, max_length=6
     )
     count: int = Field(default=5, ge=1, le=50)
     difficulty: Difficulty | None = None
@@ -94,6 +92,8 @@ class DraftOut(BaseModel):
     stem: str
     options: list[OptionOut]
     correct_option_ids: list[str]
+    # Accepted answers, the number and tolerance, or the marking guide, for written answers.
+    answer_key: dict | None
     explanation: str | None
     marks: int
     difficulty: str | None

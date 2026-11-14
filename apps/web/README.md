@@ -109,8 +109,8 @@ Choices worth knowing:
   the third page doesn't send you back to the first.
 - **The editor checks what the API would refuse** (a right answer chosen, options all different, an accepted
   answer given, the answer a number) and says so in its own words; the API checks again.
-- **AI drafts stay on two types.** Correcting an AI draft offers only multiple choice and true/false, as the
-  API does (ADR 0005); the other types are written by hand.
+- **AI drafts can be any type** (ADR 0006, decision 7), and correcting one uses the same editor in draft
+  mode, so a draft can become any type before it's approved.
 
 ### Learning materials and AI drafts
 

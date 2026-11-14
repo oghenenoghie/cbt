@@ -1,8 +1,8 @@
 # ADR 0006: More question types and teacher marking
 
-- **Status:** Accepted. Stages A and B are built.
+- **Status:** Accepted. Stages A, B and C are built.
 - **Date:** 2026-11-13
-- **Implemented in:** `backend/api/app/questions/schemas.py`, `backend/api/app/attempts/marking.py`, `backend/api/app/results/marking.py`, `backend/api/app/results/service.py` (migration `0014_question_types_marking`)
+- **Implemented in:** `backend/api/app/questions/schemas.py`, `backend/api/app/attempts/marking.py`, `backend/api/app/results/marking.py`, `backend/api/app/results/service.py` (migration `0014_question_types_marking`); AI drafts in `backend/api/app/ai/` (migration `0015_ai_question_types`)
 
 ## Context
 
@@ -20,7 +20,7 @@ The work is built in stages:
 
 - **A. The API:** the new types in the bank, sitting them, automatic marking, teacher marking, and teachers' marks in results. (Built.)
 - **B. Web screens:** writing the new types, answering them while sitting, a marking screen, and marks and comments in results. (Built: `apps/web`, `/exams/marking`.) Typed answers save when typing pauses, so an essay isn't one answer event per keystroke.
-- **C. AI drafts of the new types.** (To come.)
+- **C. AI drafts of the new types**, with checks that suit each one. (Built: decision 7.)
 
 ## Decisions
 
@@ -59,7 +59,14 @@ The work is built in stages:
 
 6. **What students see.** Once the review is available (ADR 0003, decision 12), each answer shows their own text, their score, right or wrong, and the teacher's comment. Never the accepted answers, the expected number or the marking guide.
 
-7. **AI drafts stay on two types for now.** Requests can ask for single-answer multiple choice and true/false only (ADR 0005, decision 9), and a draft can't be edited into another type. Drafting the new types, with checks that suit them, is stage C.
+7. **AI drafts of every type** (stage C; ADR 0005's rules all still apply). A request can ask for any of the six types, and a draft can be corrected into any of them; drafts keep the answer key as bank versions do (`question_drafts.answer_key`). On top of ADR 0005's checks, each type has its own:
+   - **Multiple answers:** at least three options, at least two right and at least one wrong, so it isn't a single-answer question in disguise.
+   - **Short answer:** each accepted answer is a word or short phrase (up to six words), and at least one of them must appear, as whole words, in a quote that was found in the material. An answer the material doesn't contain can't be traced to it, so it is rejected before the answer check.
+   - **Number:** the answer is a number with a margin of 0 or more; the answer check confirms it follows from figures in the quotes.
+   - **Essay:** a marking guide is required, and the answer check confirms every point in it is established by the quotes.
+   - **The answer check** is told each type's answer in words (the right options, the accepted answers, the number and margin, or the marking guide) and judges it against the quotes: for a short answer, that any other answer the material supports is accepted too; for an essay, that the guide covers what is asked so answers can be marked fairly.
+
+   These rules weren't put to the user as separate questions: when the user said to carry on with stage C, they were chosen to follow the product rule that every AI question and answer must be grounded in the school's approved material. Any of them can change.
 
 ## Consequences
 
@@ -67,6 +74,7 @@ The work is built in stages:
 - Results with written answers always wait for a teacher to finish marking and release them.
 - The record shows every mark a written answer was given, by whom and when, and the automatic mark it replaced.
 - Downgrading migration 0014 fails while any question of a new type exists.
+- AI can draft every type; essays and short answers it drafts still wait for a teacher's approval, and essays for a teacher's marks.
 
 ## Still open
 
