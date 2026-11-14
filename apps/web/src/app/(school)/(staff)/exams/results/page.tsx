@@ -85,6 +85,15 @@ function ResultsView({ initial, lookup }: { initial: Exam; lookup: SchoolLookup 
         <Loaded value={results}>
           {(r) => (
             <>
+              {r.pending_marking > 0 && (
+                <div className="alert alert-warning">
+                  {r.pending_marking === 1
+                    ? "1 written answer is"
+                    : `${r.pending_marking} written answers are`}{" "}
+                  waiting for a mark. Until then they count as 0, and results can&apos;t be released.{" "}
+                  <Link href={`/exams/marking?id=${exam.id}`}>Mark answers</Link>
+                </div>
+              )}
               <div className={styles.stats}>
                 <Stat label="Students" value={String(r.summary.students)} />
                 <Stat label="Handed in" value={String(r.summary.sat)} />

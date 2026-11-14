@@ -92,7 +92,7 @@ it again). The subject, topic, passage and active/archived filters are kept in t
 
 | Screen | What staff do there |
 |---|---|
-| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write multiple-choice (2 to 6 options, one right answer) and true/false questions with marks, difficulty, topics and an explanation; open one to see its answer, edit it, see earlier versions, archive, restore or delete it |
+| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write questions of six types (ADR 0006): multiple choice with one right answer or several, true/false, short answer (the answers to accept), number (the answer and a margin) and essay (an optional marking guide), with marks, difficulty, topics and an explanation; open one to see its answer key, edit it, see earlier versions, archive, restore or delete it |
 | **Passages** (`/passages`) | List a subject's reading passages; add and edit them; see the questions about one and write more; archive, restore or delete |
 
 Choices worth knowing:
@@ -107,8 +107,10 @@ Choices worth knowing:
 - **Closing an editor with unsaved changes asks first**, so pressing Escape doesn't lose a question.
 - **Changes update the list in place** (`usePagedList`'s `replace` and `remove`), so archiving something on
   the third page doesn't send you back to the first.
-- **The editor checks what the API would refuse** (a right answer chosen, options all different) and says
-  so in its own words; the API checks again.
+- **The editor checks what the API would refuse** (a right answer chosen, options all different, an accepted
+  answer given, the answer a number) and says so in its own words; the API checks again.
+- **AI drafts stay on two types.** Correcting an AI draft offers only multiple choice and true/false, as the
+  API does (ADR 0005); the other types are written by hand.
 
 ### Learning materials and AI drafts
 
@@ -144,8 +146,9 @@ the API works out for the signed-in person and checks again on every action.
 | **Exams** (`/exams`) | Every exam you can see, newest first, by status and subject; start a **New exam** (subject, term, classes, times and settings) |
 | **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** |
 | **Approvals** (`/approvals`) | For exam coordinators and school admins: the exams waiting for them. The dashboard shows how many |
-| **Results** (`/exams/results?id=…`) | Whether students can see them yet, and **Release results** once the exam has closed. A summary (students, handed in, didn't sit, average, highest, lowest), then two tabs: **Students** (each student's counted attempt, by class or by score, with a CSV download) and **Questions** (item analysis: the share who got each question right and how many chose each option, in paper order or hardest first) |
-| **A marked script** (`/exams/script?exam=…&attempt=…`) | One student's attempt in paper order, each question marked, with the right answer and their answer. Opened from a name in the results or in who has started |
+| **Results** (`/exams/results?id=…`) | Whether students can see them yet, how many written answers wait for a mark, and **Release results** once the exam has closed and nothing waits. A summary (students, handed in, didn't sit, average, highest, lowest), then two tabs: **Students** (each student's counted attempt, by class or by score, with what's left to mark and a CSV download) and **Questions** (item analysis: the share who got each question right, or of the marks for written answers, and how many chose each option, in paper order or hardest first) |
+| **Marking** (`/exams/marking?id=…&item=…`) | For exams with written answers (ADR 0006): the short-answer, number and essay questions with how many answers wait; open one to read every student's answer beside the accepted answers or marking guide, and give a mark out of the question's marks with a comment the student sees. Essays wait for a mark; short answers and numbers were marked automatically and can be re-marked, for example to accept a spelling. Linked from the exam, its results and a waiting count |
+| **A marked script** (`/exams/script?exam=…&attempt=…`) | One student's attempt in paper order, each question marked, with the right answer and their answer, written answers with the key or guide, and who marked them; the exam's teachers can mark written answers here too. Opened from a name in the results, in who has started or in marking |
 
 Choices worth knowing:
 
@@ -165,6 +168,11 @@ Choices worth knowing:
 - **Results count each student's latest finished attempt**, as the API does. Staff see scores and the
   answer key whether or not results are released; students see only what's released, never the key.
 - **Item analysis names the options from the frozen paper**, which lists questions in the same order.
+- **Marking** is open to the same people as releasing (the API's `can_mark` says so; exam coordinators who
+  don't teach the exam can read but not mark), from the moment an attempt is handed in until results are
+  released. Every mark is kept; marking again replaces the mark that counts. Results can't be released
+  while an answer waits (the API refuses and says how many), and the API refuses an exam with essays set
+  to show results at once, which the paper lists before it's submitted.
 - The page addresses an exam as `/exams/view?id=…` rather than a dynamic route, so the screens stay
   compatible with a static export for the desktop app.
 
@@ -173,7 +181,7 @@ Choices worth knowing:
 | Screen | What students do there |
 |---|---|
 | **My exams** (`/my-exams`) | Their published exams, open now, coming up and done; start one after a short briefing (time, questions, instructions, how the clock works), carry on with one already started, or open its result. Checks again every minute, so an exam that opens appears |
-| **Sitting** (`/sit?attempt=…`) | One question at a time, with its passage beside it, a numbered navigator showing what's answered, a countdown, and Hand in |
+| **Sitting** (`/sit?attempt=…`) | One question at a time, with its passage beside it, a numbered navigator showing what's answered, a countdown, and Hand in. Options to choose (tick boxes when several are right), a box for a word or a number, or a larger box with a word count for an essay |
 | **My results** (`/my-results`) | Released scores, newest first; open one for the question-by-question review once the exam has closed |
 
 How sitting an exam behaves:
@@ -182,16 +190,19 @@ How sitting an exam behaves:
   with the browser's monotonic clock, so a wrong computer clock or a sleeping tab doesn't change it. The
   server refuses late answers whatever the screen shows.
 - **Answers save as they're chosen** (`useAnswerSaver`), one request at a time, the latest choice per
-  question winning. A failed save retries every three seconds; the bar says how many answers aren't
-  saved yet, and the browser warns before leaving the page with unsaved answers. Handing in is refused
-  while anything is unsaved, so nothing shown as chosen is lost.
+  question winning. **Typed answers save when typing pauses** (1.5 seconds), when the box is left, or
+  before moving on or handing in, because every save is kept as an answer event: an essay typed key by
+  key is one or a few saves, not one per letter. A failed save retries every three seconds; the bar says
+  how many answers aren't saved yet, and the browser warns before leaving the page with unsaved answers.
+  Handing in is refused while anything is unsaved, so nothing shown as given is lost.
 - **Resuming**: reopening the attempt (a reload, another computer) shows the saved answers, opens at the
   first unanswered question, and the clock has kept running.
 - **When time runs out** the page stops taking answers, lets the last saves through, and waits for the
   server to finish the attempt, so it's recorded as time running out rather than handed in. If the page
   is closed, the server finishes the attempt anyway the next time anything reads it.
-- **Students never see answer keys.** The review shows their own answer marked right or wrong and the
-  marks, never which option was correct: the API doesn't send it.
+- **Students never see answer keys.** The review shows their own answer (chosen or written) marked right,
+  wrong or part marks, and their teacher's comment, never which option was correct, the accepted answers
+  or the marking guide: the API doesn't send them.
 
 Pages under `(school)` are client components that fetch from the API, so they stay compatible with
 a static export for the offline desktop app later. Styling is plain CSS: design tokens and shared
@@ -213,3 +224,5 @@ The screens are being built in stages, each its own pull request:
    staff results screens, so an exam can be run end to end in the browser.
 5. **Materials and AI drafts** (built): uploading and approving learning materials, asking for AI drafts
    and reviewing them into the question bank.
+6. **More question types and marking** (built, ADR 0006): writing and sitting multiple-answer, short-answer,
+   number and essay questions, marking written answers, and marks and comments in results.

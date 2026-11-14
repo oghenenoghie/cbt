@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Copy, Send, Trash2, Undo2, Upload, XCircle } from "lucide-react";
+import { BarChart3, Copy, PenLine, Send, Trash2, Undo2, Upload, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -9,6 +9,7 @@ import { ReleaseResults } from "@/components/exams/ReleaseResults";
 import { ErrorAlert } from "@/components/Feedback";
 import { ConfirmModal, Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
+import { isWritten } from "@/lib/bank";
 import { formatWindow, type SchoolLookup } from "@/lib/exams";
 import { count } from "@/lib/format";
 import type { Exam, ExamAction, Paper } from "@/lib/types";
@@ -184,6 +185,9 @@ export function ExamActions({
   const action = useAction();
   const can = (name: ExamAction) => exam.allowed_actions.includes(name);
   const problems = paper.status === "ready" ? paper.data.problems : [];
+  // Written answers (short answer, number, essay) can be marked by teachers (ADR 0006).
+  const hasWritten =
+    paper.status === "ready" && paper.data.blocks.some((b) => b.questions.some((q) => isWritten(q.type)));
   const classes = lookup.armNames(exam.arm_ids);
 
   function close() {
@@ -212,6 +216,12 @@ export function ExamActions({
           <Link className="btn btn-secondary" href={`/exams/results?id=${exam.id}`}>
             <BarChart3 size={16} aria-hidden="true" />
             Results
+          </Link>
+        )}
+        {exam.status === "published" && hasWritten && (
+          <Link className="btn btn-secondary" href={`/exams/marking?id=${exam.id}`}>
+            <PenLine size={16} aria-hidden="true" />
+            Marking
           </Link>
         )}
         {can("submit") && (

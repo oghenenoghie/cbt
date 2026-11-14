@@ -9,16 +9,21 @@ import { ConfirmModal } from "@/components/Modal";
 import { api, ApiError } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 import { useSession } from "@/lib/session";
-import { formatClock } from "@/lib/sitting";
+import { answeredInWriting, formatClock, wordCount } from "@/lib/sitting";
 import type { Attempt, AttemptQuestion, MyExam } from "@/lib/types";
 import { useAction } from "@/lib/useAction";
 import { useApi } from "@/lib/useApi";
 import { useQueryParams } from "@/lib/useQueryParams";
 
 import styles from "./sit.module.css";
-import { useAnswerSaver, type SaveState } from "./useAnswerSaver";
+import { useAnswerSaver, type AnswerBody, type SaveState } from "./useAnswerSaver";
 
 const LETTERS = "ABCDEF";
+/** How long typing pauses before a written answer is saved. */
+const TYPING_SAVE_MS = 1500;
+/** The longest answers the API takes: an essay, and anything else typed. */
+const ESSAY_CHARS = 20000;
+const SHORT_CHARS = 500;
 /** How long to wait for the last saves when time runs out. */
 const LAST_SAVES_MS = 5000;
 /** How often to ask whether the server has finished an attempt whose time is up. */
@@ -27,6 +32,16 @@ const TIME_UP_POLL_MS = 3000;
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type Question = AttemptQuestion & { passage: { title: string; body: string } | null };
+
+/** A student's answer to one question: chosen options, or what they wrote. */
+interface Given {
+  selected: string[];
+  text: string;
+}
+
+function isAnswered(given: Given | undefined): boolean {
+  return Boolean(given && (given.selected.length > 0 || given.text.trim()));
+}
 
 /**
  * Seconds left, counted down from what the server said. Measured with the browser's monotonic
@@ -96,16 +111,100 @@ function Timer({ left }: { left: number }) {
   );
 }
 
-function QuestionView({
+/** Typing in a written answer: shown at once, saved when typing pauses or the box is left. */
+function WrittenAnswer({
   question,
-  chosen,
-  onChoose,
+  text,
+  stemId,
+  readOnly,
+  onType,
+  onLeave,
 }: {
   question: Question;
-  chosen: string[];
-  onChoose: (optionIds: string[]) => void;
+  text: string;
+  stemId: string;
+  readOnly: boolean;
+  onType: (text: string) => void;
+  onLeave: () => void;
+}) {
+  const id = `answer-${question.item_id}`;
+  const hintId = `${id}-hint`;
+  if (question.type === "essay") {
+    const words = wordCount(text);
+    return (
+      <div className="field">
+        <label htmlFor={id}>Your answer</label>
+        <textarea
+          id={id}
+          className={styles.essay}
+          rows={12}
+          maxLength={ESSAY_CHARS}
+          value={text}
+          readOnly={readOnly}
+          aria-describedby={`${stemId} ${hintId}`}
+          onChange={(e) => onType(e.target.value)}
+          onBlur={onLeave}
+        />
+        <span id={hintId} className="hint">
+          {words === 1 ? "1 word" : `${words} words`}. A teacher marks this answer.
+        </span>
+      </div>
+    );
+  }
+  return (
+    <div className="field">
+      <label htmlFor={id}>Your answer</label>
+      <input
+        id={id}
+        className={styles.written}
+        type="text"
+        inputMode={question.type === "numeric" ? "decimal" : undefined}
+        autoComplete="off"
+        spellCheck={question.type === "numeric" ? false : undefined}
+        maxLength={SHORT_CHARS}
+        value={text}
+        readOnly={readOnly}
+        aria-describedby={`${stemId} ${hintId}`}
+        onChange={(e) => onType(e.target.value)}
+        onBlur={onLeave}
+      />
+      <span id={hintId} className="hint">
+        {question.type === "numeric"
+          ? "Write a number, for example 9.8. Leave out units unless the question asks for them."
+          : "A word or short phrase. Check your spelling."}
+      </span>
+    </div>
+  );
+}
+
+function QuestionView({
+  question,
+  given,
+  readOnly,
+  onChange,
+  onLeave,
+}: {
+  question: Question;
+  given: Given;
+  readOnly: boolean;
+  /** `typing` when the student is still typing a written answer. */
+  onChange: (given: Given, typing: boolean) => void;
+  onLeave: () => void;
 }) {
   const stemId = `stem-${question.item_id}`;
+  const chosen = given.selected;
+  const several = question.type === "mcq_multiple";
+
+  function choose(optionId: string, on: boolean) {
+    if (readOnly) return;
+    const selected = several
+      ? on
+        ? [...chosen, optionId]
+        : chosen.filter((id) => id !== optionId)
+      : [optionId];
+    onChange({ ...given, selected }, false);
+  }
+
   return (
     <div>
       <p className={styles.number}>
@@ -114,32 +213,45 @@ function QuestionView({
       <p id={stemId} className={styles.stem}>
         {question.stem}
       </p>
-      <fieldset aria-describedby={stemId}>
-        <legend className="visually-hidden">Your answer to question {question.number}</legend>
-        <div className={styles.options}>
-          {question.options.map((option, i) => {
-            const selected = chosen.includes(option.id);
-            return (
-              <label key={option.id} className={`${styles.option} ${selected ? styles.chosen : ""}`}>
-                <input
-                  type="radio"
-                  name={`answer-${question.item_id}`}
-                  checked={selected}
-                  onChange={() => onChoose([option.id])}
-                />
-                {question.type === "mcq_single" && <span className={styles.letter}>{LETTERS[i]}.</span>}
-                <span>{option.text}</span>
-              </label>
-            );
-          })}
-        </div>
-      </fieldset>
-      {chosen.length > 0 && (
+      {answeredInWriting(question.type) ? (
+        <WrittenAnswer
+          question={question}
+          text={given.text}
+          stemId={stemId}
+          readOnly={readOnly}
+          onType={(text) => onChange({ ...given, text }, true)}
+          onLeave={onLeave}
+        />
+      ) : (
+        <fieldset aria-describedby={stemId}>
+          <legend className={several ? styles.instruction : "visually-hidden"}>
+            {several ? "Tick every right answer." : `Your answer to question ${question.number}`}
+          </legend>
+          <div className={styles.options}>
+            {question.options.map((option, i) => {
+              const selected = chosen.includes(option.id);
+              return (
+                <label key={option.id} className={`${styles.option} ${selected ? styles.chosen : ""}`}>
+                  <input
+                    type={several ? "checkbox" : "radio"}
+                    name={`answer-${question.item_id}`}
+                    checked={selected}
+                    onChange={(e) => choose(option.id, e.target.checked)}
+                  />
+                  {question.type !== "true_false" && <span className={styles.letter}>{LETTERS[i]}.</span>}
+                  <span>{option.text}</span>
+                </label>
+              );
+            })}
+          </div>
+        </fieldset>
+      )}
+      {isAnswered(given) && !readOnly && (
         <button
           type="button"
           className="btn btn-ghost btn-small"
           style={{ marginTop: 10 }}
-          onClick={() => onChoose([])}
+          onClick={() => onChange({ selected: [], text: "" }, false)}
         >
           Clear my answer
         </button>
@@ -161,11 +273,13 @@ function InProgress({
     () => attempt.blocks.flatMap((b) => b.questions.map((q) => ({ ...q, passage: b.passage }))),
     [attempt],
   );
-  const [answers, setAnswers] = useState<Record<string, string[]>>(() =>
-    Object.fromEntries(questions.map((q) => [q.item_id, q.selected_option_ids])),
+  const [answers, setAnswers] = useState<Record<string, Given>>(() =>
+    Object.fromEntries(
+      questions.map((q) => [q.item_id, { selected: q.selected_option_ids, text: q.text ?? "" }]),
+    ),
   );
   const [index, setIndex] = useState(() => {
-    const first = questions.findIndex((q) => q.selected_option_ids.length === 0);
+    const first = questions.findIndex((q) => !q.selected_option_ids.length && !q.text?.trim());
     return first === -1 ? 0 : first;
   });
   const [confirming, setConfirming] = useState(false);
@@ -183,8 +297,8 @@ function InProgress({
   const handIn = useAction();
   const left = useCountdown(attempt.seconds_left);
   const question = questions[index];
-  const answered = questions.filter((q) => (answers[q.item_id] ?? []).length > 0);
-  const unanswered = questions.filter((q) => (answers[q.item_id] ?? []).length === 0).map((q) => q.number);
+  const answered = questions.filter((q) => isAnswered(answers[q.item_id]));
+  const unanswered = questions.filter((q) => !isAnswered(answers[q.item_id])).map((q) => q.number);
 
   /**
    * Time's up: let the last saves go through, then wait for the server to finish the attempt
@@ -225,9 +339,17 @@ function InProgress({
     }
   }, [left, timeUp, finishWhenTimeUp]);
 
-  function choose(optionIds: string[]) {
-    setAnswers((current) => ({ ...current, [question.item_id]: optionIds }));
-    saver.save(question.item_id, optionIds);
+  function change(given: Given, typing: boolean) {
+    setAnswers((current) => ({ ...current, [question.item_id]: given }));
+    const body: AnswerBody = answeredInWriting(question.type)
+      ? { text: given.text }
+      : { selected_option_ids: given.selected };
+    saver.save(question.item_id, body, typing ? TYPING_SAVE_MS : 0);
+  }
+
+  function goTo(next: number) {
+    saver.flush();
+    setIndex(next);
   }
 
   return (
@@ -277,20 +399,22 @@ function InProgress({
               <QuestionView
                 key={question.item_id}
                 question={question}
-                chosen={answers[question.item_id] ?? []}
-                onChoose={timeUp ? () => undefined : choose}
+                given={answers[question.item_id] ?? { selected: [], text: "" }}
+                readOnly={timeUp}
+                onChange={timeUp ? () => undefined : change}
+                onLeave={() => saver.flush(question.item_id)}
               />
               <div className={styles.moves}>
                 <button
                   type="button"
                   className="btn btn-secondary"
                   disabled={index === 0}
-                  onClick={() => setIndex(index - 1)}
+                  onClick={() => goTo(index - 1)}
                 >
                   Previous
                 </button>
                 {index < questions.length - 1 ? (
-                  <button type="button" className="btn btn-primary" onClick={() => setIndex(index + 1)}>
+                  <button type="button" className="btn btn-primary" onClick={() => goTo(index + 1)}>
                     Next
                   </button>
                 ) : (
@@ -311,7 +435,7 @@ function InProgress({
           <h2>Questions</h2>
           <div className={styles.grid}>
             {questions.map((q, i) => {
-              const done = (answers[q.item_id] ?? []).length > 0;
+              const done = isAnswered(answers[q.item_id]);
               return (
                 <button
                   key={q.item_id}
@@ -319,7 +443,7 @@ function InProgress({
                   className={`${styles.cell} ${done ? styles.cellAnswered : ""} ${i === index ? styles.cellCurrent : ""}`}
                   aria-label={`Question ${q.number}, ${done ? "answered" : "not answered"}`}
                   aria-current={i === index ? "step" : undefined}
-                  onClick={() => setIndex(i)}
+                  onClick={() => goTo(i)}
                 >
                   {q.number}
                 </button>

@@ -1,6 +1,6 @@
 # ADR 0006: More question types and teacher marking
 
-- **Status:** Accepted. Stage A is built.
+- **Status:** Accepted. Stages A and B are built.
 - **Date:** 2026-11-13
 - **Implemented in:** `backend/api/app/questions/schemas.py`, `backend/api/app/attempts/marking.py`, `backend/api/app/results/marking.py`, `backend/api/app/results/service.py` (migration `0014_question_types_marking`)
 
@@ -19,7 +19,7 @@ Matching questions were left for later.
 The work is built in stages:
 
 - **A. The API:** the new types in the bank, sitting them, automatic marking, teacher marking, and teachers' marks in results. (Built.)
-- **B. Web screens:** writing the new types, answering them while sitting, a marking screen, and marks and comments in results. (To come.)
+- **B. Web screens:** writing the new types, answering them while sitting, a marking screen, and marks and comments in results. (Built: `apps/web`, `/exams/marking`.) Typed answers save when typing pauses, so an essay isn't one answer event per keystroke.
 - **C. AI drafts of the new types.** (To come.)
 
 ## Decisions
