@@ -171,3 +171,42 @@
   gap: 4px;
   justify-content: flex-end;
 }
+
+/* --- Marking written answers (ADR 0006) ----------------------------------------------------- */
+
+.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.itemFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  font-size: 14px;
+}
+
+.backButton {
+  justify-self: start;
+  padding-left: 0;
+}
+
+.moves {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tags strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.chosenPart {
+  border: 2px solid var(--warning) !important;
+  background: var(--warning-soft);
+}

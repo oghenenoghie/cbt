@@ -53,8 +53,9 @@ export function ReleaseResults({
           }}
           onConfirm={release}
         >
-          Students in {classes} will see their score and, question by question, whether they got it right.
-          They never see the correct answers. Once released, results stay released.
+          Students in {classes} will see their score and, question by question, whether they got it right,
+          with any comments you gave. They never see the correct answers. Once released, results stay released
+          and marks can&apos;t be changed.
         </ConfirmModal>
       )}
     </>

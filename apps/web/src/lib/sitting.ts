@@ -1,7 +1,17 @@
 "use client";
 
 import { parseTimestamp } from "@/lib/format";
-import type { MyExam } from "@/lib/types";
+import type { MyExam, QuestionType } from "@/lib/types";
+
+/** Questions a student answers by typing (a word, a number or an essay) rather than choosing. */
+export function answeredInWriting(type: QuestionType): boolean {
+  return type === "short_answer" || type === "numeric" || type === "essay";
+}
+
+/** Words in a written answer, as a student would count them. */
+export function wordCount(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
 
 /** Where a student's exam is, from their side: what they can do now. */
 export type MyExamStage = "in_progress" | "can_start" | "upcoming" | "done";

@@ -1,4 +1,4 @@
-import { TYPE_LABELS } from "@/lib/bank";
+import { contentOf, TYPE_LABELS } from "@/lib/bank";
 import type {
   AiRequest,
   AiRequestStatus,
@@ -29,9 +29,10 @@ export function isBankShaped(draft: QuestionDraft): boolean {
 }
 
 /** A draft as a bank version, for showing it with the right answer marked. */
-export function asVersion(
-  draft: QuestionDraft,
-): Pick<QuestionVersion, "type" | "stem" | "options" | "correct_option_ids"> & {
+export function asVersion(draft: QuestionDraft): Pick<
+  QuestionVersion,
+  "type" | "stem" | "options" | "correct_option_ids" | "answer_key"
+> & {
   explanation: string | null;
 } {
   return {
@@ -39,25 +40,18 @@ export function asVersion(
     stem: draft.stem,
     options: draft.options,
     correct_option_ids: draft.correct_option_ids,
+    answer_key: null,
     explanation: draft.explanation,
   };
 }
 
 /** A pending draft's content in the shape the API takes, for correcting it. */
 export function draftContent(draft: QuestionDraft): QuestionContent {
-  const type = draft.type as QuestionContent["type"];
-  return {
-    type,
-    stem: draft.stem,
-    options: type === "mcq_single" ? draft.options.map((o) => o.text) : null,
-    correct:
-      type === "true_false"
-        ? draft.correct_option_ids[0] === "true"
-        : draft.options.findIndex((o) => o.id === draft.correct_option_ids[0]),
-    explanation: draft.explanation,
+  return contentOf({
+    ...asVersion(draft),
     marks: draft.marks,
     difficulty: draft.difficulty,
-  };
+  });
 }
 
 // Built with the constructor: the regex syntax checker targets ES2017, before Unicode classes.

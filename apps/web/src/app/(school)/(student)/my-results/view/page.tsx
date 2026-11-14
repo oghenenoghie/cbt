@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, CircleCheck, CircleX } from "lucide-react";
+import { ArrowLeft, CircleCheck, CircleDot, CircleX, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -15,11 +15,15 @@ import styles from "../results.module.css";
 const LETTERS = "ABCDEF";
 
 /**
- * One of the student's answers, marked right or wrong. It shows what they chose, never which
- * option was correct: the API doesn't send that to students.
+ * One of the student's answers, marked right or wrong. It shows what they chose or wrote, and any
+ * teacher's comment, never which option was correct or the accepted answers: the API doesn't send
+ * those to students.
  */
 function Reviewed({ question }: { question: ReviewQuestion }) {
-  const answered = question.selected_option_ids.length > 0;
+  const written = question.options.length === 0;
+  const answered = question.selected_option_ids.length > 0 || Boolean(question.text?.trim());
+  const part = !question.is_correct && question.score > 0;
+  const outcome = question.is_correct ? styles.mineRight : part ? styles.minePart : styles.mineWrong;
   return (
     <div className={`card ${styles.question}`}>
       <div className={styles.head}>
@@ -33,6 +37,10 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
           <span className="badge badge-success">
             <CircleCheck size={14} aria-hidden="true" /> Right
           </span>
+        ) : part ? (
+          <span className="badge badge-warning">
+            <CircleDot size={14} aria-hidden="true" /> Part marks
+          </span>
         ) : (
           <span className="badge badge-danger">
             <CircleX size={14} aria-hidden="true" /> Wrong
@@ -40,21 +48,36 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
         )}
       </div>
       <p className={styles.stem}>{question.stem}</p>
-      <ul className={styles.options}>
-        {question.options.map((option, i) => {
-          const mine = question.selected_option_ids.includes(option.id);
-          const style = mine
-            ? `${styles.mine} ${question.is_correct ? styles.mineRight : styles.mineWrong}`
-            : "";
-          return (
-            <li key={option.id} className={style}>
-              {question.type === "mcq_single" && <span>{LETTERS[i]}.</span>}
-              <span>{option.text}</span>
-              {mine && <span className={styles.tag}>Your answer</span>}
-            </li>
-          );
-        })}
-      </ul>
+      {written ? (
+        answered && (
+          <div className={`${styles.written} ${styles.mine} ${outcome}`}>
+            <span className={styles.tag}>Your answer</span>
+            <p>{question.text}</p>
+          </div>
+        )
+      ) : (
+        <ul className={styles.options}>
+          {question.options.map((option, i) => {
+            const mine = question.selected_option_ids.includes(option.id);
+            return (
+              <li key={option.id} className={mine ? `${styles.mine} ${outcome}` : ""}>
+                {question.type !== "true_false" && <span>{LETTERS[i]}.</span>}
+                <span>{option.text}</span>
+                {mine && <span className={styles.tag}>Your answer</span>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {question.comment && (
+        <div className={styles.comment}>
+          <MessageSquare size={16} aria-hidden="true" />
+          <div>
+            <strong>Your teacher&apos;s comment</strong>
+            <p>{question.comment}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -95,7 +118,7 @@ function Result({ examId }: { examId: string }) {
                     Your answers
                   </h2>
                   <p className="muted" style={{ margin: 0 }}>
-                    {right} of {total} right. Ask your teacher about the ones you got wrong.
+                    {right} of {total} fully right. Ask your teacher about the ones you got wrong.
                   </p>
                 </div>
                 <div className={styles.blocks}>
