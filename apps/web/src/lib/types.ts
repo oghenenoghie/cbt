@@ -153,8 +153,8 @@ export type QuestionType =
   | "short_answer"
   | "numeric"
   | "essay";
-/** The types AI drafts are written in so far (ADR 0005, ADR 0006). */
-export type AiQuestionType = "mcq_single" | "true_false";
+/** AI drafts can be any of the bank's types (ADR 0005, ADR 0006 stage C). */
+export type AiQuestionType = QuestionType;
 export type Difficulty = "easy" | "medium" | "hard";
 export type BankStatus = "active" | "archived";
 
@@ -776,6 +776,8 @@ export interface QuestionDraft {
   stem: string;
   options: QuestionOption[];
   correct_option_ids: string[];
+  /** Accepted answers, the number and margin, or the marking guide, for written answers. */
+  answer_key: AnswerKey | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;

@@ -34,8 +34,21 @@ export const TYPE_HINTS: Record<QuestionType, string> = {
   essay: "A written answer that a teacher marks",
 };
 
-/** The types AI drafts can be (ADR 0005); the others are written by hand for now. */
-export const AI_TYPES: AiQuestionType[] = ["mcq_single", "true_false"];
+/** The types AI drafts can be: all of the bank's (ADR 0005, ADR 0006 stage C). */
+export const AI_TYPES: AiQuestionType[] = [
+  "mcq_single",
+  "mcq_multiple",
+  "true_false",
+  "short_answer",
+  "numeric",
+  "essay",
+];
+
+/** The types asked for, in words: "multiple choice", "short answer or essay". */
+export function describeTypes(types: QuestionType[]): string {
+  const names = types.map((t) => TYPE_LABELS[t].toLowerCase());
+  return names.length > 1 ? `${names.slice(0, -1).join(", ")} or ${names[names.length - 1]}` : names[0];
+}
 
 /** Types with options to write: single- and multiple-answer multiple choice. */
 export function hasOptions(type: QuestionType): boolean {

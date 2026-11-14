@@ -205,8 +205,10 @@ class QuestionDraft(Base):
     type: Mapped[str] = mapped_column(String(20), nullable=False)
     stem: Mapped[str] = mapped_column(Text, nullable=False)
     options: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
-    # The answer key. Staff only, like the bank's.
+    # The answer key. Staff only, like the bank's: the right options for choice questions, and
+    # the accepted answers, the number and tolerance, or the marking guide for the others.
     correct_option_ids: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    answer_key: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     marks: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)

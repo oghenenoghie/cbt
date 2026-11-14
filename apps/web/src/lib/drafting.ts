@@ -1,4 +1,4 @@
-import { contentOf, TYPE_LABELS } from "@/lib/bank";
+import { contentOf, describeTypes, TYPE_LABELS } from "@/lib/bank";
 import type {
   AiRequest,
   AiRequestStatus,
@@ -23,9 +23,9 @@ export const DRAFT_STATES: Record<DraftStatus, { label: string; badge: string }>
   rejected: { label: "Failed the checks", badge: "badge-danger" },
 };
 
-/** Whether a draft is in the bank's format, so it can be shown and edited like a question. */
+/** Whether a draft is one of the bank's types, so it can be shown and edited like a question. */
 export function isBankShaped(draft: QuestionDraft): boolean {
-  return draft.type === "mcq_single" || draft.type === "true_false";
+  return draft.type in TYPE_LABELS;
 }
 
 /** A draft as a bank version, for showing it with the right answer marked. */
@@ -40,7 +40,7 @@ export function asVersion(draft: QuestionDraft): Pick<
     stem: draft.stem,
     options: draft.options,
     correct_option_ids: draft.correct_option_ids,
-    answer_key: null,
+    answer_key: draft.answer_key,
     explanation: draft.explanation,
   };
 }
@@ -96,7 +96,7 @@ export function formatCost(usd: number): string {
 
 /** What was asked for, in a line: "5 multiple choice on Cells". */
 export function describeRequest(request: AiRequest, subject: Subject): string {
-  const types = request.question_types.map((t) => TYPE_LABELS[t].toLowerCase()).join(" or ");
+  const types = describeTypes(request.question_types);
   const topics = subject.topics.filter((t) => request.topic_ids.includes(t.id)).map((t) => t.name);
   return `${request.count} ${types}${topics.length ? ` on ${topics.join(", ")}` : ""}`;
 }

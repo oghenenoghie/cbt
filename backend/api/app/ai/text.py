@@ -89,6 +89,16 @@ def quote_found(quote: str, source: str) -> bool:
     return True
 
 
+def phrase_in(phrase: str, text: str) -> bool:
+    """Whether `phrase` appears in `text` as whole words, in order (ignoring punctuation, case,
+    spacing and typographic variants). Unlike `quote_found`, a single word counts: this is for
+    finding an answer inside evidence that was already matched."""
+    needle = words(phrase)
+    if not needle:
+        return False
+    return f" {' '.join(needle)} " in " " + " ".join(words(text)) + " "
+
+
 def stem_word(word: str) -> str:
     """A light stemmer, so "cells" finds "cell" and "dividing" finds "divide"."""
     if len(word) <= 4 or word.isdigit():

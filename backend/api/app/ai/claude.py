@@ -31,7 +31,11 @@ logger = logging.getLogger(__name__)
 
 TYPE_NAMES = {
     "mcq_single": "multiple choice with one correct answer (`mcq_single`)",
+    "mcq_multiple": "multiple choice with several correct answers (`mcq_multiple`)",
     "true_false": "true/false (`true_false`)",
+    "short_answer": "short answer, a word or short phrase (`short_answer`)",
+    "numeric": "a numerical answer (`numeric`)",
+    "essay": "a written answer marked by a teacher (`essay`)",
 }
 
 WRITE_SYSTEM = """\
@@ -49,14 +53,33 @@ For each question:
 sentences that make the answer correct exactly as they appear in the source, word for word. \
 The system looks for each quote in the source it names and discards a question whose quotes it \
 can't find, so don't paraphrase, correct or join sentences from different places.
+- Only fill the fields the question's type uses. Leave the others empty: `options`, \
+`correct_options` and `accepted_answers` as empty lists, and `correct_option`, \
+`statement_is_true`, `value`, `tolerance` and `guide` as null.
 - Multiple choice (`mcq_single`): four options where the sources allow (never fewer than three), \
 exactly one of them correct according to the sources. Set `correct_option` to the correct \
-option's position counting from 0, and `statement_is_true` to null. Wrong options should be \
-plausible to a student who hasn't learnt the material but clearly wrong according to the \
-sources. Don't use "all of the above", "none of the above" or options that overlap.
-- True/false (`true_false`): the stem is a statement. Set `statement_is_true`, leave `options` \
-empty and set `correct_option` to null. A false statement should change one important detail \
-of something the sources say.
+option's position counting from 0. Wrong options should be plausible to a student who hasn't \
+learnt the material but clearly wrong according to the sources. Don't use "all of the above", \
+"none of the above" or options that overlap.
+- Multiple answers (`mcq_multiple`): four to six options, at least two of them correct and at \
+least one wrong, according to the sources. List the correct options' positions (from 0) in \
+`correct_options`. Students must tick exactly the correct ones, so each option must be clearly \
+right or clearly wrong according to the sources.
+- True/false (`true_false`): the stem is a statement. Set `statement_is_true`. A false statement \
+should change one important detail of something the sources say.
+- Short answer (`short_answer`): the answer is a word, a name or a short phrase of at most six \
+words, written as it appears in a quote you cite. In `accepted_answers`, list it and any other \
+forms the sources treat as the same answer (a symbol, an abbreviation, a different spelling); \
+answers are compared ignoring case and punctuation at either end. Ask so that only one answer \
+fits.
+- Numeric (`numeric`): the answer is a number, found in or worked out from figures in the \
+quotes. Set `value`, and `tolerance` to how far from it still counts (0 when the answer is \
+exact, more when rounding is expected). Say in the stem which unit the answer is in, and show \
+any working in `explanation`.
+- Essay (`essay`): ask the student to explain, describe or compare something the sources \
+cover in enough depth for a written answer. In `guide`, list the points a good answer makes, \
+each taken from the sources, and how the marks are shared between them. A teacher marks the \
+answer with this guide.
 - `explanation`: one or two sentences, based on the sources, that would help a student see why \
 the answer is right.
 - Ask about the subject matter, never about the document itself (its pages, headings, authors, \
@@ -81,10 +104,17 @@ by the extracts is unsupported.
 
 For each question, first write a short `assessment` (one or two sentences a teacher would \
 understand), then decide:
-- `supported`: the extracts establish that the marked answer is correct (for true/false, that \
-the statement is true, or false, as marked).
-- `single_answer`: for multiple choice, no other option is also correct or defensible according \
-to the extracts; for true/false, the statement isn't partly true and partly false.
+- `supported`: the extracts establish that the marked answer is correct. For true/false, that \
+the statement is true, or false, as marked; for multiple answers, that each marked option is \
+correct and each other option is wrong; for a short answer, that the accepted answers are \
+correct; for a number, that it follows from figures in the extracts; for an essay, that every \
+point in the marking guide is established by the extracts.
+- `single_answer`: the answer is unambiguous. For multiple choice, no other option is also \
+correct or defensible according to the extracts; for multiple answers, exactly the marked \
+options are correct; for true/false, the statement isn't partly true and partly false; for a \
+short answer, any other answer the extracts would support is among the accepted answers; for a \
+number, there is one answer and its unit is clear; for an essay, the guide covers what the \
+question asks, so answers can be marked fairly with it.
 - `clear`: a student could understand what is asked; it isn't ambiguous or trick-worded and \
 doesn't depend on seeing the document.
 - `in_scope`: it is about the subject, and about the requested topics or objective when there \
@@ -111,11 +141,16 @@ WRITE_SCHEMA: dict[str, Any] = {
                 "properties": {
                     "topic": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                     "citations": {"type": "array", "items": _CITATION},
-                    "type": {"type": "string", "enum": ["mcq_single", "true_false"]},
+                    "type": {"type": "string", "enum": list(TYPE_NAMES)},
                     "stem": {"type": "string"},
                     "options": {"type": "array", "items": {"type": "string"}},
                     "correct_option": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
+                    "correct_options": {"type": "array", "items": {"type": "integer"}},
                     "statement_is_true": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                    "accepted_answers": {"type": "array", "items": {"type": "string"}},
+                    "value": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                    "tolerance": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                    "guide": {"anyOf": [{"type": "string"}, {"type": "null"}]},
                     "explanation": {"type": "string"},
                     "difficulty": {"type": "string", "enum": ["easy", "medium", "hard"]},
                 },
@@ -126,7 +161,12 @@ WRITE_SCHEMA: dict[str, Any] = {
                     "stem",
                     "options",
                     "correct_option",
+                    "correct_options",
                     "statement_is_true",
+                    "accepted_answers",
+                    "value",
+                    "tolerance",
+                    "guide",
                     "explanation",
                     "difficulty",
                 ],

@@ -7,7 +7,6 @@ import { ErrorAlert } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
 import {
-  AI_TYPES,
   contentOf,
   DIFFICULTY_LABELS,
   hasOptions,
@@ -133,7 +132,6 @@ export function QuestionEditor({
   const [confirmClose, setConfirmClose] = useState(false);
   const { busy, error, run } = useAction();
 
-  const types = draft ? AI_TYPES : ALL_TYPES;
   const content: QuestionContent = {
     type,
     stem,
@@ -312,7 +310,7 @@ export function QuestionEditor({
         <fieldset>
           <legend>Type</legend>
           <div className={styles.typeChoices}>
-            {types.map((t) => (
+            {ALL_TYPES.map((t) => (
               <label key={t} className="check" htmlFor={`question-type-${t}`}>
                 <input
                   id={`question-type-${t}`}

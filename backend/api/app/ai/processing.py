@@ -231,6 +231,7 @@ def process_request(db: Session, request_id: str, provider: Provider | None = No
             stem=candidate.stem,
             options=candidate.options,
             correct_option_ids=candidate.correct_option_ids,
+            answer_key=candidate.answer_key,
             explanation=candidate.explanation,
             marks=candidate.marks,
             difficulty=candidate.difficulty,

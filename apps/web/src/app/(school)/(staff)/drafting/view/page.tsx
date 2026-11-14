@@ -6,7 +6,7 @@ import { Suspense, useState } from "react";
 
 import { ErrorAlert, Loaded, Notice } from "@/components/Feedback";
 import { api } from "@/lib/api";
-import { DIFFICULTY_LABELS, TYPE_LABELS, useBankSubjects } from "@/lib/bank";
+import { describeTypes, DIFFICULTY_LABELS, useBankSubjects } from "@/lib/bank";
 import { describeRequest, formatCost, REQUEST_STATES } from "@/lib/drafting";
 import { count, formatDateTime } from "@/lib/format";
 import { usePolling } from "@/lib/materials";
@@ -38,8 +38,7 @@ function Summary({ request, subject }: { request: AiRequestDetail; subject: Subj
       <dl className={styles.facts}>
         <dt>Questions</dt>
         <dd>
-          {count(request.count, "question")}:{" "}
-          {request.question_types.map((t) => TYPE_LABELS[t].toLowerCase()).join(" or ")}
+          {count(request.count, "question")}: {describeTypes(request.question_types)}
           {request.difficulty ? `, ${DIFFICULTY_LABELS[request.difficulty].toLowerCase()}` : ""},{" "}
           {count(request.marks, "mark")} each
         </dd>
