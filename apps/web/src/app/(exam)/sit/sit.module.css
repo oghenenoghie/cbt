@@ -250,3 +250,21 @@
   font-size: 22px;
   margin: 10px 0 8px;
 }
+
+/* --- Written answers and multiple-answer questions ---------------------------------------- */
+
+.instruction {
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.written,
+.essay {
+  font-size: 17px;
+}
+
+.essay {
+  min-height: 260px;
+  line-height: 1.6;
+  resize: vertical;
+}

@@ -6,8 +6,8 @@ import { useState } from "react";
 import { ErrorAlert, Loaded } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
 import { api, listAll } from "@/lib/api";
-import { DIFFICULTY_LABELS, TYPE_LABELS } from "@/lib/bank";
-import type { AiRequestDetail, Difficulty, LearningDocument, QuestionType, Subject } from "@/lib/types";
+import { AI_TYPES, DIFFICULTY_LABELS, TYPE_LABELS } from "@/lib/bank";
+import type { AiQuestionType, AiRequestDetail, Difficulty, LearningDocument, Subject } from "@/lib/types";
 import { useAction } from "@/lib/useAction";
 import { useLoader } from "@/lib/useApi";
 
@@ -42,7 +42,7 @@ function RequestForm({
   const [topics, setTopics] = useState<Set<string>>(new Set());
   const [documents, setDocuments] = useState<Set<string>>(new Set());
   const [objective, setObjective] = useState("");
-  const [types, setTypes] = useState<Set<QuestionType>>(new Set(["mcq_single"]));
+  const [types, setTypes] = useState<Set<AiQuestionType>>(new Set(["mcq_single"]));
   const [count, setCount] = useState("5");
   const [difficulty, setDifficulty] = useState<Difficulty | "">("");
   const [marks, setMarks] = useState("1");
@@ -129,7 +129,7 @@ function RequestForm({
       <fieldset>
         <legend>Question types</legend>
         <div className={styles.checks}>
-          {(Object.keys(TYPE_LABELS) as QuestionType[]).map((type) => (
+          {AI_TYPES.map((type) => (
             <label key={type} className="check" htmlFor={`request-type-${type}`}>
               <input
                 id={`request-type-${type}`}

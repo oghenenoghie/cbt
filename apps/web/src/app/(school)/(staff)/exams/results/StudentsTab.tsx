@@ -47,7 +47,7 @@ export function StudentsTab({ exam, results }: { exam: Exam; results: ExamResult
     downloadText(
       `results-${name}-${day}.csv`,
       toCsv([
-        ["student", "class", "status", "score", "out of", "percentage", "attempts"],
+        ["student", "class", "status", "score", "out of", "percentage", "attempts", "answers to mark"],
         ...shown.map((s) => [
           s.candidate_name,
           s.arm_name ?? "",
@@ -56,6 +56,7 @@ export function StudentsTab({ exam, results }: { exam: Exam; results: ExamResult
           String(results.max_score),
           s.percentage === null ? "" : String(s.percentage),
           String(s.attempts_used),
+          String(s.pending_marking),
         ]),
       ]),
     );
@@ -126,6 +127,11 @@ export function StudentsTab({ exam, results }: { exam: Exam; results: ExamResult
                       <span className="sub">
                         {s.score} out of {results.max_score}
                       </span>
+                      {s.pending_marking > 0 && (
+                        <span className="badge badge-warning" style={{ marginTop: 4 }}>
+                          {s.pending_marking} to mark
+                        </span>
+                      )}
                     </>
                   )}
                 </td>

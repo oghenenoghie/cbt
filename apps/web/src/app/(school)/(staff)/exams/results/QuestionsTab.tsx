@@ -3,7 +3,9 @@
 import { CircleCheck } from "lucide-react";
 import { useState } from "react";
 
+import { AnswerKeyView } from "@/components/bank/QuestionBody";
 import { Loaded } from "@/components/Feedback";
+import { isWritten, TYPE_LABELS } from "@/lib/bank";
 import { count } from "@/lib/format";
 import type { ItemAnalysis, ItemStat, Paper, QuestionOption } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
@@ -22,6 +24,7 @@ function difficulty(facility: number): { label: string; badge: string } {
 function Item({ item, options, counted }: { item: ItemStat; options: QuestionOption[]; counted: number }) {
   const level = difficulty(item.facility);
   const unanswered = counted - item.answered;
+  const written = isWritten(item.type);
   return (
     <article className={`card ${styles.item}`} aria-label={`Question ${item.position}`}>
       <div className={styles.itemHead}>
@@ -30,35 +33,49 @@ function Item({ item, options, counted }: { item: ItemStat; options: QuestionOpt
           {item.passage_title ? ` · passage: ${item.passage_title}` : ""} · {count(item.marks, "mark")}
         </strong>
         <span className={`badge ${level.badge}`}>
-          {Math.round(item.facility)}% right · {level.label}
+          {Math.round(item.facility)}% {written ? "of the marks" : "right"} · {level.label}
         </span>
       </div>
       <p className={styles.stem}>{item.stem}</p>
-      <ul className={styles.choices}>
-        {options.map((option, i) => {
-          const chosen = item.option_counts[option.id] ?? 0;
-          const share = counted ? (chosen / counted) * 100 : 0;
-          const right = item.correct_option_ids.includes(option.id);
-          return (
-            <li key={option.id} className={`${styles.choice} ${right ? styles.right : ""}`}>
-              <span className={styles.choiceText}>
-                {item.type === "mcq_single" && <span>{LETTERS[i]}.</span>}
-                <span>
-                  {option.text}
-                  {right && <span className="visually-hidden"> (the right answer)</span>}
+      {written ? (
+        <>
+          <p className="muted" style={{ margin: 0, fontSize: 14 }}>
+            {TYPE_LABELS[item.type]} · {count(item.answered, "answer")} · {item.correct} with full marks
+            {item.pending_marking > 0 && ` · ${item.pending_marking} waiting for a mark`}
+          </p>
+          <AnswerKeyView type={item.type} answerKey={item.answer_key} />
+        </>
+      ) : (
+        <ul className={styles.choices}>
+          {options.map((option, i) => {
+            const chosen = item.option_counts[option.id] ?? 0;
+            const share = counted ? (chosen / counted) * 100 : 0;
+            const right = item.correct_option_ids.includes(option.id);
+            return (
+              <li key={option.id} className={`${styles.choice} ${right ? styles.right : ""}`}>
+                <span className={styles.choiceText}>
+                  {item.type !== "true_false" && <span>{LETTERS[i]}.</span>}
+                  <span>
+                    {option.text}
+                    {right && (
+                      <span className="visually-hidden">
+                        {item.type === "mcq_multiple" ? " (a right answer)" : " (the right answer)"}
+                      </span>
+                    )}
+                  </span>
+                  {right && <CircleCheck size={16} aria-hidden="true" style={{ flex: "none" }} />}
                 </span>
-                {right && <CircleCheck size={16} aria-hidden="true" style={{ flex: "none" }} />}
-              </span>
-              <span className={styles.bar} aria-hidden="true">
-                <span className={right ? styles.rightFill : undefined} style={{ width: `${share}%` }} />
-              </span>
-              <span className={styles.count}>
-                {chosen} ({Math.round(share)}%)
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+                <span className={styles.bar} aria-hidden="true">
+                  <span className={right ? styles.rightFill : undefined} style={{ width: `${share}%` }} />
+                </span>
+                <span className={styles.count}>
+                  {chosen} ({Math.round(share)}%)
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       {unanswered > 0 && (
         <p className="muted" style={{ margin: 0, fontSize: 14 }}>
           {unanswered === 1 ? "1 student" : `${unanswered} students`} didn&apos;t answer it.
@@ -93,7 +110,8 @@ export function QuestionsTab({ examId }: { examId: string }) {
                 <div className="toolbar" style={{ marginBottom: 0, alignItems: "center" }}>
                   <p className="muted" style={{ margin: 0, flex: "1 1 240px" }}>
                     From {count(a.attempts_counted, "finished attempt")}: each student&apos;s latest. The bar
-                    shows how many chose each option; the right answer is ticked.
+                    shows how many chose each option; right answers are ticked. For written answers, the share
+                    of the marks scored.
                   </p>
                   <div className="field">
                     <label htmlFor="items-order">Order</label>

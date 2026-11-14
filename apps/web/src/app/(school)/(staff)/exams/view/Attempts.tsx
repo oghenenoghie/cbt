@@ -124,6 +124,7 @@ export function Attempts({ exam }: { exam: Exam }) {
                           ) : (
                             `${a.score} out of ${a.max_score}`
                           )}
+                          {a.pending_marking > 0 && <span className="sub">{a.pending_marking} to mark</span>}
                         </td>
                       </tr>
                     ))}

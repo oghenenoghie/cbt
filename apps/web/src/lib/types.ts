@@ -30,8 +30,18 @@ export interface SubjectRef {
 }
 
 export interface MyClasses {
-  enrolments: { session: SessionRef; arm_id: string; arm_name: string; subjects: SubjectRef[] }[];
-  teaching: { session: SessionRef; arm_id: string; arm_name: string; subject: SubjectRef }[];
+  enrolments: {
+    session: SessionRef;
+    arm_id: string;
+    arm_name: string;
+    subjects: SubjectRef[];
+  }[];
+  teaching: {
+    session: SessionRef;
+    arm_id: string;
+    arm_name: string;
+    subject: SubjectRef;
+  }[];
 }
 
 export const ROLE_LABELS: Record<SchoolRole, string> = {
@@ -136,13 +146,32 @@ export interface Assignment {
 
 // --- Question bank (school admins, and teachers of the subject) ---------------------------------
 
-export type QuestionType = "mcq_single" | "true_false";
+export type QuestionType =
+  | "mcq_single"
+  | "mcq_multiple"
+  | "true_false"
+  | "short_answer"
+  | "numeric"
+  | "essay";
+/** The types AI drafts are written in so far (ADR 0005, ADR 0006). */
+export type AiQuestionType = "mcq_single" | "true_false";
 export type Difficulty = "easy" | "medium" | "hard";
 export type BankStatus = "active" | "archived";
 
 export interface QuestionOption {
   id: string;
   text: string;
+}
+
+/**
+ * The answer key of a question answered in writing: the accepted answers (short answer), the
+ * number and how far from it still counts (numeric), or the marking guide (essay). Staff only.
+ */
+export interface AnswerKey {
+  accepted_answers?: string[];
+  value?: number;
+  tolerance?: number;
+  guide?: string;
 }
 
 /** One version of a question, as staff see it: the answer key is included. */
@@ -152,6 +181,7 @@ export interface QuestionVersion {
   stem: string;
   options: QuestionOption[];
   correct_option_ids: string[];
+  answer_key: AnswerKey | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;
@@ -173,12 +203,20 @@ export interface Question {
   updated_at: string;
 }
 
-/** What a teacher writes: `correct` is the right option's position, or true/false. */
+/**
+ * What a teacher writes. `correct` is the right option's position (`mcq_single`), the right
+ * options' positions (`mcq_multiple`) or true/false; the written types use `accepted_answers`,
+ * `value` and `tolerance`, or `guide` instead. What a type doesn't use is null.
+ */
 export interface QuestionContent {
   type: QuestionType;
   stem: string;
   options: string[] | null;
-  correct: number | boolean;
+  correct: number | number[] | boolean | null;
+  accepted_answers: string[] | null;
+  value: number | null;
+  tolerance: number | null;
+  guide: string | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;
@@ -282,12 +320,18 @@ export interface PaperQuestion {
   stem: string;
   options: QuestionOption[];
   correct_option_ids: string[];
+  answer_key: AnswerKey | null;
   marks: number;
 }
 
 export interface PaperBlock {
   block: number;
-  passage: { passage_id: string; version: number; title: string; body: string } | null;
+  passage: {
+    passage_id: string;
+    version: number;
+    title: string;
+    body: string;
+  } | null;
   questions: PaperQuestion[];
 }
 
@@ -316,8 +360,11 @@ export interface AttemptSummary {
   submitted_reason: string | null;
   answered_count: number;
   question_count: number;
+  /** With teachers' marks, once submitted. */
   score: number | null;
   max_score: number;
+  /** Written answers waiting for a teacher's mark. */
+  pending_marking: number;
 }
 
 // --- Students: sitting exams and results -----------------------------------------------------
@@ -349,10 +396,12 @@ export interface AttemptQuestion {
   number: number;
   type: QuestionType;
   stem: string;
-  /** In this student's order. */
+  /** In this student's order. Empty for questions answered in writing. */
   options: QuestionOption[];
   marks: number;
   selected_option_ids: string[];
+  /** The saved answer to a short-answer, number or essay question. */
+  text: string | null;
 }
 
 export interface AttemptBlock {
@@ -405,13 +454,21 @@ export interface ReviewQuestion {
   stem: string;
   options: QuestionOption[];
   selected_option_ids: string[];
+  /** What the student wrote, for questions answered in writing. */
+  text: string | null;
+  /** Full marks. A written answer can also score part of its marks. */
   is_correct: boolean;
   score: number;
   marks: number;
+  /** The teacher's comment on a marked answer. */
+  comment: string | null;
 }
 
 export interface MyResultDetail extends MyResult {
-  blocks: { passage: { title: string; body: string } | null; questions: ReviewQuestion[] }[];
+  blocks: {
+    passage: { title: string; body: string } | null;
+    questions: ReviewQuestion[];
+  }[];
 }
 
 // --- Results for staff (answer keys included) -------------------------------------------------
@@ -426,8 +483,11 @@ export interface StudentResult {
   attempts_used: number;
   counted_attempt_id: string | null;
   counted_attempt_number: number | null;
+  /** With teachers' marks; answers still waiting count as 0. */
   score: number | null;
   percentage: number | null;
+  /** Written answers in the counted attempt waiting for a teacher's mark. */
+  pending_marking: number;
 }
 
 export interface ExamResults {
@@ -435,6 +495,8 @@ export interface ExamResults {
   results_release: ResultsRelease;
   results_released_at: string | null;
   max_score: number;
+  /** Answers still to mark across the counted attempts. Results can't be released until it's 0. */
+  pending_marking: number;
   summary: {
     students: number;
     sat: number;
@@ -457,12 +519,16 @@ export interface ItemStat {
   passage_title: string | null;
   marks: number;
   correct_option_ids: string[];
+  answer_key: AnswerKey | null;
   answered: number;
+  /** How many got full marks. */
   correct: number;
-  /** Percentage of counted attempts that got it right. */
+  /** The marks scored as a percentage of those available (for right-or-wrong questions, the
+   * percentage of counted attempts that got it right). */
   facility: number;
   /** How many chose each option, by option id. */
   option_counts: Record<string, number>;
+  pending_marking: number;
 }
 
 export interface ItemAnalysis {
@@ -471,18 +537,36 @@ export interface ItemAnalysis {
   items: ItemStat[];
 }
 
+/** A teacher's mark for a written answer. */
+export interface TeacherMark {
+  score: number;
+  comment: string | null;
+  marked_by_id: string | null;
+  marked_by_name: string | null;
+  marked_at: string;
+}
+
 export interface ScriptQuestion {
   position: number;
+  item_id: string;
+  response_id: string;
   question_id: string;
   version: number;
   type: QuestionType;
   stem: string;
   options: QuestionOption[];
   correct_option_ids: string[];
+  answer_key: AnswerKey | null;
   selected_option_ids: string[];
+  text: string | null;
+  /** What counts: the teacher's mark if there is one, else the automatic one. */
   is_correct: boolean;
   score: number;
   marks: number;
+  /** What automatic marking gave. */
+  auto_score: number;
+  pending_marking: boolean;
+  mark: TeacherMark | null;
 }
 
 /** One student's marked attempt, with the answer key. Staff only. */
@@ -497,7 +581,62 @@ export interface Script {
   score: number;
   max_score: number;
   percentage: number;
+  pending_marking: number;
   questions: ScriptQuestion[];
+}
+
+// --- Marking written answers (ADR 0006) -------------------------------------------------------
+
+export interface MarkingQuestion {
+  item_id: string;
+  position: number;
+  block: number;
+  question_id: string;
+  version: number;
+  type: QuestionType;
+  stem: string;
+  passage_title: string | null;
+  marks: number;
+  answer_key: AnswerKey | null;
+  /** Of the counted attempts: answers given, marked by a teacher, and waiting. */
+  answered: number;
+  marked: number;
+  pending: number;
+}
+
+export interface MarkingOverview {
+  exam_id: string;
+  results_release: ResultsRelease;
+  results_released_at: string | null;
+  /** Whether you may give marks now. */
+  can_mark: boolean;
+  /** Why marks can't be given or changed now. */
+  locked_reason: string | null;
+  pending: number;
+  questions: MarkingQuestion[];
+}
+
+export interface MarkingAnswer {
+  response_id: string;
+  attempt_id: string;
+  attempt_number: number;
+  candidate_id: string;
+  candidate_name: string;
+  text: string | null;
+  auto_score: number;
+  auto_correct: boolean;
+  /** What counts now. */
+  score: number;
+  pending: boolean;
+  mark: TeacherMark | null;
+}
+
+export interface MarkingAnswers {
+  exam_id: string;
+  question: MarkingQuestion;
+  can_mark: boolean;
+  locked_reason: string | null;
+  answers: MarkingAnswer[];
 }
 
 // Learning materials (ADR 0004) --------------------------------------------------------------
@@ -661,7 +800,7 @@ export interface AiRequest {
   subject_id: string;
   requested_by_id: string | null;
   requested_by_name: string | null;
-  question_types: QuestionType[];
+  question_types: AiQuestionType[];
   count: number;
   difficulty: Difficulty | null;
   marks: number;
