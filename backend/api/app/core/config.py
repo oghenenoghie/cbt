@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     login_max_failures: int = 5
     login_throttle_window_minutes: int = 15
 
+    # Integrations (ADR 0008): requests each integration may make per minute, across all its keys.
+    integration_rate_limit_per_minute: int = 120
+
     # Learning materials (ADR 0004).
     # Where uploaded originals are kept: a directory on local disk for now.
     storage_dir: str = "./storage"

@@ -29,4 +29,10 @@ Browser and mobile clients must never contain a platform client secret. They sho
 
 ## Current implementation status
 
-The tenant and integration persistence models, first Alembic migration, API-key hashing helpers, tenant-scoped bearer authentication dependency, and protected `GET /api/v1/integrations/me` endpoint are now scaffolded. The web Integrations page is currently a design preview; it is not yet wired to live management APIs. School administrators can now sign in (session cookies; see `backend/api/README.md`). Integration creation and credential lifecycle endpoints, webhook delivery, SDKs, and LTI support remain future implementation work. Do not treat the example exam-launch and webhook endpoints as live.
+School admins can manage their school's integrations through the API ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations A): register an integration, grant it permissions from a fixed list (`classes:read`, `candidates:read`, `candidates:write`, `results:read`), issue API keys (shown once, stored only as hashes, valid until revoked, up to five at a time so a key can be replaced without downtime), revoke keys, disable the integration and see its activity. Each integration is rate-limited per minute across its keys. The endpoints are listed in the [API README](../../backend/api/README.md#integrations).
+
+An integration can so far only call `GET /api/v1/integrations/me`. Next:
+- **Integrations B:** the web Integrations page, which is still a static design preview.
+- **Integrations C:** the first public endpoints, for classes, student and enrolment sync and released results.
+
+Webhook delivery, exam launch, OAuth client credentials, SDKs, SSO and LTI remain future work. Don't treat the example exam-launch and webhook endpoints as live.

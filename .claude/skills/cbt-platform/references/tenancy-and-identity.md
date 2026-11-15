@@ -83,4 +83,4 @@ Subjects, topics and chapters later scope AI retrieval and generation (see `asse
 
 ## What Phase 2 unblocks
 
-Once admin authentication and tenant-scoped authorization exist, the **integration management** endpoints can open: create an integration; issue, rotate, revoke and expire credentials (raw key shown once); and grant scopes, each writing an audit entry. After that, the web Integrations page (`apps/web/src/app/integrations/page.tsx`, currently a static preview) can be connected to them.
+**Integration management** is open (ADR 0008, Integrations A). School admins register integrations, grant scopes from `app/integrations/scopes.py`, issue keys (raw key shown once, up to five active, no expiry) and revoke them, and disable an integration. Each change writes an audit entry, and each integration is rate-limited. Next, the web Integrations page (`apps/web/src/app/integrations/page.tsx`, still a static preview) is connected to them (B), and then the first public endpoints arrive (C).

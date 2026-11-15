@@ -14,7 +14,12 @@ from app.models.classroom import Enrolment, TeachingAssignment
 from app.models.documents import Document, DocumentSegment, DocumentTopic, DocumentVersion
 from app.models.exams import Exam, ExamArm, ExamItem, ExamPaperItem
 from app.models.identity import AuthSession, LoginThrottle, PlatformAdmin, User
-from app.models.integration import ApiCredential, Integration, IntegrationScope
+from app.models.integration import (
+    ApiCredential,
+    Integration,
+    IntegrationRateWindow,
+    IntegrationScope,
+)
 from app.models.offline import (
     DeviceRegistration,
     LabDevice,
@@ -59,6 +64,7 @@ __all__ = [
     "ExamItem",
     "ExamPaperItem",
     "Integration",
+    "IntegrationRateWindow",
     "IntegrationScope",
     "LabDevice",
     "LoginThrottle",

@@ -9,7 +9,9 @@ Purpose: let schools adopt CBT without replacing their portal, LMS, SIS, ERP, we
 | Built | Planned |
 |---|---|
 | Hashed `cbt_live_` API keys, `IntegrationPrincipal`, scope checks, `GET /api/v1/integrations/me` | OAuth 2.0 client-credentials token endpoint (`POST /oauth/token`) |
-| | Resources: `/candidates`, `/courses`, `/assessments`, `/exam-sessions`, `/attempts/{id}`, `/results/{id}`, `/webhook-endpoints`, `/integrations` |
+| Management by school admins (ADR 0008, Integrations A): `/api/v1/school/integrations` to register, set permissions from `app/integrations/scopes.py`, issue keys (shown once, up to 5 active), revoke, disable, and read the activity | The web Integrations page (Integrations B; `apps/web/src/app/integrations` is still a static preview) |
+| Per-integration rate limit (`app/integrations/limits.py`, 429 with `Retry-After`) | Public resources (Integrations C): classes, candidate and enrolment sync, released results, with the `{"error": ...}` envelope, size limits and idempotency keys |
+| | Later resources: `/assessments`, `/exam-sessions`, `/attempts/{id}`, `/webhook-endpoints` |
 | | Signed webhooks with an event outbox, hosted exam launch, OIDC/SAML SSO, LTI 1.3, TypeScript and Python SDKs, CSV/XLSX import |
 
 Rollout order: (1) API foundation: credentials/OAuth, scopes, audit, OpenAPI, rate limits, idempotency, sandbox; (2) candidate provisioning, assessment catalogue, exam launch, attempt submission, result retrieval; (3) webhooks and SDKs; (4) OIDC/SAML and LTI 1.3 after conformance testing; (5) connector marketplace.
@@ -26,7 +28,9 @@ Rollout order: (1) API foundation: credentials/OAuth, scopes, audit, OpenAPI, ra
 
 ## Security rules
 
-- Hash secrets at rest, show them once, and support rotation, revocation, expiry and audit history. Hashing exists today, and `ApiCredential` has status, expiry and revocation fields, but there are no lifecycle endpoints yet.
+- Hash secrets at rest, show them once, and support rotation, revocation and audit history. All of this exists (ADR 0008). Keys don't expire, by the user's decision; rotation is several active keys per integration, and revoking is final.
+- Only scopes in the catalogue (`app/integrations/scopes.py`) can be granted. Adding one that touches answer keys, unpublished questions or AI drafts needs a new decision.
+- Every public request that reads or changes school data writes an audit entry with actor type `integration` (from Integrations C). It shows in the integration's activity.
 - **Exam launch tokens** are short-lived, single-use, and bound to tenant + candidate + assessment + permitted time window. Never trust a client-supplied candidate identity, and never put a reusable secret in the launch URL.
 - Browser, mobile and Electron renderer code never holds a client secret. They call the customer's own backend or use a short-lived, user-authorised flow.
 - Candidate-facing scopes never expose answer keys or unpublished questions. Results wait for the release policy.
