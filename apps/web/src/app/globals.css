@@ -582,3 +582,76 @@ legend {
 .one-time dd {
   margin: 0;
 }
+
+/* --- Exam code slips (exams/view/ExamCodes.tsx) ------------------------------------------- */
+
+/* The slips exist only while codes are on screen. They print on their own: nothing else does. */
+.print-slips {
+  display: none;
+}
+
+@media print {
+  body:has(> .print-slips) > *:not(.print-slips) {
+    display: none !important;
+  }
+
+  body:has(> .print-slips) {
+    background: #fff;
+  }
+
+  .print-slips {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    color: #000;
+    font-size: 12pt;
+  }
+
+  .print-slip {
+    break-inside: avoid;
+    padding: 12pt 14pt;
+    border: 1px dashed #777;
+    margin: -0.5px;
+  }
+
+  .print-slip p {
+    margin: 0 0 6pt;
+  }
+
+  .print-slip-exam {
+    font-size: 10pt;
+    color: #333;
+  }
+
+  .print-slip-name {
+    font-weight: 700;
+    font-size: 13pt;
+  }
+
+  .print-slip dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 2pt 10pt;
+    margin: 0 0 6pt;
+  }
+
+  .print-slip dt {
+    color: #333;
+  }
+
+  .print-slip dd {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  .print-slip .print-slip-code {
+    font-size: 16pt;
+    font-weight: 700;
+    letter-spacing: 2pt;
+  }
+
+  .print-slip-hint {
+    font-size: 9pt;
+    color: #333;
+  }
+}

@@ -114,7 +114,10 @@ export function Attempts({ exam }: { exam: Exam }) {
                           )}
                           {exam.max_attempts > 1 && <span className="sub">Attempt {a.number}</span>}
                         </td>
-                        <td>{status(a)}</td>
+                        <td>
+                          {status(a)}
+                          {a.source === "offline" && <span className="sub">On a lab computer</span>}
+                        </td>
                         <td>
                           {a.answered_count} of {a.question_count} answered
                         </td>

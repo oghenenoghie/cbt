@@ -16,6 +16,8 @@ export interface ExamForm {
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
   resultsRelease: ResultsRelease;
+  offlineAllowed: boolean;
+  instantScores: boolean;
 }
 
 export function toForm(settings: ExamSettings): ExamForm {
@@ -29,6 +31,8 @@ export function toForm(settings: ExamSettings): ExamForm {
     shuffleQuestions: settings.shuffle_questions,
     shuffleOptions: settings.shuffle_options,
     resultsRelease: settings.results_release,
+    offlineAllowed: settings.offline_allowed,
+    instantScores: settings.offline_instant_scores,
   };
 }
 
@@ -52,6 +56,9 @@ export function fromForm(form: ExamForm): ExamSettings | string {
     shuffle_questions: form.shuffleQuestions,
     shuffle_options: form.shuffleOptions,
     results_release: form.resultsRelease,
+    offline_allowed: form.offlineAllowed,
+    // Instant scores need results shown at once, and lab computers (ADR 0007, decision 1).
+    offline_instant_scores: form.offlineAllowed && form.resultsRelease === "immediate" && form.instantScores,
   };
 }
 
@@ -66,6 +73,7 @@ export function ExamFields({
 }) {
   const set = <K extends keyof ExamForm>(name: K, value: ExamForm[K]) => onChange({ ...form, [name]: value });
   const id = (name: string) => `${idPrefix}-${name}`;
+  const instantAllowed = form.offlineAllowed && form.resultsRelease === "immediate";
   return (
     <>
       <div className="field">
@@ -184,6 +192,43 @@ export function ExamFields({
             <span>
               As soon as each student submits
               <span className="hint">Their score straight away, for example for practice tests.</span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>Lab computers</legend>
+        <div className={styles.checks}>
+          <label className="check" htmlFor={id("offline")}>
+            <input
+              id={id("offline")}
+              type="checkbox"
+              checked={form.offlineAllowed}
+              onChange={(e) => set("offlineAllowed", e.target.checked)}
+            />
+            <span>
+              Can be sat on lab computers without the internet
+              <span className="hint">
+                Students sign in there with a code you print. Their answers are marked here when the lab
+                computer uploads them.
+              </span>
+            </span>
+          </label>
+          <label className="check" htmlFor={id("instant")}>
+            <input
+              id={id("instant")}
+              type="checkbox"
+              checked={instantAllowed && form.instantScores}
+              disabled={!instantAllowed}
+              onChange={(e) => set("instantScores", e.target.checked)}
+            />
+            <span>
+              Show each student their score on the lab computer straight away
+              <span className="hint">
+                {instantAllowed
+                  ? "This puts the answer key on lab computers, encrypted so only registered ones can read it. Someone with a registered computer and the know-how could get it. Essays still wait for a teacher."
+                  : "Only for exams sat on lab computers whose results are shown as soon as each student submits."}
+              </span>
             </span>
           </label>
         </div>

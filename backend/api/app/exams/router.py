@@ -112,6 +112,9 @@ def _actions(viewer: Viewer, exam: Exam, arm_ids: list[str], author_role: str) -
             actions.append("withdraw")
     elif can_release_results(exam, _now()) and viewer.can_release(exam, arm_ids):
         actions.append("release_results")
+    if exam.status == "published" and exam.offline_allowed and viewer.can_release(exam, arm_ids):
+        # Print codes and export packages until it closes; upload lab results at any time.
+        actions.append("manage_offline")
     if viewer.can_prepare(exam.subject_id, arm_ids):
         actions.append("copy")
     return actions

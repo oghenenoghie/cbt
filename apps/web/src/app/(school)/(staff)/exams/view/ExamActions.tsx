@@ -297,6 +297,14 @@ export function ExamActions({
         >
           Students in {classes} can sit it {formatWindow(exam.opens_at, exam.closes_at)}. A published exam
           can&apos;t be changed. Until it opens, it can be withdrawn.
+          {exam.offline_instant_scores && (
+            <>
+              {" "}
+              <strong>
+                Lab computers will hold its answer key, encrypted, to show scores straight away.
+              </strong>
+            </>
+          )}
         </ConfirmModal>
       )}
       {dialog === "return" && (

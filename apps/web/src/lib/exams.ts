@@ -64,7 +64,10 @@ export function fromLocalInput(value: string): string {
   return new Date(value).toISOString();
 }
 
-/** Settings for a new exam: tomorrow, 09:00 to 12:00, one hour, one attempt, shuffled. */
+/**
+ * Settings for a new exam: tomorrow, 09:00 to 12:00, one hour, one attempt, shuffled, and able to
+ * be sat on lab computers without instant scores (ADR 0007's defaults).
+ */
 export function defaultSettings(): ExamSettings {
   const opens = new Date();
   opens.setDate(opens.getDate() + 1);
@@ -81,6 +84,8 @@ export function defaultSettings(): ExamSettings {
     shuffle_questions: true,
     shuffle_options: true,
     results_release: "teacher",
+    offline_allowed: true,
+    offline_instant_scores: false,
   };
 }
 
