@@ -106,6 +106,14 @@ def draft_paper(db: Session, exam: Exam) -> tuple[list[Block], list[str]]:
         blocks.append(block)
     if not blocks:
         problems.append("Add at least one question or passage.")
+    if exam.offline_instant_scores and exam.results_release != "immediate":
+        problems.append(
+            "Scores on lab computers straight away need results shown as soon as each student "
+            "submits: set “Results” to “As soon as each student submits”, or turn instant "
+            "scores off."
+        )
+    if exam.offline_instant_scores and not exam.offline_allowed:
+        problems.append("Instant scores on lab computers need the exam to be sat offline.")
     if exam.results_release == "immediate" and any(
         entry.version.type == "essay" for block in blocks for entry in block.questions
     ):

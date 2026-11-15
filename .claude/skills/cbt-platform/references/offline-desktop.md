@@ -4,6 +4,8 @@ Authoritative sources: `docs/architecture/overview.md` §4 and `apps/desktop/REA
 
 ## What exists today
 
+**Decided and built server-side (ADR 0007, stage A):** students sign in offline with one-time **exam codes** (username + code; PBKDF2 hashes in the package); answer keys stay on the server unless an exam's author opts into **instant scores** (needs immediate results; keys AES-GCM encrypted under the school's offline key); packages travel **over the internet and by USB**; every published exam can be sat offline unless its author turns it off. The API registers lab computers (one-time code online, or a signed request file by USB), issues **signed packages** (Ed25519 over the body text), and accepts **signed, idempotent results** (`app/offline/`). Next: web screens (B), the desktop app (C), packaging (D).
+
 `apps/desktop/src/main.ts` opens one Electron window, with `contextIsolation: true`, `nodeIntegration: false` and `sandbox: true`. Keep those settings. In development it loads `WEB_APP_URL` (default `http://localhost:3000`). A packaged build loads `../../web/out/index.html`, which nothing produces yet: Next.js isn't configured for static export, and that path is outside electron-builder's `files`. Fix that before shipping an offline build.
 
 ## Responsibilities
@@ -14,7 +16,7 @@ Managed Windows installation and updates (NSIS installer), school and device reg
 
 1. While online, a teacher or admin provisions the exam and the eligible student and device data.
 2. The desktop app downloads a **signed exam package** and its assets.
-3. Students authenticate using the school's configured offline policy. **That policy isn't defined yet: ask before designing it.**
+3. Students authenticate with their username and a one-time exam code the teacher printed (ADR 0007).
 4. Answers persist locally after every change, with an **append-only event history**.
 5. Submission is **sealed locally** and queued.
 6. When connectivity returns, the client uploads signed submissions **idempotently**.

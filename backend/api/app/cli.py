@@ -129,6 +129,11 @@ def _parser() -> argparse.ArgumentParser:
     admin = commands.add_parser("create-platform-admin", help="Create a platform administrator.")
     admin.add_argument("--email", required=True)
     admin.add_argument("--display-name", required=True)
+
+    commands.add_parser(
+        "generate-signing-key",
+        help="Print a new key for signing offline exam packages (OFFLINE_SIGNING_KEY).",
+    )
     return parser
 
 
@@ -139,6 +144,12 @@ def main(
     read_password: Callable[[], str] = _prompt_password,
 ) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "generate-signing-key":
+        from app.offline.crypto import new_signing_seed
+
+        # Kept secret, like a password: lab computers trust packages signed with it (ADR 0007).
+        print(new_signing_seed())
+        return 0
     if session_factory is None:
         from app.db.session import SessionLocal
 

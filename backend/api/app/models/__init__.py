@@ -15,6 +15,14 @@ from app.models.documents import Document, DocumentSegment, DocumentTopic, Docum
 from app.models.exams import Exam, ExamArm, ExamItem, ExamPaperItem
 from app.models.identity import AuthSession, LoginThrottle, PlatformAdmin, User
 from app.models.integration import ApiCredential, Integration, IntegrationScope
+from app.models.offline import (
+    DeviceRegistration,
+    LabDevice,
+    OfflineCode,
+    OfflinePackage,
+    OfflineSubmission,
+    SchoolOfflineKey,
+)
 from app.models.questions import (
     Passage,
     PassageVersion,
@@ -39,6 +47,7 @@ __all__ = [
     "ClassLevel",
     "ClassLevelSubject",
     "Document",
+    "DeviceRegistration",
     "DraftCitation",
     "DocumentSegment",
     "DocumentTopic",
@@ -51,7 +60,11 @@ __all__ = [
     "ExamPaperItem",
     "Integration",
     "IntegrationScope",
+    "LabDevice",
     "LoginThrottle",
+    "OfflineCode",
+    "OfflinePackage",
+    "OfflineSubmission",
     "PlatformAdmin",
     "Passage",
     "PassageVersion",
@@ -61,6 +74,7 @@ __all__ = [
     "QuestionTopic",
     "QuestionVersion",
     "ResponseMark",
+    "SchoolOfflineKey",
     "Subject",
     "TeachingAssignment",
     "Tenant",

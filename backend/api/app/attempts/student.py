@@ -309,7 +309,7 @@ def save_answer(
         .join(ExamPaperItem, ExamPaperItem.question_version_id == QuestionVersion.id)
         .where(ExamPaperItem.id == item_id, ExamPaperItem.exam_id == attempt.exam_id)
     )
-    chosen, text = _checked_answer(question_type, attempt.option_orders[item_id], body)
+    chosen, text = checked_answer(question_type, attempt.option_orders[item_id], body)
 
     latest = db.scalar(
         select(AnswerEvent)
@@ -347,7 +347,7 @@ def save_answer(
     )
 
 
-def _checked_answer(
+def checked_answer(
     question_type: str | None, option_ids: list[str], body: AnswerIn
 ) -> tuple[list[str], str | None]:
     """The answer to store for this question type: (chosen options, text)."""

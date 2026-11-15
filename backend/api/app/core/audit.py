@@ -36,7 +36,8 @@ def record_audit(
     """Stage an audit entry on `db` (the caller commits).
 
     `tenant_id` is None only for platform-level events. `actor_type` is "user",
-    "platform_admin", "integration", "system" or "anonymous". `action` is dotted, like webhook
+    "platform_admin", "integration", "device" (a lab computer, ADR 0007), "system" or
+    "anonymous". `action` is dotted, like webhook
     event names (e.g. "auth.login.succeeded").
     """
     entry = AuditLog(

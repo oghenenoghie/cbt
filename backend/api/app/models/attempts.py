@@ -133,6 +133,12 @@ class ExamAttempt(Base):
     max_score: Mapped[int] = mapped_column(Integer, nullable=False)
     # Set when submitted. Students see it only once results are released (Exams D).
     score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # "offline" when it was sat on a lab computer and uploaded (ADR 0007), else "online". Set by
+    # the server only, so there's no check constraint (adding one would rebuild the table on
+    # SQLite and risk its partial index).
+    source: Mapped[str] = mapped_column(
+        String(10), default="online", server_default="online", nullable=False
+    )
     created_at: Mapped[datetime] = _created_at()
 
 

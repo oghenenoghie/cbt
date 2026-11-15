@@ -131,6 +131,8 @@ class AttemptSummary(BaseModel):
     max_score: int
     # Written answers waiting for a teacher's mark.
     pending_marking: int
+    # "offline" when it was sat on a lab computer and uploaded (ADR 0007).
+    source: str
 
 
 class AttemptList(BaseModel):

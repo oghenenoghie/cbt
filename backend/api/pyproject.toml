@@ -27,6 +27,8 @@ dependencies = [
   "Pillow>=11,<13",
   # AI question drafts (ADR 0005): Claude through the Anthropic API.
   "anthropic>=2.6,<3",
+  # Offline exams (ADR 0007): Ed25519 package and result signatures, AES-GCM for answer keys.
+  "cryptography>=42,<51",
 ]
 
 [project.optional-dependencies]

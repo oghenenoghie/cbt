@@ -78,6 +78,20 @@ class Settings(BaseSettings):
     ai_price_cache_read: float = 0.2
     ai_price_cache_write: float = 5.0
 
+    # Offline exams on lab computers (ADR 0007).
+    # The Ed25519 key that signs exam packages: 32 random bytes in base64 (generate one with
+    # `python -m app.cli generate-signing-key`). Without it, development servers generate one and
+    # keep it in STORAGE_DIR; other environments refuse to issue packages.
+    offline_signing_key: str | None = None
+    # How long a lab computer's registration code stays valid.
+    device_registration_hours: int = 24
+    # Packages can be downloaded from this many days before an exam opens.
+    offline_package_days: int = 14
+    # PBKDF2-SHA256 rounds for exam codes, which lab computers check offline.
+    offline_code_iterations: int = 200_000
+    # Allowance for a lab computer's clock and network delays when checking times, in minutes.
+    offline_time_allowance_minutes: int = 10
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

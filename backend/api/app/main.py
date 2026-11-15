@@ -11,6 +11,10 @@ from app.core.config import get_settings
 from app.documents.router import router as documents_router
 from app.exams.router import router as exams_router
 from app.integrations.router import router as integrations_router
+from app.offline.router import admin_router as devices_admin_router
+from app.offline.router import device_router as devices_router
+from app.offline.router import exam_router as offline_exam_router
+from app.offline.router import public_router as offline_public_router
 from app.questions.passages import router as passages_router
 from app.questions.router import router as questions_router
 from app.results.marking import router as marking_router
@@ -60,6 +64,10 @@ app.include_router(attempts_staff_router, prefix=settings.api_v1_prefix)
 app.include_router(attempts_student_router, prefix=settings.api_v1_prefix)
 app.include_router(results_staff_router, prefix=settings.api_v1_prefix)
 app.include_router(marking_router, prefix=settings.api_v1_prefix)
+app.include_router(devices_admin_router, prefix=settings.api_v1_prefix)
+app.include_router(devices_router, prefix=settings.api_v1_prefix)
+app.include_router(offline_exam_router, prefix=settings.api_v1_prefix)
+app.include_router(offline_public_router, prefix=settings.api_v1_prefix)
 app.include_router(results_student_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 
