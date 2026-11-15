@@ -24,7 +24,7 @@ Both clients use shared backend services. AI-generated questions must be grounde
 | Desktop | Electron, TypeScript |
 | API | Python, FastAPI, Pydantic |
 | Primary database | PostgreSQL |
-| Desktop/local exam store | SQLite |
+| Desktop/local exam store | Crash-safe files: signed packages and an append-only journal per attempt (ADR 0007) |
 | Semantic retrieval | PostgreSQL + pgvector |
 | Background jobs | Redis + Celery (introduced when needed) |
 | Document processing | PyMuPDF, python-docx, python-pptx, OCR |

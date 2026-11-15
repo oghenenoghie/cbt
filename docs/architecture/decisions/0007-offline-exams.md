@@ -1,8 +1,8 @@
 # ADR 0007: Offline exams on lab computers
 
-- **Status:** Accepted. Stages A and B are built.
+- **Status:** Accepted. Stages A, B and C are built.
 - **Date:** 2026-11-15
-- **Implemented in:** `backend/api/app/offline/`, `backend/api/app/models/offline.py` (migration `0016_offline_exams`); the web screens in `apps/web` (`/school/lab-computers`, the exam page's Lab computers card, `src/lib/offline.ts`); later `apps/desktop`
+- **Implemented in:** `backend/api/app/offline/`, `backend/api/app/models/offline.py` (migration `0016_offline_exams`); the web screens in `apps/web` (`/school/lab-computers`, the exam page's Lab computers card, `src/lib/offline.ts`); the lab app in `apps/desktop`
 
 ## Context
 
@@ -19,7 +19,7 @@ The work is built in stages:
 
 - **A. The API:** the exam settings, lab computer registration, exam codes, signed packages, and checked, idempotent upload of results. (Built.)
 - **B. Web screens:** the settings, printing codes, managing lab computers, USB export and import, and each exam's offline status. (Built.)
-- **C. The desktop app:** setting up a computer, downloading and checking packages, students signing in with codes, sitting with crash-safe local storage, instant scores where allowed, and syncing.
+- **C. The desktop app:** setting up a computer, downloading and checking packages, students signing in with codes, sitting with crash-safe local storage, instant scores where allowed, and syncing. (Built.)
 - **D. Packaging:** the Windows installer, updates and a CI build. School network (LAN) mode is later; nothing here assumes the sync server is the cloud.
 
 ## Decisions
@@ -49,7 +49,21 @@ The work is built in stages:
 
 8. **Who sees what on an exam.** The exam reports `manage_offline` among its `allowed_actions` to the people who can release its results, while it is published and can be sat on lab computers: they make codes and export packages until it closes, and upload results at any time. Its offline status (codes, downloads, results) is shown to everyone who can see the exam, with each student's code batch but never a code.
 
-9. **Limits, stated plainly.** Offline mode can't give live invigilation or immediate revocation: a revoked student or a withdrawn exam isn't known to a lab computer until it syncs, and its clock can be wrong. Staff see flags and conflicts; schools should cover the rest in their exam rules.
+9. **The lab app** (`apps/desktop`, stage C). The user decided on 2026-11-15 that the exam room is locked, and that a lab PIN on each computer guards the staff side.
+   - **Structure.** The main process does everything that matters: keys, files, the network, signing and checking. The window only shows screens, through a narrow bridge (`contextIsolation`, `sandbox`, no Node in the window).
+   - **The exam room is locked.** The app runs full screen and on top. Closing it, other windows and leaving the page are blocked, and only the lab PIN unlocks it, for example after a crash or for a student who must leave. An app can't block everything Windows offers (Ctrl+Alt+Del, for one), so invigilators still matter. Development builds run in a normal window.
+   - **The lab PIN** (at least 6 digits) is set when the computer is registered and kept only as a scrypt hash. The staff side (downloading exams, loading a USB package, sending and saving results) needs it. Wrong PINs lock it for a minute, then longer.
+   - **Local storage** is a folder of files in the app's data directory, not SQLite:
+     - `device.json`: the computer's id, school, the signing key and the server address. The device token, the private key and the school key are encrypted with Windows DPAPI (Electron `safeStorage`).
+     - Packages as downloaded, signed. Each is checked again every time it is loaded.
+     - One journal per attempt. Every answer is appended and flushed to disk before the screen says it is saved, which makes the history append-only by construction and needs no native module.
+     - An outbox of sealed results until the server has answered.
+   - **Trust.** Online registration trusts the server over HTTPS. A USB setup file carries the signing key and is trusted on first use, because a school admin brought it from the web app. Every package must verify against that key and belong to the computer's school.
+   - **Sitting.** A student chooses an exam that is open, then signs in with their username and exam code, checked against the package's hashes. Wrong codes are throttled per student. Attempts count those the server knew about when the package was downloaded, plus those on this computer. The question and option orders follow the online rules: passages move with their questions, and true/false options stay in order. The computer's clock runs the attempt: it ends at the start plus the duration, capped at closing, and a restart carries on from the saved start. The server flags times it doesn't believe (decision 6).
+   - **Instant scores** decrypt the exam's key with the school key and mark it with the same rules as the server. The score shown is for the student only: the server marks the uploaded answers again, and that mark is the one that counts.
+   - **Sending results.** A computer registered online uploads its outbox every minute and on request, and shows what the server decided for each result. Staff can save results to USB at any time. When a computer online finds an exam is no longer offered (withdrawn), it stops students starting it.
+
+10. **Limits, stated plainly.** Offline mode can't give live invigilation or immediate revocation: a revoked student or a withdrawn exam isn't known to a lab computer until it syncs, and its clock can be wrong. Staff see flags and conflicts; schools should cover the rest in their exam rules.
 
 ## Consequences
 
