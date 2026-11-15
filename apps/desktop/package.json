@@ -2,27 +2,35 @@
   "name": "@intelligent-cbt/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Windows desktop client for Intelligent CBT",
+  "description": "Intelligent CBT lab app: exams on school computers without the internet",
   "main": "dist/main.js",
   "scripts": {
-    "dev": "electron .",
-    "build": "tsc -p tsconfig.json",
-    "package:win": "electron-builder --win nsis"
+    "build": "tsc -p tsconfig.json && node build-renderer.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer.json",
+    "test": "npm run build && node --test \"dist/**/*.test.js\"",
+    "dev": "npm run build && electron .",
+    "package:win": "npm run build && electron-builder --win nsis"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "electron": "^33.2.1",
-    "electron-builder": "^25.1.8",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "electron": "45.2.1",
+    "electron-builder": "^26.0.0",
+    "esbuild": "~0.28.2",
+    "react": "~19.3.1",
+    "react-dom": "~19.3.1",
     "typescript": "^5.7.2"
   },
   "build": {
     "appId": "com.intelligentcbt.desktop",
-    "productName": "Intelligent CBT",
+    "productName": "Intelligent CBT Lab",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
+      "!dist/**/*.test.js",
       "package.json"
     ],
     "win": {

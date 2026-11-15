@@ -37,7 +37,7 @@ Diagram specifications should be versioned and linked to the source passages and
 
 ## 4. Offline desktop architecture
 
-The desktop app stores only the data required for assigned examinations and approved offline content. SQLite is the local persistence layer.
+The desktop app stores only the data required for assigned examinations and approved offline content. Local persistence is a folder of crash-safe files: signed packages, and an append-only journal per attempt flushed after every answer (ADR 0007, decision 9, which replaced the earlier plan for SQLite).
 
 Offline exam workflow:
 1. A teacher/admin provisions an exam and eligible student/device data while connected.

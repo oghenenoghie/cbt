@@ -1,39 +1,41 @@
-import { app, BrowserWindow } from "electron";
+/**
+ * Intelligent CBT Lab: exams on school computers without the internet (ADR 0007, decision 9).
+ *
+ * Settings from the environment, for development and tests:
+ * - LAB_DATA_DIR: where the computer's files live (default: the app's user data folder).
+ * - LAB_KIOSK: "1" to lock the exam room in development, "0" to never lock (packaged builds lock).
+ */
+
+import { app } from "electron";
 import path from "node:path";
 
-const isDevelopment = !app.isPackaged;
+import { Lab } from "./core/lab.js";
+import { registerBridge } from "./main/bridge.js";
+import { systemVault } from "./main/vault.js";
+import { createLabWindow } from "./main/window.js";
 
-function createMainWindow(): void {
-  const window = new BrowserWindow({
-    width: 1440,
-    height: 900,
-    minWidth: 1100,
-    minHeight: 700,
-    show: false,
-    webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-    },
+const SYNC_EVERY_MS = 60_000;
+
+// One lab app per computer: a second copy would share the same files.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.whenReady().then(() => {
+    const dataDir = process.env.LAB_DATA_DIR ?? path.join(app.getPath("userData"), "lab");
+    const kiosk = process.env.LAB_KIOSK ? process.env.LAB_KIOSK === "1" : app.isPackaged;
+    const lab = new Lab(dataDir, systemVault());
+    lab.recover();
+
+    const labWindow = createLabWindow({ kiosk, devTools: !app.isPackaged });
+    const bridge = registerBridge(lab, labWindow);
+    void bridge.autoSync();
+    setInterval(() => void bridge.autoSync(), SYNC_EVERY_MS).unref();
+
+    app.on("second-instance", () => {
+      labWindow.window.show();
+      labWindow.window.focus();
+    });
   });
 
-  window.once("ready-to-show", () => window.show());
-
-  if (isDevelopment) {
-    void window.loadURL(process.env.WEB_APP_URL ?? "http://localhost:3000");
-  } else {
-    void window.loadFile(path.join(__dirname, "../../web/out/index.html"));
-  }
+  app.on("window-all-closed", () => app.quit());
 }
-
-app.whenReady().then(() => {
-  createMainWindow();
-
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createMainWindow();
-  });
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
