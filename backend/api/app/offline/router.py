@@ -12,6 +12,7 @@ import json
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi.responses import FileResponse
 from pydantic import ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
@@ -36,7 +37,7 @@ from app.models import (
     User,
 )
 from app.models.tenant import as_utc, normalize_school_code
-from app.offline import crypto, service
+from app.offline import crypto, releases, service
 from app.offline.schemas import (
     REQUEST_FORMAT,
     SETUP_FORMAT,
@@ -52,6 +53,7 @@ from app.offline.schemas import (
     Envelope,
     FileRegistered,
     FileRegistration,
+    LabAppOut,
     OfflineStatus,
     OfflineStudent,
     OfflineSubmissionOut,
@@ -211,6 +213,33 @@ def register_by_file(
     return FileRegistered(device=_devices_out(db, [device])[0], setup=Envelope(**setup))
 
 
+def _release() -> tuple[dict, dict, object]:
+    found = releases.latest()
+    if found is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND, detail="No lab app has been published on this server yet."
+        )
+    return found
+
+
+def _installer(path, name: str) -> FileResponse:
+    return FileResponse(path, media_type="application/vnd.microsoft.portable-executable", filename=name)
+
+
+@admin_router.get("/app", response_model=LabAppOut)
+def lab_app(principal: SessionPrincipal = Depends(admin_read)) -> LabAppOut:
+    """The newest lab app on this server, to install on lab computers."""
+    _, body, _ = _release()
+    return LabAppOut(**body)
+
+
+@admin_router.get("/app/installer")
+def lab_app_installer(principal: SessionPrincipal = Depends(admin_read)) -> FileResponse:
+    """The newest installer, for a first install or a computer that never goes online."""
+    _, body, path = _release()
+    return _installer(path, body["file"])
+
+
 def _admin_device(db: Session, principal: SessionPrincipal, device_id: str) -> LabDevice:
     return get_owned(db, LabDevice, device_id, principal, "Lab computer")
 
@@ -360,6 +389,19 @@ def register_device(
         signing_public_key=signing_public,
         school_key=key,
     )
+
+
+@device_router.get("/app/latest", response_model=Envelope)
+def device_app_manifest(device: LabDevice = Depends(current_device)) -> Envelope:
+    """The newest lab app's manifest, signed with the key that signs packages (decision 10)."""
+    envelope, _, _ = _release()
+    return Envelope(**envelope)
+
+
+@device_router.get("/app/installer")
+def device_app_installer(device: LabDevice = Depends(current_device)) -> FileResponse:
+    _, body, path = _release()
+    return _installer(path, body["file"])
 
 
 @device_router.get("/me", response_model=DeviceInfo)

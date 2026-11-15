@@ -129,11 +129,22 @@ export interface SyncReport {
   message: string;
 }
 
+export interface LabAppStatus {
+  version: string;
+  /** A newer version, downloaded and checked, waiting to be installed. */
+  update: { version: string; notes: string | null; size: number } | null;
+  /** Why the last check for an update failed, if it did. */
+  update_problem: string | null;
+  /** Why installing must wait (students still sitting), or null. */
+  install_blocked: string | null;
+}
+
 export interface StaffOverview {
   device: DeviceSummary;
   exams: StaffExam[];
   results: StaffResult[];
   last_sync: SyncReport | null;
+  app: LabAppStatus;
 }
 
 /** Every call the window can make, with its input and result. */
@@ -161,6 +172,7 @@ export interface LabCalls {
   loadPackageFile: [void, { title: string } | null];
   saveResultsFile: [{ scope: "unsent" | "all" }, { saved_to: string; count: number } | null];
   changePin: [{ current: string; next: string }, void];
+  installUpdate: [void, void];
   quit: [void, void];
 }
 

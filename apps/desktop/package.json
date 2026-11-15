@@ -6,10 +6,11 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.json && node build-renderer.mjs",
+    "build:production": "tsc -p tsconfig.json && node build-renderer.mjs --production",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.renderer.json",
     "test": "npm run build && node --test \"dist/**/*.test.js\"",
     "dev": "npm run build && electron .",
-    "package:win": "npm run build && electron-builder --win nsis"
+    "package:win": "npm run build:production && electron-builder --win nsis --x64 --publish never"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -23,22 +24,39 @@
     "typescript": "^5.7.2"
   },
   "build": {
-    "appId": "com.intelligentcbt.desktop",
+    "appId": "com.intelligentcbt.lab",
     "productName": "Intelligent CBT Lab",
+    "artifactName": "Intelligent-CBT-Lab-Setup-${version}.${ext}",
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "build"
     },
     "files": [
       "dist/**/*",
       "!dist/**/*.test.js",
+      "!dist/**/*.map",
       "package.json"
     ],
     "win": {
-      "target": ["nsis"]
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Intelligent CBT Lab",
+      "deleteAppDataOnUninstall": false
+    },
+    "publish": null
   }
 }

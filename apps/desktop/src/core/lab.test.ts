@@ -234,6 +234,8 @@ test("an attempt is saved answer by answer, survives a restart, and seals a sign
   await lab.signIn({ exam_id: "exam-1", username: "amy", code: "K7QM-3XRP" });
   const sitting = lab.begin();
   assert.equal(sitting.seconds_left, 30 * 60);
+  // Updates wait until every student on this computer has handed in.
+  assert.match(lab.overview().app.install_blocked ?? "", /hasn't handed in/);
   assert.equal(sitting.questions.find((q) => q.item_id === "q2")?.passage?.title, "The water cycle");
   lab.answer({ item_id: "q1", selected: ["a"], text: null });
   lab.answer({ item_id: "q1", selected: ["b"], text: null });
@@ -252,6 +254,7 @@ test("an attempt is saved answer by answer, survives a restart, and seals a sign
 
   const finished = restarted.handIn();
   assert.equal(finished.reason, "student");
+  assert.equal(restarted.overview().app.install_blocked, null);
   assert.equal(finished.answered, 2);
   assert.equal(finished.score, null);
   await assert.rejects(

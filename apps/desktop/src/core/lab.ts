@@ -23,6 +23,7 @@ import type {
   DeviceSummary,
   Finished,
   GivenAnswer,
+  LabAppStatus,
   LabStatus,
   ResultStatus,
   RoomExam,
@@ -49,6 +50,7 @@ import { CHOICE_TYPES, mark, type AnswerKey } from "./marking.js";
 import { openPackage, PackageError, type ExamPackage, type PackageItem } from "./package.js";
 import { hashPin, LabPin, PinError, validPin, PIN_RULE } from "./pin.js";
 import { server, serverAddress, ServerError, type SubmissionResult } from "./server.js";
+import { Updates } from "./updates.js";
 
 export const REQUEST_FORMAT = "cbt-device-request/1";
 export const SETUP_FORMAT = "cbt-device-setup/1";
@@ -217,12 +219,17 @@ export class Lab {
   private current: Current | null = null;
   private signInFailures = new Map<string, { count: number; until: number }>();
 
+  readonly updates: Updates;
+
   constructor(
     readonly dataDir: string,
     private readonly vault: Vault = plainVault,
     readonly now: () => Date = () => new Date(),
+    /** This app's version, to compare with the server's newest (ADR 0007, decision 10). */
+    readonly appVersion = "0.0.0",
   ) {
     this.pin = new LabPin(join(dataDir, "pin.json"), now);
+    this.updates = new Updates(join(dataDir, "updates"), appVersion);
   }
 
   // --- Files ------------------------------------------------------------------------------------
@@ -924,6 +931,7 @@ export class Lab {
         }
       }
       this.saveExamIndex(latest);
+      await this.checkForUpdate(device.server, token, device.signing_public_key);
       const parts = [sent === 1 ? "1 result sent" : `${sent} results sent`];
       if (downloaded) parts.push(downloaded === 1 ? "1 exam downloaded" : `${downloaded} exams downloaded`);
       return this.report(true, `Up to date: ${parts.join(", ")}.`);
@@ -932,6 +940,22 @@ export class Lab {
         error instanceof ServerError || error instanceof LabError ? error.message : "Sending results failed.";
       return this.report(false, sent ? `${sent} sent, then: ${message}` : message);
     }
+  }
+
+  /** Download a newer lab app if the server has one; a failure is noted for staff, not thrown. */
+  private async checkForUpdate(address: string, token: string, signingKey: string): Promise<void> {
+    let message: string | null = null;
+    try {
+      await this.updates.check(address, token, signingKey);
+    } catch (error) {
+      message = error instanceof Error ? error.message : "Checking for an update failed.";
+    }
+    writeJson(this.path("updates", "status.json"), { at: this.now().toISOString(), message });
+  }
+
+  /** Attempts on this computer not yet handed in: updating waits for them. */
+  unfinishedAttempts(): number {
+    return this.attemptMetas().filter((meta) => !this.finishOf(meta.attempt_id)).length;
   }
 
   private tryLoad(packageId: string): ExamPackage | null {
@@ -1014,7 +1038,20 @@ export class Lab {
         sent_at: e.sent_at,
       }))
       .sort((a, b) => b.finished_at.localeCompare(a.finished_at));
-    return { device, exams, results, last_sync: readJson<SyncReport>(this.path("sync.json")) };
+    const ready = this.updates.ready();
+    const unfinished = this.unfinishedAttempts();
+    const app: LabAppStatus = {
+      version: this.appVersion,
+      update: ready
+        ? { version: ready.release.version, notes: ready.release.notes, size: ready.release.size }
+        : null,
+      update_problem:
+        readJson<{ message: string | null }>(this.path("updates", "status.json"))?.message ?? null,
+      install_blocked: unfinished
+        ? `${unfinished === 1 ? "A student hasn't" : `${unfinished} students haven't`} handed in on this computer yet. Install the update after the exam.`
+        : null,
+    };
+    return { device, exams, results, last_sync: readJson<SyncReport>(this.path("sync.json")), app };
   }
 
   async changePin(current: string, next: string): Promise<void> {

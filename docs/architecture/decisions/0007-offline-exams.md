@@ -1,6 +1,6 @@
 # ADR 0007: Offline exams on lab computers
 
-- **Status:** Accepted. Stages A, B and C are built.
+- **Status:** Accepted. Stages A to D are built.
 - **Date:** 2026-11-15
 - **Implemented in:** `backend/api/app/offline/`, `backend/api/app/models/offline.py` (migration `0016_offline_exams`); the web screens in `apps/web` (`/school/lab-computers`, the exam page's Lab computers card, `src/lib/offline.ts`); the lab app in `apps/desktop`
 
@@ -20,7 +20,7 @@ The work is built in stages:
 - **A. The API:** the exam settings, lab computer registration, exam codes, signed packages, and checked, idempotent upload of results. (Built.)
 - **B. Web screens:** the settings, printing codes, managing lab computers, USB export and import, and each exam's offline status. (Built.)
 - **C. The desktop app:** setting up a computer, downloading and checking packages, students signing in with codes, sitting with crash-safe local storage, instant scores where allowed, and syncing. (Built.)
-- **D. Packaging:** the Windows installer, updates and a CI build. School network (LAN) mode is later; nothing here assumes the sync server is the cloud.
+- **D. Packaging:** the Windows installer, updates and a CI build (decision 10). (Built.) School network (LAN) mode is later; nothing here assumes the sync server is the cloud.
 
 ## Decisions
 
@@ -63,7 +63,14 @@ The work is built in stages:
    - **Instant scores** decrypt the exam's key with the school key and mark it with the same rules as the server. The score shown is for the student only: the server marks the uploaded answers again, and that mark is the one that counts.
    - **Sending results.** A computer registered online uploads its outbox every minute and on request, and shows what the server decided for each result. Staff can save results to USB at any time. When a computer online finds an exam is no longer offered (withdrawn), it stops students starting it.
 
-10. **Limits, stated plainly.** Offline mode can't give live invigilation or immediate revocation: a revoked student or a withdrawn exam isn't known to a lab computer until it syncs, and its clock can be wrong. Staff see flags and conflicts; schools should cover the rest in their exam rules.
+10. **Installing and updating the lab app** (stage D). The user decided on 2026-11-15 that updates come from the school's own server, and that installers are unsigned until the school has a code-signing certificate.
+    - **The installer** is built by CI on Windows with electron-builder: an NSIS installer for all users of the computer. It is unsigned for now, so Windows warns about an unknown publisher on each install. The build signs it once a certificate and its password are added as GitHub secrets.
+    - **A release** is published to the server with `python -m app.cli publish-lab-app <installer> --version x.y.z`. This keeps the installer in `LAB_APP_DIR`, plus a manifest (version, file, size, SHA-256, notes) signed with the package-signing key. That is the key lab computers already trust, so a lab computer installs only what the school's server signed, even without code signing. The newest two installers are kept.
+    - **School admins** download the installer from the web app's Lab computers page, for a first install and for computers that never go online.
+    - **Lab computers registered online** check for a new version with each sync. They download it in the background, check its signature and SHA-256, and wait. Staff install it from the staff side, and never during an exam: installing is refused while any attempt on the computer isn't handed in. Updating keeps the registration, packages, attempts and results, which live in the user's data folder, not the program's.
+    - **Computers registered by USB** are updated by closing the app from the staff side and running the new installer from a USB stick.
+
+11. **Limits, stated plainly.** Offline mode can't give live invigilation or immediate revocation: a revoked student or a withdrawn exam isn't known to a lab computer until it syncs, and its clock can be wrong. Staff see flags and conflicts; schools should cover the rest in their exam rules.
 
 ## Consequences
 

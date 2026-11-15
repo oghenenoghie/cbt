@@ -77,6 +77,78 @@ function ChangePin({ onClose }: { onClose: () => void }) {
   );
 }
 
+/** This app's version, and a newer one from the school's server when it's ready (ADR 0007, decision 10). */
+function AppUpdates({ online, overview }: { online: boolean; overview: StaffOverview }) {
+  const [confirming, setConfirming] = useState(false);
+  const { busy, error, run } = useAction();
+  const { app } = overview;
+  return (
+    <section className="card">
+      <div className="card-header">
+        <div>
+          <h2>This app</h2>
+          <p className="muted">
+            Intelligent CBT Lab, version {app.version}.{" "}
+            {online
+              ? "New versions are downloaded from the school's server when they're published, and installed from here between exams."
+              : "To update it, a school admin downloads the newest installer from the web app's Lab computers page. Close the app here, then run the installer from a USB stick."}{" "}
+            Updating keeps this computer&apos;s registration, exams and results.
+          </p>
+        </div>
+        {app.update && (
+          <div className="actions">
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={busy || Boolean(app.install_blocked)}
+              onClick={() => setConfirming(true)}
+            >
+              Install version {app.update.version}
+            </button>
+          </div>
+        )}
+      </div>
+      {app.update && (
+        <div className="alert alert-info">
+          Version {app.update.version} is downloaded and checked
+          {app.update.notes ? `: ${app.update.notes}` : "."}
+        </div>
+      )}
+      {app.update && app.install_blocked && <div className="alert alert-warning">{app.install_blocked}</div>}
+      {app.update_problem && <div className="alert alert-warning">{app.update_problem}</div>}
+      {confirming && app.update && (
+        <Dialog title={`Install version ${app.update.version}?`} onClose={() => setConfirming(false)}>
+          <div className="stack">
+            <p>
+              The app closes and Windows&apos; installer opens. Windows may ask for an administrator&apos;s
+              permission. Results not yet sent stay on this computer and are sent when the app opens again.
+            </p>
+            <ErrorText error={error} />
+            <div className="actions end">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={busy}
+                onClick={() => setConfirming(false)}
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={busy}
+                onClick={() => void run(() => call("installUpdate"))}
+              >
+                {busy ? "Starting…" : "Install and close the app"}
+              </button>
+            </div>
+          </div>
+        </Dialog>
+      )}
+    </section>
+  );
+}
+
 /** For teachers and invigilators, after the lab PIN: exams, results, files and the lock. */
 export function Staff({ status, onLocked }: { status: LabStatus; onLocked: (status: LabStatus) => void }) {
   const [overview, setOverview] = useState<StaffOverview | null>(null);
@@ -316,6 +388,8 @@ export function Staff({ status, onLocked }: { status: LabStatus; onLocked: (stat
             </table>
           )}
         </section>
+
+        {overview && <AppUpdates online={online} overview={overview} />}
       </main>
       {changingPin && <ChangePin onClose={() => setChangingPin(false)} />}
     </div>

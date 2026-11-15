@@ -9,7 +9,7 @@ import { api } from "@/lib/api";
 import { count, formatDateTime } from "@/lib/format";
 import { downloadJson, fileSlug, readJsonFile, registrationRequest } from "@/lib/offline";
 import { useSignedIn } from "@/lib/session";
-import type { FileRegistered, LabComputer, RegistrationCode } from "@/lib/types";
+import type { FileRegistered, LabApp, LabComputer, RegistrationCode } from "@/lib/types";
 import { useAction } from "@/lib/useAction";
 import { useApi } from "@/lib/useApi";
 
@@ -239,6 +239,44 @@ function lastSeen(computer: LabComputer): React.ReactNode {
   );
 }
 
+function megabytes(bytes: number): string {
+  return `${(bytes / 1_000_000).toFixed(bytes < 10_000_000 ? 1 : 0)} MB`;
+}
+
+/** The newest lab app installer on this server (ADR 0007, decision 10), for installing it. */
+function GetTheApp() {
+  const app = useApi<LabApp>("/school/devices/app");
+  return (
+    <section className={`card ${styles.app}`} aria-labelledby="lab-app-heading">
+      <div>
+        <h2 id="lab-app-heading">The lab app</h2>
+        {app.status === "ready" ? (
+          <p className="muted">
+            Version {app.data.version}, {megabytes(app.data.size)}, published{" "}
+            {formatDateTime(app.data.published_at)}. Install it on each lab computer (Windows). Windows may
+            say the publisher is unknown: choose More info, then Run anyway. Computers registered over the
+            internet download new versions themselves, and staff install them between exams; for the others,
+            carry the installer on a USB stick.
+          </p>
+        ) : app.status === "error" ? (
+          <p className="muted">
+            No lab app has been published on this server yet. Whoever runs the server publishes it with the
+            command in the API&apos;s README.
+          </p>
+        ) : (
+          <p className="muted">Loading…</p>
+        )}
+      </div>
+      {app.status === "ready" && (
+        <a className="btn btn-secondary" href="/api/v1/school/devices/app/installer" download={app.data.file}>
+          <Download size={16} aria-hidden="true" />
+          Download the installer
+        </a>
+      )}
+    </section>
+  );
+}
+
 type Dialog = "online" | "file" | { rename: LabComputer } | { remove: LabComputer };
 
 export default function LabComputersPage() {
@@ -283,6 +321,7 @@ export default function LabComputersPage() {
         </div>
       </div>
       <Notice text={notice} onDismiss={() => setNotice(null)} />
+      <GetTheApp />
       <Loaded value={computers}>
         {(list) => {
           if (list.length === 0) {

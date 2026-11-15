@@ -246,6 +246,8 @@ With `AI_PROCESSING=inline` (the default) the API drafts right after responding;
 
 Lab computers can sit published exams without the internet, with the desktop app (stage C, to come): they download a signed exam package while online, students sign in with one-time exam codes, and signed results upload when the connection returns, or travel by USB. The server checks every result. See [ADR 0007](../../docs/architecture/decisions/0007-offline-exams.md).
 
+**Lab app releases** (ADR 0007, decision 10). CI builds the Windows installer; on a tag `lab-vX.Y.Z` it attaches it to a GitHub release (`.github/workflows/lab-app-release.yml`). To offer it to a server's lab computers, run `python -m app.cli publish-lab-app Intelligent-CBT-Lab-Setup-X.Y.Z.exe --version X.Y.Z [--notes "..."]` on the server. It copies the installer to `LAB_APP_DIR` (default `STORAGE_DIR/lab-app`; keep it on persistent storage) and writes a manifest with its SHA-256, signed with `OFFLINE_SIGNING_KEY`. Only a newer version can be published, and the two newest installers are kept. Lab computers registered online download it, check the signature and checksum, and staff install it between exams.
+
 Packages are signed with `OFFLINE_SIGNING_KEY` (generate one with `python -m app.cli generate-signing-key` and keep it secret; lab computers trust packages signed with it). Development servers without one generate a key under `STORAGE_DIR`; other environments refuse to issue packages (503).
 
 | Endpoint | Who | What it does |
@@ -263,6 +265,8 @@ Packages are signed with `OFFLINE_SIGNING_KEY` (generate one with `python -m app
 | `POST /api/v1/exams/{id}/offline/results` | The exam's teachers, school admins | Results brought back by USB, each checked as above |
 | `GET /api/v1/exams/{id}/offline` | Anyone who can see the exam | Codes issued (and each student's code batch, never a code), packages issued and results received, with flags and conflicts |
 | `GET /api/v1/offline/signing-key` | Anyone | The public key for checking packages |
+| `GET /api/v1/school/devices/app`, `.../app/installer` | School admins | The newest lab app (version, size, notes) and its installer, for first installs and computers that never go online |
+| `GET /api/v1/devices/app/latest`, `.../app/installer` | A lab computer | The newest lab app's manifest, signed with the package-signing key, and its installer |
 
 Exams have `offline_allowed` (default on) and `offline_instant_scores` (default off; needs `results_release: "immediate"`). A published exam that can be sat offline lists `manage_offline` in `allowed_actions` for the people who may print its codes, export it and upload its results. Offline attempts appear with `source: "offline"`.
 
