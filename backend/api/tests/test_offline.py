@@ -328,10 +328,22 @@ def test_teachers_print_codes_for_the_students_an_exam_is_set_for(school, db: Se
     batches = dict(db.execute(select(OfflineCode.candidate_id, OfflineCode.batch)).all())
     assert batches == {by_name["amy"]["candidate_id"]: 2, by_name["ben"]["candidate_id"]: 1}
 
+    # The exam's status lists who has a code, and from which batch, but never the codes.
+    status_ = school.teacher.client.get(f"{E}/{exam_id}/offline").json()
+    assert [(s["username"], s["class_name"], s["code_batch"]) for s in status_["roster"]] == [
+        ("amy", "JSS1 A", 2),
+        ("ben", "JSS1 A", 1),
+    ]
+    assert "code" not in status_["roster"][0]
+
 
 def test_who_can_print_codes_and_when(school, db: Session) -> None:
     exam_id = published(school)
     url = f"{E}/{exam_id}/offline/codes"
+    # The exam tells each person whether they can manage it on lab computers.
+    for who, expected in ((school.teacher, True), (school.head, True), (school.coordinator, False)):
+        exam = who.client.get(f"{E}/{exam_id}").json()
+        assert ("manage_offline" in exam["allowed_actions"]) is expected
     for who in (school.coordinator, school.other_teacher):
         assert who.client.post(url, json={}, headers=who.headers).status_code == 403
     assert school.amy.client.post(url, json={}, headers=school.amy.headers).status_code == 403
@@ -348,6 +360,8 @@ def test_who_can_print_codes_and_when(school, db: Session) -> None:
     )
     assert response.status_code == 409
     assert "turned off" in response.json()["detail"]
+    exam = school.teacher.client.get(f"{E}/{not_offline}").json()
+    assert "manage_offline" not in exam["allowed_actions"]
     cara = db.scalar(select(LabDevice.id))  # nobody: just a stranger's id
     response = school.teacher.client.post(
         url, json={"candidate_ids": [cara or "someone-else"]}, headers=school.teacher.headers

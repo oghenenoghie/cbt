@@ -261,10 +261,10 @@ Packages are signed with `OFFLINE_SIGNING_KEY` (generate one with `python -m app
 | `POST /api/v1/exams/{id}/offline/codes` | The exam's teachers, school admins | Codes for its students (or `candidate_ids` only), shown once for printing |
 | `GET /api/v1/exams/{id}/offline/package` | The exam's teachers, school admins | The package as a file, for USB |
 | `POST /api/v1/exams/{id}/offline/results` | The exam's teachers, school admins | Results brought back by USB, each checked as above |
-| `GET /api/v1/exams/{id}/offline` | Anyone who can see the exam | Codes issued, packages issued and results received, with flags and conflicts |
+| `GET /api/v1/exams/{id}/offline` | Anyone who can see the exam | Codes issued (and each student's code batch, never a code), packages issued and results received, with flags and conflicts |
 | `GET /api/v1/offline/signing-key` | Anyone | The public key for checking packages |
 
-Exams have `offline_allowed` (default on) and `offline_instant_scores` (default off; needs `results_release: "immediate"`). Offline attempts appear with `source: "offline"`.
+Exams have `offline_allowed` (default on) and `offline_instant_scores` (default off; needs `results_release: "immediate"`). A published exam that can be sat offline lists `manage_offline` in `allowed_actions` for the people who may print its codes, export it and upload its results. Offline attempts appear with `source: "offline"`.
 
 ### Creating the first accounts
 

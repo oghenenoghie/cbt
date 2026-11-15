@@ -53,6 +53,7 @@ from app.offline.schemas import (
     FileRegistered,
     FileRegistration,
     OfflineStatus,
+    OfflineStudent,
     OfflineSubmissionOut,
     PackageOut,
     RegistrationCodeOut,
@@ -619,6 +620,7 @@ def offline_status(
     exam, _ = visible_exam(db, viewer_for(db, principal), exam_id)
     students = service.eligible_students(db, exam)
     codes = list(db.scalars(select(OfflineCode).where(OfflineCode.exam_id == exam.id)))
+    batches = {c.candidate_id: c.batch for c in codes}
     packages = list(
         db.scalars(
             select(OfflinePackage)
@@ -658,6 +660,16 @@ def offline_status(
         students=len(students),
         codes_issued=len(codes),
         codes_batch=max((c.batch for c in codes), default=0),
+        roster=[
+            OfflineStudent(
+                candidate_id=s.candidate_id,
+                name=s.name,
+                username=s.username,
+                class_name=s.class_name,
+                code_batch=batches.get(s.candidate_id),
+            )
+            for s in students
+        ],
         packages=[
             PackageOut(
                 id=p.id,

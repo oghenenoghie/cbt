@@ -221,6 +221,16 @@ class OfflineSubmissionOut(BaseModel):
     received_at: datetime
 
 
+class OfflineStudent(BaseModel):
+    """A student the exam is set for, and the batch of their current code (never the code)."""
+
+    candidate_id: str
+    name: str
+    username: str | None
+    class_name: str | None
+    code_batch: int | None
+
+
 class OfflineStatus(BaseModel):
     exam_id: str
     offline_allowed: bool
@@ -228,5 +238,6 @@ class OfflineStatus(BaseModel):
     students: int
     codes_issued: int
     codes_batch: int
+    roster: list[OfflineStudent]
     packages: list[PackageOut]
     submissions: list[OfflineSubmissionOut]

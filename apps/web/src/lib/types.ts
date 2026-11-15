@@ -256,6 +256,7 @@ export type ExamAction =
   | "return"
   | "withdraw"
   | "release_results"
+  | "manage_offline"
   | "copy";
 
 export interface ExamItem {
@@ -279,6 +280,10 @@ export interface Exam {
   shuffle_questions: boolean;
   shuffle_options: boolean;
   results_release: ResultsRelease;
+  /** Whether it can be sat on lab computers without the internet (ADR 0007). */
+  offline_allowed: boolean;
+  /** Whether lab computers show scores at once, holding the answer key encrypted. */
+  offline_instant_scores: boolean;
   status: ExamStatus;
   /** The approver's note when it was last sent back, or the reason it was withdrawn. */
   review_note: string | null;
@@ -309,6 +314,8 @@ export interface ExamSettings {
   shuffle_questions: boolean;
   shuffle_options: boolean;
   results_release: ResultsRelease;
+  offline_allowed: boolean;
+  offline_instant_scores: boolean;
 }
 
 /** A question as it appears on the paper, with its answer. Staff only. */
@@ -365,6 +372,8 @@ export interface AttemptSummary {
   max_score: number;
   /** Written answers waiting for a teacher's mark. */
   pending_marking: number;
+  /** "online", or "offline" when it was sat on a lab computer and uploaded. */
+  source: "online" | "offline";
 }
 
 // --- Students: sitting exams and results -----------------------------------------------------
@@ -835,4 +844,109 @@ export interface QuestionCitation {
   document_version: number;
   location: string;
   quote: string;
+}
+
+// --- Offline exams on lab computers (ADR 0007) ----------------------------------------------------
+
+/** A signed JSON file: `body` is the JSON as text, `signature` covers exactly those bytes. */
+export interface SignedEnvelope {
+  format: string;
+  body: string;
+  signature: string;
+}
+
+export interface LabComputer {
+  id: string;
+  name: string;
+  status: "active" | "revoked";
+  /** "online": registered with a code; "file": by USB. */
+  method: "online" | "file";
+  registered_at: string;
+  registered_by_name: string | null;
+  last_seen_at: string | null;
+  revoked_at: string | null;
+}
+
+/** A one-time code for registering a lab computer over the internet. Shown once. */
+export interface RegistrationCode {
+  code: string;
+  expires_at: string;
+}
+
+export interface FileRegistered {
+  device: LabComputer;
+  /** The setup file to carry back to the lab computer. */
+  setup: SignedEnvelope;
+}
+
+export interface StudentCode {
+  candidate_id: string;
+  name: string;
+  username: string | null;
+  class_name: string | null;
+  /** "K7QM-3XRP". Shown once: the server keeps only a hash. */
+  code: string;
+}
+
+export interface CodesOut {
+  exam_id: string;
+  batch: number;
+  codes: StudentCode[];
+}
+
+export interface OfflineStudent {
+  candidate_id: string;
+  name: string;
+  username: string | null;
+  class_name: string | null;
+  /** The batch of their current code, or null when they have none. */
+  code_batch: number | null;
+}
+
+export interface OfflinePackage {
+  id: string;
+  device_id: string | null;
+  device_name: string | null;
+  exported_by_name: string | null;
+  codes_batch: number;
+  instant_scores: boolean;
+  created_at: string;
+}
+
+export type OfflineResultStatus = "accepted" | "conflict" | "rejected";
+
+export interface OfflineSubmission {
+  submission_id: string;
+  candidate_id: string;
+  candidate_name: string;
+  device_id: string;
+  device_name: string;
+  status: OfflineResultStatus;
+  reason: string | null;
+  /** Things staff should check, such as a lab computer's clock being wrong. */
+  flags: string[];
+  attempt_id: string | null;
+  received_via: "device" | "file";
+  received_at: string;
+}
+
+export interface OfflineStatus {
+  exam_id: string;
+  offline_allowed: boolean;
+  instant_scores: boolean;
+  students: number;
+  codes_issued: number;
+  codes_batch: number;
+  roster: OfflineStudent[];
+  packages: OfflinePackage[];
+  submissions: OfflineSubmission[];
+}
+
+/** What happened to each result in an uploaded results file. */
+export interface SubmissionResult {
+  submission_id: string;
+  status: OfflineResultStatus;
+  reason: string | null;
+  flags: string[];
+  attempt_id: string | null;
 }

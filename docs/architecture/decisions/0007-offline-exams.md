@@ -1,8 +1,8 @@
 # ADR 0007: Offline exams on lab computers
 
-- **Status:** Accepted. Stage A is built.
+- **Status:** Accepted. Stages A and B are built.
 - **Date:** 2026-11-15
-- **Implemented in:** `backend/api/app/offline/`, `backend/api/app/models/offline.py` (migration `0016_offline_exams`); later `apps/desktop`
+- **Implemented in:** `backend/api/app/offline/`, `backend/api/app/models/offline.py` (migration `0016_offline_exams`); the web screens in `apps/web` (`/school/lab-computers`, the exam page's Lab computers card, `src/lib/offline.ts`); later `apps/desktop`
 
 ## Context
 
@@ -18,7 +18,7 @@ The user decided these on 2026-11-15:
 The work is built in stages:
 
 - **A. The API:** the exam settings, lab computer registration, exam codes, signed packages, and checked, idempotent upload of results. (Built.)
-- **B. Web screens:** the settings, printing codes, managing lab computers, USB export and import, and each exam's offline status.
+- **B. Web screens:** the settings, printing codes, managing lab computers, USB export and import, and each exam's offline status. (Built.)
 - **C. The desktop app:** setting up a computer, downloading and checking packages, students signing in with codes, sitting with crash-safe local storage, instant scores where allowed, and syncing.
 - **D. Packaging:** the Windows installer, updates and a CI build. School network (LAN) mode is later; nothing here assumes the sync server is the cloud.
 
@@ -45,7 +45,11 @@ The work is built in stages:
 
    An accepted submission becomes an attempt (`source = "offline"`) with its answer events, marked by the same code as online attempts. **The same submission again returns the first result**; the same id with different content is refused and recorded. A student who already used all their attempts, or is sitting online at that moment, gets a **conflict**: kept for staff, not counted. So does a result that arrives after the exam's results were released, because released results are final and their marking is locked. A result for an exam withdrawn after its package was downloaded is rejected.
 
-7. **Limits, stated plainly.** Offline mode can't give live invigilation or immediate revocation: a revoked student or a withdrawn exam isn't known to a lab computer until it syncs, and its clock can be wrong. Staff see flags and conflicts; schools should cover the rest in their exam rules.
+7. **Files carried by USB** are JSON. A package and a setup file are the signed envelope itself. A registration request is an envelope of format `cbt-device-request/1` whose body holds the computer's `name`, `public_key` (Ed25519) and `exchange_key` (X25519), signed by its own key. A results file is `{"format": "cbt-offline-results/1", "submissions": [envelopes]}`; the web app also takes a list of results or a single one, and uploads them 2,000 at a time. The web app only finds the envelopes in a file; the API checks each one.
+
+8. **Who sees what on an exam.** The exam reports `manage_offline` among its `allowed_actions` to the people who can release its results, while it is published and can be sat on lab computers: they make codes and export packages until it closes, and upload results at any time. Its offline status (codes, downloads, results) is shown to everyone who can see the exam, with each student's code batch but never a code.
+
+9. **Limits, stated plainly.** Offline mode can't give live invigilation or immediate revocation: a revoked student or a withdrawn exam isn't known to a lab computer until it syncs, and its clock can be wrong. Staff see flags and conflicts; schools should cover the rest in their exam rules.
 
 ## Consequences
 

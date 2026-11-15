@@ -37,6 +37,14 @@ function Summary({ exam, lookup }: { exam: Exam; lookup: SchoolLookup }) {
             ? `Released ${formatDateTime(exam.results_released_at)}`
             : "Shown when a teacher releases them, after the exam closes"}
       </dd>
+      <dt>Lab computers</dt>
+      <dd>
+        {!exam.offline_allowed
+          ? "Not sat on lab computers"
+          : exam.offline_instant_scores
+            ? "Can be sat on lab computers, which show each student their score straight away"
+            : "Can be sat on lab computers; answers are marked here once uploaded"}
+      </dd>
       <dt>Instructions</dt>
       <dd>{exam.instructions ?? <span className="muted">None</span>}</dd>
     </dl>

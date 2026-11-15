@@ -15,6 +15,7 @@ import { useQueryParams } from "@/lib/useQueryParams";
 
 import { Attempts } from "./Attempts";
 import { ExamActions } from "./ExamActions";
+import { LabComputers } from "./LabComputers";
 import { PaperCard } from "./PaperCard";
 import { SettingsCard } from "./SettingsCard";
 import styles from "./view.module.css";
@@ -92,6 +93,8 @@ function ExamView({
   const { user } = useSignedIn();
   const [exam, setExam] = useState(initial);
   const [notice, setNotice] = useState<string | null>(null);
+  // Changes when lab results arrive, so the attempts list loads again.
+  const [attemptsVersion, setAttemptsVersion] = useState(0);
   const paper = useApi<Paper>(`/exams/${exam.id}/paper`);
   const subject = lookup.subjects.find((s) => s.id === exam.subject_id);
   const state = examState(exam);
@@ -132,7 +135,14 @@ function ExamView({
       <div className="stack">
         <Notice text={notice} onDismiss={() => setNotice(null)} />
         <StatusAlert exam={exam} />
-        {exam.status === "published" && <Attempts exam={exam} />}
+        {exam.status === "published" && <Attempts key={attemptsVersion} exam={exam} />}
+        {exam.status === "published" && exam.offline_allowed && (
+          <LabComputers
+            exam={exam}
+            subject={lookup.subjectName(exam.subject_id)}
+            onResults={() => setAttemptsVersion((v) => v + 1)}
+          />
+        )}
         <SettingsCard exam={exam} lookup={lookup} teachingArms={teachingArms} onChanged={(e) => changed(e)} />
         <PaperCard exam={exam} subject={subject} paper={paper} onItemsChanged={(e) => changed(e)} />
       </div>

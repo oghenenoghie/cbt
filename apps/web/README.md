@@ -68,6 +68,7 @@ npm run build
 | **Subjects** (`/school/subjects`) | Subjects with codes, the levels that take them, and their topics in order |
 | **Enrolment** (`/school/enrolment`) | A class's students: add (search and pick), move to another arm, remove |
 | **Teaching** (`/school/teaching`) | Assign a teacher to a class and subject (only subjects the class's level takes), filter and remove |
+| **Lab computers** (`/school/lab-computers`) | Computers where students sit exams without the internet (ADR 0007): register one over the internet with a one-time code (shown once with the school code), or by USB (upload the request file the lab app wrote, get back its setup file); rename and remove them |
 
 Choices worth knowing:
 
@@ -144,7 +145,7 @@ the API works out for the signed-in person and checks again on every action.
 | Screen | What staff do there |
 |---|---|
 | **Exams** (`/exams`) | Every exam you can see, newest first, by status and subject; start a **New exam** (subject, term, classes, times and settings) |
-| **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** |
+| **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** and, if it can be sat on lab computers, its **Lab computers** card |
 | **Approvals** (`/approvals`) | For exam coordinators and school admins: the exams waiting for them. The dashboard shows how many |
 | **Results** (`/exams/results?id=…`) | Whether students can see them yet, how many written answers wait for a mark, and **Release results** once the exam has closed and nothing waits. A summary (students, handed in, didn't sit, average, highest, lowest), then two tabs: **Students** (each student's counted attempt, by class or by score, with what's left to mark and a CSV download) and **Questions** (item analysis: the share who got each question right, or of the marks for written answers, and how many chose each option, in paper order or hardest first) |
 | **Marking** (`/exams/marking?id=…&item=…`) | For exams with written answers (ADR 0006): the short-answer, number and essay questions with how many answers wait; open one to read every student's answer beside the accepted answers or marking guide, and give a mark out of the question's marks with a comment the student sees. Essays wait for a mark; short answers and numbers were marked automatically and can be re-marked, for example to accept a spelling. Linked from the exam, its results and a waiting count |
@@ -173,6 +174,22 @@ Choices worth knowing:
   released. Every mark is kept; marking again replaces the mark that counts. Results can't be released
   while an answer waits (the API refuses and says how many), and the API refuses an exam with essays set
   to show results at once, which the paper lists before it's submitted.
+- **Lab computers** (ADR 0007). The exam's settings say whether it can be sat on lab computers (on by
+  default) and whether they show scores straight away (only with results shown at once; the publish
+  dialog warns that the answer key goes on lab computers, encrypted). On a published exam, the people who
+  can release its results (`manage_offline` in `allowed_actions`) get:
+  - **Exam codes**: for every student it's set for, or chosen students (a lost slip). Shown once, then
+    printed as slips: the print stylesheet prints only the slips (`.print-slips` in `globals.css`).
+    Making a code again replaces the old one, and the card warns which lab computers must download the
+    exam again.
+  - **Save the exam for USB**: the signed package as a JSON file, for labs that never go online.
+  - **Upload results**: results files from lab computers (`{"format": "cbt-offline-results/1",
+    "submissions": [...]}`, or a list of results), several at once. Each result comes back accepted, a
+    conflict or rejected, with the reason and any clock flags; one already received is said so and
+    counts once.
+  - Everyone who can see the exam sees what was received, and **who has started** marks attempts sat
+    on a lab computer. Files are read and written in the browser (`src/lib/offline.ts`); the API checks
+    every signature.
 - The page addresses an exam as `/exams/view?id=…` rather than a dynamic route, so the screens stay
   compatible with a static export for the desktop app.
 
@@ -226,3 +243,5 @@ The screens are being built in stages, each its own pull request:
    and reviewing them into the question bank.
 6. **More question types and marking** (built, ADR 0006): writing and sitting multiple-answer, short-answer,
    number and essay questions, marking written answers, and marks and comments in results.
+7. **Lab computers** (ADR 0007): the web screens are built (exam settings, lab computers, exam codes,
+   USB packages and results). The desktop lab app that uses them is next.
