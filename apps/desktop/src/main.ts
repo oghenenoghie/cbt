@@ -23,8 +23,9 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     const dataDir = process.env.LAB_DATA_DIR ?? path.join(app.getPath("userData"), "lab");
     const kiosk = process.env.LAB_KIOSK ? process.env.LAB_KIOSK === "1" : app.isPackaged;
-    const lab = new Lab(dataDir, systemVault());
+    const lab = new Lab(dataDir, systemVault(), undefined, app.getVersion());
     lab.recover();
+    lab.updates.tidy();
 
     const labWindow = createLabWindow({ kiosk, devTools: !app.isPackaged });
     const bridge = registerBridge(lab, labWindow);

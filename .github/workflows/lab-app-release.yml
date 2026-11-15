@@ -1,0 +1,91 @@
+name: Lab app installer
+
+# Builds the Windows installer (ADR 0007, decision 10). On a tag `lab-vX.Y.Z` it also attaches the
+# installer to a GitHub release; the server's operator then publishes it to lab computers with
+# `python -m app.cli publish-lab-app`. Installers are signed only when the WIN_CSC_LINK and
+# WIN_CSC_KEY_PASSWORD secrets exist; until then they're unsigned.
+
+on:
+  push:
+    tags: ["lab-v*"]
+  pull_request:
+    paths:
+      - "apps/desktop/**"
+      - ".github/workflows/lab-app-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lab-app-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  installer:
+    name: Windows installer
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/desktop
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: apps/desktop/package-lock.json
+
+      - name: Check the tag matches the app's version
+        if: startsWith(github.ref, 'refs/tags/lab-v')
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "lab-v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "The tag ${GITHUB_REF_NAME} doesn't match apps/desktop/package.json (${version})." >&2
+            exit 1
+          fi
+
+      - name: Install (exactly what the lockfile pins)
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Build the installer
+        run: npm run package:win
+        env:
+          # Empty until a certificate is added: electron-builder then skips signing.
+          CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab-app-installer
+          path: apps/desktop/release/Intelligent-CBT-Lab-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    name: GitHub release
+    needs: installer
+    if: startsWith(github.ref, 'refs/tags/lab-v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: lab-app-installer
+          path: installer
+
+      - name: Attach the installer to a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" installer/*.exe \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "Intelligent CBT Lab ${GITHUB_REF_NAME#lab-v}" \
+            --notes "Publish it to a server with: python -m app.cli publish-lab-app <installer> --version ${GITHUB_REF_NAME#lab-v}"

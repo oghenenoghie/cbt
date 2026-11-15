@@ -68,7 +68,7 @@ npm run build
 | **Subjects** (`/school/subjects`) | Subjects with codes, the levels that take them, and their topics in order |
 | **Enrolment** (`/school/enrolment`) | A class's students: add (search and pick), move to another arm, remove |
 | **Teaching** (`/school/teaching`) | Assign a teacher to a class and subject (only subjects the class's level takes), filter and remove |
-| **Lab computers** (`/school/lab-computers`) | Computers where students sit exams without the internet (ADR 0007): register one over the internet with a one-time code (shown once with the school code), or by USB (upload the request file the lab app wrote, get back its setup file); rename and remove them |
+| **Lab computers** (`/school/lab-computers`) | Computers where students sit exams without the internet (ADR 0007): register one over the internet with a one-time code (shown once with the school code), or by USB (upload the request file the lab app wrote, get back its setup file); rename and remove them; download the newest lab app installer when the server has one |
 
 Choices worth knowing:
 
@@ -243,5 +243,5 @@ The screens are being built in stages, each its own pull request:
    and reviewing them into the question bank.
 6. **More question types and marking** (built, ADR 0006): writing and sitting multiple-answer, short-answer,
    number and essay questions, marking written answers, and marks and comments in results.
-7. **Lab computers** (ADR 0007): the web screens are built (exam settings, lab computers, exam codes,
-   USB packages and results). The desktop lab app that uses them is next.
+7. **Lab computers** (built, ADR 0007): exam settings, lab computers (with the lab app's installer), exam
+   codes, USB packages and results. The lab app itself is `apps/desktop`.

@@ -91,6 +91,9 @@ class Settings(BaseSettings):
     offline_code_iterations: int = 200_000
     # Allowance for a lab computer's clock and network delays when checking times, in minutes.
     offline_time_allowance_minutes: int = 10
+    # Where the lab app's newest installer and its signed manifest are kept (ADR 0007, decision
+    # 10). Defaults to STORAGE_DIR/lab-app. Publish with `python -m app.cli publish-lab-app`.
+    lab_app_dir: str | None = None
 
     model_config = SettingsConfigDict(
         env_file=".env",

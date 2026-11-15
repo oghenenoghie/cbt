@@ -119,4 +119,29 @@ export const server = {
   submit(address: string, token: string, envelope: Envelope): Promise<SubmissionResult> {
     return call(address, "/devices/me/submissions", { method: "POST", token, body: envelope });
   },
+  /** The newest lab app's signed manifest, or null when the server has none (ADR 0007, decision 10). */
+  async appManifest(address: string, token: string): Promise<Envelope | null> {
+    try {
+      return await call<Envelope>(address, "/devices/app/latest", { token });
+    } catch (error) {
+      if (error instanceof ServerError && error.status === 404) return null;
+      throw error;
+    }
+  },
+  /** The newest installer, as a stream of bytes. */
+  async appInstaller(address: string, token: string): Promise<ReadableStream<Uint8Array>> {
+    let response: Response;
+    try {
+      response = await fetch(`${address}/api/v1/devices/app/installer`, {
+        headers: { Authorization: `Device ${token}` },
+        signal: AbortSignal.timeout(30 * 60_000),
+      });
+    } catch {
+      throw new ServerError("Can't reach the school's server to download the update.", 0);
+    }
+    if (!response.ok || !response.body) {
+      throw new ServerError(`The server refused the update download (${response.status}).`, response.status);
+    }
+    return response.body;
+  },
 };

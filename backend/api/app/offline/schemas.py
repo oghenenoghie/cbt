@@ -241,3 +241,17 @@ class OfflineStatus(BaseModel):
     roster: list[OfflineStudent]
     packages: list[PackageOut]
     submissions: list[OfflineSubmissionOut]
+
+
+# --- The lab app's releases (decision 10) ----------------------------------------------------------
+
+
+class LabAppOut(BaseModel):
+    """The newest lab app on this server, for school admins."""
+
+    version: str
+    file: str
+    size: int
+    sha256: str
+    published_at: datetime
+    notes: str | None

@@ -4,7 +4,7 @@
  * computer up is only possible before it is registered.
  */
 
-import { app, dialog, ipcMain, type BrowserWindow } from "electron";
+import { app, dialog, ipcMain, shell, type BrowserWindow } from "electron";
 import { readFileSync, writeFileSync } from "node:fs";
 
 import { Lab, LabError } from "../core/lab.js";
@@ -191,6 +191,28 @@ export function registerBridge(lab: Lab, labWindow: LabWindow): { autoSync(): Pr
       },
     ],
     changePin: ["staff", ({ current, next }) => lab.changePin(current, next)],
+    installUpdate: [
+      "staff",
+      async () => {
+        // Never during an exam (ADR 0007, decision 10): an installer closes the app.
+        const ready = lab.updates.ready();
+        if (!ready) throw new LabError("There's no update ready to install.");
+        if (lab.unfinishedAttempts() > 0) {
+          throw new LabError(
+            "A student hasn't handed in on this computer yet. Install the update after the exam.",
+          );
+        }
+        if (process.platform !== "win32")
+          throw new LabError("Updates install on Windows lab computers only.");
+        // The installer replaces the program; this computer's files stay where they are. Opened
+        // through the shell, so Windows can ask for an administrator's permission.
+        const problem = await shell.openPath(ready.path);
+        if (problem) throw new LabError(`The installer didn't open: ${problem}`);
+        staffUntil = 0;
+        labWindow.setLocked(false);
+        setImmediate(() => app.quit());
+      },
+    ],
     quit: [
       "staff",
       () => {

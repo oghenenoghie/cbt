@@ -3,6 +3,7 @@
     python -m app.cli create-school-admin --school-code greenfield \\
         --school-name "Greenfield College" --username admin --display-name "School Admin"
     python -m app.cli create-platform-admin --email ops@example.com --display-name "Platform Ops"
+    python -m app.cli publish-lab-app Intelligent-CBT-Lab-Setup-0.2.0.exe --version 0.2.0
 
 Passwords are prompted for, never passed as arguments (which would land in shell history), and
 must meet the staff password policy. Uses DATABASE_URL, like the API. `--school-name` creates
@@ -134,6 +135,14 @@ def _parser() -> argparse.ArgumentParser:
         "generate-signing-key",
         help="Print a new key for signing offline exam packages (OFFLINE_SIGNING_KEY).",
     )
+
+    release = commands.add_parser(
+        "publish-lab-app",
+        help="Publish a lab app installer to this server's lab computers (ADR 0007, decision 10).",
+    )
+    release.add_argument("installer", help="The installer (.exe) built by CI.")
+    release.add_argument("--version", required=True, help="Its version, for example 0.2.0.")
+    release.add_argument("--notes", help="What changed, shown to staff on lab computers.")
     return parser
 
 
@@ -149,6 +158,19 @@ def main(
 
         # Kept secret, like a password: lab computers trust packages signed with it (ADR 0007).
         print(new_signing_seed())
+        return 0
+    if args.command == "publish-lab-app":
+        from pathlib import Path
+
+        from app.offline.crypto import SigningNotConfigured
+        from app.offline.releases import ReleaseError, publish, release_dir
+
+        try:
+            body = publish(Path(args.installer), args.version, args.notes)
+        except (ReleaseError, SigningNotConfigured) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Published lab app {body['version']} ({body['size']} bytes) in {release_dir()}.")
         return 0
     if session_factory is None:
         from app.db.session import SessionLocal

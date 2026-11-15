@@ -867,6 +867,16 @@ export interface LabComputer {
   revoked_at: string | null;
 }
 
+/** The newest lab app installer on the server (ADR 0007, decision 10). */
+export interface LabApp {
+  version: string;
+  file: string;
+  size: number;
+  sha256: string;
+  published_at: string;
+  notes: string | null;
+}
+
 /** A one-time code for registering a lab computer over the internet. Shown once. */
 export interface RegistrationCode {
   code: string;

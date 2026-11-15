@@ -8,9 +8,10 @@ npm run build     # tsc for the main process and core, esbuild for the screens â
 npm run dev       # build, then open the app
 npm test          # build, then the core's tests (node:test)
 npm run typecheck
+npm run package:win   # the Windows installer in release/ (on Windows; on Linux it needs Wine)
 ```
 
-`npm run dev` runs in a normal window. Set `LAB_KIOSK=1` to try the exam-room lock, and `LAB_DATA_DIR=<folder>` to keep a test computer's files apart from your own. To register it against a local API, use the address `http://localhost:8000`; plain http is refused for anything but this computer. CI (`.github/workflows/desktop.yml`) runs the typecheck and the tests. Packaging the Windows installer is stage D.
+`npm run dev` runs in a normal window. Set `LAB_KIOSK=1` to try the exam-room lock, and `LAB_DATA_DIR=<folder>` to keep a test computer's files apart from your own. To register it against a local API, use the address `http://localhost:8000`; plain http is refused for anything but this computer. CI (`.github/workflows/desktop.yml`) runs the typecheck and the tests; `.github/workflows/lab-app-release.yml` builds the installer on Windows for every change to the app.
 
 ## How it's built
 
@@ -30,6 +31,15 @@ Choices worth knowing:
 - **Time** is the computer's clock: an attempt ends at its start plus the duration, capped at closing. After a restart it carries on from the saved start, and an attempt whose time ran out while the computer was off is handed in as time up. The server flags times it doesn't believe.
 - **Sending results**: a computer registered over the internet sends its results every minute and right after each hand-in, and fetches exams that are new or have new codes. It stops students starting an exam the server no longer offers, for example a withdrawn one. A computer registered by USB saves results to a file for the web app.
 - **Instant scores** are shown only for exams whose author chose them. The score is computed here with the server's rules, and the server's own mark is the one that counts.
+
+## Installing and updating ([ADR 0007](../../docs/architecture/decisions/0007-offline-exams.md), decision 10)
+
+- **The installer** (`npm run package:win`, electron-builder) is an NSIS installer for all users of the computer: "Intelligent CBT Lab", with a desktop and Start menu shortcut. The packaged app locks the exam room from its first start. It is unsigned for now, so Windows warns about an unknown publisher: choose More info, then Run anyway. CI signs it once the `WIN_CSC_LINK` (the certificate, base64) and `WIN_CSC_KEY_PASSWORD` secrets exist.
+- **Releasing** a new version:
+  1. Raise `version` in `package.json`, and merge.
+  2. Push a tag `lab-vX.Y.Z` that matches it. The release workflow builds the installer and attaches it to a GitHub release.
+  3. On each server, run `python -m app.cli publish-lab-app <installer> --version X.Y.Z` (see the API's README).
+- **Updates** (`src/core/updates.ts`): with each sync, a computer registered online asks the server for its newest version. A newer one is downloaded to the app's data folder and kept only if the manifest's signature (the package-signing key the computer already trusts) and the installer's SHA-256 match. The staff side then offers **Install version X**, which is refused while any attempt on the computer isn't handed in. Installing closes the app and opens the installer; the computer's files (registration, packages, attempts, results) live in the user data folder and stay. Computers registered by USB are updated by running the new installer, which school admins download from the web app's Lab computers page.
 
 ## Checked by hand
 
