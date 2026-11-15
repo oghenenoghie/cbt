@@ -59,6 +59,7 @@ def list_attempts(
             question_count=len(a.question_order),
             score=marked[a.id].score if a.id in marked else a.score,
             pending_marking=marked[a.id].pending if a.id in marked else 0,
+            source=a.source,
             max_score=a.max_score,
         )
         for a in attempts

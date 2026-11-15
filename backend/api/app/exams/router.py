@@ -148,6 +148,8 @@ def _outs(db: Session, viewer: Viewer, exams: list[Exam]) -> list[ExamOut]:
             shuffle_questions=e.shuffle_questions,
             shuffle_options=e.shuffle_options,
             results_release=e.results_release,
+            offline_allowed=e.offline_allowed,
+            offline_instant_scores=e.offline_instant_scores,
             status=e.status,
             review_note=e.review_note,
             created_by_id=e.created_by_id,
@@ -399,6 +401,8 @@ def create_exam(
         shuffle_questions=body.shuffle_questions,
         shuffle_options=body.shuffle_options,
         results_release=body.results_release,
+        offline_allowed=body.offline_allowed,
+        offline_instant_scores=body.offline_instant_scores,
         created_by_id=principal.user_id,
     )
     db.add(exam)
@@ -620,6 +624,8 @@ def copy_exam(
         shuffle_questions=source.shuffle_questions,
         shuffle_options=source.shuffle_options,
         results_release=source.results_release,
+        offline_allowed=source.offline_allowed,
+        offline_instant_scores=source.offline_instant_scores,
         created_by_id=principal.user_id,
         copied_from_id=source.id,
     )

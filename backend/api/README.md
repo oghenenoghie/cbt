@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)), and `0013_more_material_kinds` allows slides, spreadsheets, CSV and photos. `0012_ai_drafts` adds AI requests, their sources, drafts and citations (see [ADR 0005](../../docs/architecture/decisions/0005-ai-question-drafts.md)). `0014_question_types_marking` adds the new question types' answer keys, text answers and teachers' marks, and `0015_ai_question_types` gives AI drafts answer keys too (see [ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)), and `0013_more_material_kinds` allows slides, spreadsheets, CSV and photos. `0012_ai_drafts` adds AI requests, their sources, drafts and citations (see [ADR 0005](../../docs/architecture/decisions/0005-ai-question-drafts.md)). `0014_question_types_marking` adds the new question types' answer keys, text answers and teachers' marks, and `0015_ai_question_types` gives AI drafts answer keys too (see [ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md)). `0016_offline_exams` adds lab computers, exam codes, offline packages and results (see [ADR 0007](../../docs/architecture/decisions/0007-offline-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -241,6 +241,30 @@ Drafting is off until you choose a provider: `AI_PROVIDER=anthropic` with `ANTHR
 | `GET /api/v1/questions/{id}/citations` | The evidence kept with an AI question's versions |
 
 With `AI_PROCESSING=inline` (the default) the API drafts right after responding; in production set `AI_PROCESSING=worker` and run `python -m app.worker`, which serves both queues. Tests never call a live model: they script `app.ai.fake.FakeProvider` with `use_provider`, and run the Claude provider through the SDK with a mocked transport.
+
+### Offline exams on lab computers
+
+Lab computers can sit published exams without the internet, with the desktop app (stage C, to come): they download a signed exam package while online, students sign in with one-time exam codes, and signed results upload when the connection returns, or travel by USB. The server checks every result. See [ADR 0007](../../docs/architecture/decisions/0007-offline-exams.md).
+
+Packages are signed with `OFFLINE_SIGNING_KEY` (generate one with `python -m app.cli generate-signing-key` and keep it secret; lab computers trust packages signed with it). Development servers without one generate a key under `STORAGE_DIR`; other environments refuse to issue packages (503).
+
+| Endpoint | Who | What it does |
+|---|---|---|
+| `GET /api/v1/school/devices` | School admins | The school's lab computers |
+| `POST /api/v1/school/devices/registrations` | School admins | A one-time code to register a computer online (shown once, valid 24 hours) |
+| `POST /api/v1/school/devices/file-registration` | School admins | Register a computer that never goes online from its request file; returns the setup file to carry back |
+| `PATCH /api/v1/school/devices/{id}`, `POST .../{id}/revoke` | School admins | Rename, or remove: a revoked computer can't download or upload |
+| `POST /api/v1/devices/register` | A lab computer | `school_code`, `registration_code`, `name`, `public_key` (its Ed25519 key); returns its device token (once), the signing key and the school's offline key. Throttled per school |
+| `GET /api/v1/devices/me`, `GET .../me/exams` | A lab computer (`Authorization: Device <token>`) | Itself, and the exams it can download (published, offline allowed, from 14 days before opening until closing) |
+| `GET /api/v1/devices/me/exams/{id}/package` | A lab computer | The signed package: the paper without answer keys, the students with their code hashes, and the encrypted answer key only for instant-score exams. Needs the codes printed first |
+| `POST /api/v1/devices/me/submissions` | A lab computer | One signed result. Accepted (marked like an online attempt), a conflict (kept, not counted) or rejected, each with the reason; the same result again returns the first answer |
+| `POST /api/v1/exams/{id}/offline/codes` | The exam's teachers, school admins | Codes for its students (or `candidate_ids` only), shown once for printing |
+| `GET /api/v1/exams/{id}/offline/package` | The exam's teachers, school admins | The package as a file, for USB |
+| `POST /api/v1/exams/{id}/offline/results` | The exam's teachers, school admins | Results brought back by USB, each checked as above |
+| `GET /api/v1/exams/{id}/offline` | Anyone who can see the exam | Codes issued, packages issued and results received, with flags and conflicts |
+| `GET /api/v1/offline/signing-key` | Anyone | The public key for checking packages |
+
+Exams have `offline_allowed` (default on) and `offline_instant_scores` (default off; needs `results_release: "immediate"`). Offline attempts appear with `source: "offline"`.
 
 ### Creating the first accounts
 

@@ -28,8 +28,10 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
+    false,
     inspect,
     select,
+    true,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -123,6 +125,14 @@ class Exam(Base):
     shuffle_options: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     # "teacher": results wait until released; "immediate": shown as soon as an attempt ends.
     results_release: Mapped[str] = mapped_column(String(20), default="teacher", nullable=False)
+    # Whether it can be sat on registered lab computers without the internet (ADR 0007), and
+    # whether those show scores straight away (the answer key goes on them, encrypted).
+    offline_allowed: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=true(), nullable=False
+    )
+    offline_instant_scores: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default=false(), nullable=False
+    )
     status: Mapped[str] = mapped_column(String(20), default="draft", index=True, nullable=False)
     # The approver's note when they last sent the exam back.
     review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -262,6 +272,8 @@ _CONTENT = (
     "shuffle_questions",
     "shuffle_options",
     "results_release",
+    "offline_allowed",
+    "offline_instant_scores",
     "created_by_id",
 )
 

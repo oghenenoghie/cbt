@@ -38,6 +38,10 @@ class ExamCreate(_Input):
     shuffle_options: bool = True
     # "teacher": results wait until the teacher releases them; "immediate": shown at once.
     results_release: ResultsRelease = "teacher"
+    # Whether it can be sat on registered lab computers without the internet, and whether those
+    # show scores straight away (its answer key goes on them, encrypted; ADR 0007).
+    offline_allowed: bool = True
+    offline_instant_scores: bool = False
 
 
 class ExamUpdate(_Input):
@@ -53,6 +57,8 @@ class ExamUpdate(_Input):
     shuffle_questions: bool | None = None
     shuffle_options: bool | None = None
     results_release: ResultsRelease | None = None
+    offline_allowed: bool | None = None
+    offline_instant_scores: bool | None = None
 
 
 class ExamArms(_Input):
@@ -117,6 +123,8 @@ class ExamOut(BaseModel):
     shuffle_questions: bool
     shuffle_options: bool
     results_release: str
+    offline_allowed: bool
+    offline_instant_scores: bool
     # draft → submitted → published (or back to draft when returned); published → withdrawn.
     status: str
     # The approver's note when it was last sent back, or the reason it was withdrawn.
