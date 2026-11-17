@@ -47,14 +47,27 @@ export function registerTrustImportIpc(
       const path = choice.filePaths[0];
       if (choice.canceled || !path) return { ok: true, value: null };
 
-      const size = statSync(path).size;
-      if (size <= 0 || size > MAX_TRUST_SET_BYTES) {
-        throw new TrustStoreError("The trust-set file must be between 1 byte and 64 KB.");
+      const fd = openSync(path, "r");
+      let contents: Buffer;
+      try {
+        const size = fstatSync(fd).size;
+        if (size <= 0 || size > MAX_TRUST_SET_BYTES) {
+          throw new TrustStoreError("The trust-set file must be between 1 byte and 64 KB.");
+        }
+        // Read a bounded amount from the opened file descriptor to avoid a size-check/read race.
+        const buffer = Buffer.alloc(MAX_TRUST_SET_BYTES + 1);
+        const bytesRead = readSync(fd, buffer, 0, buffer.length, 0);
+        if (bytesRead > MAX_TRUST_SET_BYTES) {
+          throw new TrustStoreError("The trust-set file must be between 1 byte and 64 KB.");
+        }
+        contents = buffer.subarray(0, bytesRead);
+      } finally {
+        closeSync(fd);
       }
 
       let envelope: unknown;
       try {
-        envelope = JSON.parse(readFileSync(path, "utf8").replace(/^\uFEFF/, ""));
+        envelope = JSON.parse(contents.toString("utf8").replace(/^\\uFEFF/, ""));
       } catch {
         throw new TrustStoreError("The selected file is not valid JSON.");
       }
