@@ -1,5 +1,6 @@
 """Interactive Windows launcher for generating the CBT offline trust root."""
 from __future__ import annotations
+
 import getpass
 from pathlib import Path
 
