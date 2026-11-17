@@ -12,6 +12,7 @@ the school if the code doesn't exist yet.
 
 import argparse
 import getpass
+import json
 import sys
 from collections.abc import Callable, Sequence
 
@@ -139,6 +140,42 @@ def _parser() -> argparse.ArgumentParser:
         "signing-key-fingerprint",
         help="Print the SHA-256 fingerprint of the configured offline signing public key.",
     )
+    commands.add_parser(
+        "signing-public-key",
+        help="Print the configured operational signing public key in base64 (public information).",
+    )
+
+    root = commands.add_parser(
+        "generate-trust-root",
+        help="Generate an encrypted Ed25519 root key pair on an offline operator workstation.",
+    )
+    root.add_argument("--private-key-file", required=True, help="Encrypted PEM output; keep it offline.")
+    root.add_argument("--public-key-file", required=True, help="Base64 public-key output; safe to distribute.")
+
+    template = commands.add_parser(
+        "create-trust-set-template",
+        help="Create an unsigned trust-set document from operational public-key metadata.",
+    )
+    template.add_argument("--keys-file", required=True, help="JSON array of public operational-key entries.")
+    template.add_argument("--generation", type=int, required=True)
+    template.add_argument("--expires-in-days", type=int, default=30)
+    template.add_argument("--minimum-client-version")
+    template.add_argument("--output-file", required=True)
+
+    sign = commands.add_parser(
+        "sign-trust-set",
+        help="Sign and export a trust-set document with the encrypted offline root key.",
+    )
+    sign.add_argument("--document-file", required=True)
+    sign.add_argument("--root-private-key-file", required=True)
+    sign.add_argument("--output-file", required=True)
+
+    verify = commands.add_parser(
+        "verify-trust-set",
+        help="Verify a signed trust-set export using the root public key.",
+    )
+    verify.add_argument("--envelope-file", required=True)
+    verify.add_argument("--root-public-key-file", required=True)
 
     release = commands.add_parser(
         "publish-lab-app",
@@ -172,6 +209,84 @@ def main(
             print(f"Error: {exc}", file=sys.stderr)
             return 1
         print(f"SHA-256 public-key fingerprint: {fingerprint}")
+        return 0
+
+    if args.command == "signing-public-key":
+        from app.offline.crypto import SigningNotConfigured, signing_public_key
+
+        try:
+            print(signing_public_key())
+        except SigningNotConfigured as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        return 0
+
+    if args.command in {
+        "generate-trust-root",
+        "create-trust-set-template",
+        "sign-trust-set",
+        "verify-trust-set",
+    }:
+        from pathlib import Path
+
+        from app.offline.root_tools import (
+            RootKeyToolError,
+            create_trust_set_template,
+            generate_root_key,
+            sign_trust_set_file,
+            verify_trust_set_file,
+        )
+
+        try:
+            if args.command == "generate-trust-root":
+                first = getpass.getpass("Root-key passphrase (at least 16 characters): ")
+                if getpass.getpass("Repeat root-key passphrase: ") != first:
+                    raise RootKeyToolError("The passphrases do not match.")
+                public_key, fingerprint = generate_root_key(
+                    Path(args.private_key_file),
+                    Path(args.public_key_file),
+                    first.encode("utf-8"),
+                )
+                print(f"Created encrypted Ed25519 root private key: {args.private_key_file}")
+                print(f"Created root public key: {args.public_key_file}")
+                print(f"Root public key (base64): {public_key}")
+                print(f"SHA-256 fingerprint: {fingerprint}")
+            elif args.command == "create-trust-set-template":
+                document = create_trust_set_template(
+                    Path(args.keys_file),
+                    Path(args.output_file),
+                    generation=args.generation,
+                    expires_in_days=args.expires_in_days,
+                    minimum_client_version=args.minimum_client_version,
+                )
+                print(
+                    f"Created unsigned trust-set generation {document['generation']} "
+                    f"with {len(document['keys'])} operational key(s): {args.output_file}"
+                )
+            elif args.command == "sign-trust-set":
+                passphrase = getpass.getpass("Root-key passphrase: ").encode("utf-8")
+                envelope = sign_trust_set_file(
+                    Path(args.document_file),
+                    Path(args.root_private_key_file),
+                    Path(args.output_file),
+                    passphrase,
+                )
+                print(
+                    f"Signed trust-set generation {json.loads(envelope['body'])['generation']} "
+                    f"using {envelope['format']}: {args.output_file}"
+                )
+            else:
+                document = verify_trust_set_file(
+                    Path(args.envelope_file),
+                    Path(args.root_public_key_file),
+                )
+                print(
+                    f"Valid {args.envelope_file}: generation {document['generation']}, "
+                    f"{len(document['keys'])} operational key(s), expires {document['expires_at']}."
+                )
+        except (RootKeyToolError, OSError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
         return 0
     if args.command == "publish-lab-app":
         from pathlib import Path

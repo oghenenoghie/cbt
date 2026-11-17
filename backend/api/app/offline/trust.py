@@ -5,7 +5,7 @@ contains protocol primitives only: it never loads or stores the root private key
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from cryptography.exceptions import InvalidSignature
@@ -34,7 +34,7 @@ def _utc_datetime(value: Any, field: str) -> datetime:
         raise TrustSetError(f"{field} must be an ISO-8601 UTC timestamp.") from error
     if parsed.tzinfo is None or parsed.utcoffset() is None or parsed.utcoffset().total_seconds() != 0:
         raise TrustSetError(f"{field} must include a UTC timezone.")
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def _json_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -166,12 +166,12 @@ def verify_trust_set(
         raise TrustSetError("Trust-set signature is invalid for the pinned root key.") from error
 
     document = parse_trust_set_body(body)
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     if current.tzinfo is None or current.utcoffset() is None:
         raise TrustSetError("Verification time must be timezone-aware.")
     issued_at = _utc_datetime(document["issued_at"], "issued_at")
     expires_at = _utc_datetime(document["expires_at"], "expires_at")
-    current = current.astimezone(timezone.utc)
+    current = current.astimezone(UTC)
     if issued_at > current:
         raise TrustSetError("Trust set is not valid yet.")
     if expires_at <= current:
@@ -181,10 +181,10 @@ def verify_trust_set(
 
 def active_signing_key(document: dict[str, Any], *, now: datetime | None = None) -> dict[str, Any]:
     """Return the sole active key only when its activation/expiry window is currently valid."""
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     if current.tzinfo is None or current.utcoffset() is None:
         raise TrustSetError("Verification time must be timezone-aware.")
-    current = current.astimezone(timezone.utc)
+    current = current.astimezone(UTC)
     active = next((entry for entry in document["keys"] if entry["status"] == "active"), None)
     if active is None:
         raise TrustSetError("Trust set has no active operational key.")
@@ -235,10 +235,10 @@ def _artifact_key_entry(
         raise TrustSetError("Artifact signing key has been revoked.")
     if for_signing and entry["status"] != "active":
         raise TrustSetError("Only the active operational key may sign new artifacts.")
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     if current.tzinfo is None or current.utcoffset() is None:
         raise TrustSetError("Artifact verification time must be timezone-aware.")
-    current = current.astimezone(timezone.utc)
+    current = current.astimezone(UTC)
     if _utc_datetime(validated["issued_at"], "issued_at") > current:
         raise TrustSetError("Operational trust set is not valid yet.")
     if _utc_datetime(validated["expires_at"], "expires_at") <= current:

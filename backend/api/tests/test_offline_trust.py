@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
 import pytest
@@ -22,8 +22,7 @@ from app.offline.trust import (
     verify_trust_set,
 )
 
-
-NOW = datetime(2026, 11, 17, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 17, 12, 0, tzinfo=UTC)
 
 
 def _public_b64(key: Ed25519PrivateKey) -> str:
