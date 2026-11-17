@@ -257,7 +257,6 @@ class LabAppOut(BaseModel):
     notes: str | None
 
 
-
 class SignedArtifactV2(_Input):
     """A server-signed v2 artifact, selected by an authorized operational key ID."""
 
