@@ -57,7 +57,7 @@ function utcDate(value: unknown, field: string): Date {
   if (!Number.isFinite(date.getTime())) throw new TrustStoreError(`${field} is invalid.`);
   return date;
 }
-function parseBody(body: string, now: Date): TrustDocument {
+function parseBody(body: string, now: Date, enforceCurrentTime = true): TrustDocument {
   let value: unknown;
   try { value = JSON.parse(body); } catch { throw new TrustStoreError("Trust-set body must be valid JSON."); }
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -74,7 +74,7 @@ function parseBody(body: string, now: Date): TrustDocument {
   }
   const issued = utcDate(doc.issued_at, "issued_at");
   const expires = utcDate(doc.expires_at, "expires_at");
-  if (expires <= issued || issued > now || expires <= now) throw new TrustStoreError("Trust set is not currently valid.");
+  if (expires <= issued || (enforceCurrentTime && (issued > now || expires <= now))) throw new TrustStoreError("Trust set is not currently valid.");
   if (!Array.isArray(doc.keys) || doc.keys.length < 1 || doc.keys.length > MAX_KEYS) {
     throw new TrustStoreError(`keys must contain between 1 and ${MAX_KEYS} entries.`);
   }
@@ -114,8 +114,8 @@ function parseBody(body: string, now: Date): TrustDocument {
   return doc as unknown as TrustDocument;
 }
 
-/** Verify using only the root public key pinned in the trusted application release. */
-export function verifyTrustSet(input: unknown, pinnedRootPublicKey: string, now = new Date()): TrustDocument {
+/** Verify signature and schema; persisted records may be structurally checked after expiry. */
+function verifyEnvelope(input: unknown, pinnedRootPublicKey: string, now: Date, enforceCurrentTime: boolean): TrustDocument {
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new TrustStoreError("Trust-set envelope is malformed.");
   const envelope = input as Record<string, unknown>;
   if (!exactKeys(envelope, ["format", "body", "signature"]) || envelope.format !== TRUST_SET_FORMAT ||
@@ -130,7 +130,12 @@ export function verifyTrustSet(input: unknown, pinnedRootPublicKey: string, now 
     valid = verify(null, Buffer.from(envelope.body, "utf8"), root, signature);
   } catch { valid = false; }
   if (!valid) throw new TrustStoreError("Trust-set signature is invalid for the pinned root key.");
-  return parseBody(envelope.body, now);
+  return parseBody(envelope.body, now, enforceCurrentTime);
+}
+
+/** Verify a newly received trust set, including its current validity window. */
+export function verifyTrustSet(input: unknown, pinnedRootPublicKey: string, now = new Date()): TrustDocument {
+  return verifyEnvelope(input, pinnedRootPublicKey, now, true);
 }
 
 /** Monotonic, crash-safe persistence. Invalid updates never replace the last accepted trust set. */
@@ -156,12 +161,19 @@ export class TrustStore {
     const envelope = input as TrustEnvelope;
     const existing = readJson<StoredTrust>(this.path);
     if (existing) {
-      const current = this.current();
-      if (!current) throw new TrustStoreError("Stored trust data is unavailable.");
-      if (document.generation < current.generation) throw new TrustStoreError("Trust-set rollback is not allowed.");
-      if (document.generation === current.generation) {
+      if (existing.format !== STORE_FORMAT || !Number.isSafeInteger(existing.generation) ||
+          typeof existing.body !== "string" || !existing.envelope) {
+        throw new TrustStoreError("Stored trust data is damaged.");
+      }
+      // Preserve the monotonic counter even after the previously accepted trust set expires.
+      const previous = verifyEnvelope(existing.envelope, this.pinnedRootPublicKey, this.now(), false);
+      if (previous.generation !== existing.generation || existing.body !== existing.envelope.body) {
+        throw new TrustStoreError("Stored trust data is inconsistent.");
+      }
+      if (document.generation < previous.generation) throw new TrustStoreError("Trust-set rollback is not allowed.");
+      if (document.generation === previous.generation) {
         if (envelope.body !== existing.body) throw new TrustStoreError("A different trust set reused an accepted generation.");
-        return { generation: current.generation, changed: false };
+        return { generation: previous.generation, changed: false };
       }
     }
     writeJson(this.path, { format: STORE_FORMAT, generation: document.generation, body: envelope.body, envelope } satisfies StoredTrust);
