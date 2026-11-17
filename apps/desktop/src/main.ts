@@ -36,7 +36,7 @@ if (!app.requestSingleInstanceLock()) {
     const trustStore = OFFLINE_TRUST_ROOT_PUBLIC_KEY
       ? new TrustStore(path.join(dataDir, "security", "trust-set.json"), OFFLINE_TRUST_ROOT_PUBLIC_KEY)
       : null;
-    registerTrustImportIpc(lab, labWindow, trustStore, bridge.isStaffOpen);
+    registerTrustImportIpc(labWindow, trustStore, bridge.isStaffOpen);
     void bridge.autoSync();
     setInterval(() => void bridge.autoSync(), SYNC_EVERY_MS).unref();
 
