@@ -66,8 +66,12 @@ def test_production_signing_key_can_be_loaded_from_private_file(tmp_path, monkey
         crypto._signing_key.cache_clear()
 
 
-@pytest.mark.skipif(os.name == "nt", reason="POSIX file permission bits are not available on Windows")
-def test_production_signing_key_file_rejects_group_or_world_permissions(tmp_path, monkeypatch) -> None:
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX file permission bits are not available on Windows"
+)
+def test_production_signing_key_file_rejects_group_or_world_permissions(
+    tmp_path, monkeypatch
+) -> None:
     settings = get_settings()
     key_file = tmp_path / "offline-signing.key"
     key_file.write_text(crypto.new_signing_seed(), encoding="ascii")
