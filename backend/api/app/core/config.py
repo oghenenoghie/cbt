@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     # "inline": process each upload in the API process right after it's received (development
     # and tests). "worker": leave it queued for `python -m app.worker` (production).
     document_processing: str = "inline"
+    # Malware scanning runs before a document is persisted or queued for extraction.
+    # Production must use "clamd"; disabled mode is restricted to development and tests.
+    document_malware_scan_mode: str = "disabled"
+    clamav_host: str = "127.0.0.1"
+    clamav_port: int = 3310
+    clamav_timeout_seconds: float = 10.0
     # Reading scanned pages and photos (OCR) with Tesseract, when it's installed on the server.
     ocr_enabled: bool = True
     tesseract_cmd: str = "tesseract"

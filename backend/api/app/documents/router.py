@@ -34,6 +34,7 @@ from app.core.config import get_settings
 from app.core.storage import Storage, get_storage
 from app.db.session import get_db
 from app.documents.extract import CONTENT_TYPES, UnreadableFile, identify
+from app.documents.malware import MalwareDetected, MalwareScannerUnavailable, scan_upload
 from app.documents.processing import process_soon
 from app.documents.schemas import (
     Approval,
@@ -223,6 +224,16 @@ def _read(file: UploadFile) -> bytes:
     return data
 
 
+def _scan_upload(data: bytes) -> None:
+    """Reject infected files and fail closed when the configured scanner is unavailable."""
+    try:
+        scan_upload(data)
+    except MalwareDetected as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(error)) from error
+    except MalwareScannerUnavailable as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(error)) from error
+
+
 def _check_topics(db: Session, principal: SessionPrincipal, subject_id: str, ids: list[str]) -> set:
     wanted = set(ids)
     if len(wanted) > 20:
@@ -329,6 +340,7 @@ def upload_document(
         raise invalid("Give the document a title.")
     topics = _check_topics(db, principal, subject.id, topic_ids)
     data = _read(file)
+    _scan_upload(data)
     filename = _filename(file.filename)
 
     document = Document(
@@ -379,6 +391,7 @@ def upload_version(
     if document.status != "active":
         raise _conflict("This document is archived. Restore it before adding a version.")
     data = _read(file)
+    _scan_upload(data)
     number = document.latest_version + 1
     version = _new_version(
         db, storage, principal, document, number, _filename(file.filename), data, note

@@ -218,6 +218,25 @@ python -m app.worker --once   # processes what's queued, then stops
 
 Uploaded originals are kept under `STORAGE_DIR` (default `./storage`), which must be on a persistent disk until the S3-compatible adapter exists.
 
+#### Upload malware scanning
+
+Every new document and document version is scanned **before** a database record, stored file or extraction job is created. The scanner uses the ClamAV daemon's TCP `INSTREAM` protocol; an infected file is rejected (422), and an unavailable or invalid scanner response rejects the upload (503). The API never treats a timeout or scanner error as a clean result.
+
+- Development and tests default to `DOCUMENT_MALWARE_SCAN_MODE=disabled`.
+- Production must set `DOCUMENT_MALWARE_SCAN_MODE=clamd`, `CLAMAV_HOST` and `CLAMAV_PORT` (default `127.0.0.1:3310`). The daemon must be reachable from every API instance that accepts uploads.
+- Set `CLAMAV_TIMEOUT_SECONDS` to bound scanner wait time (default 10 seconds). Keep the ClamAV daemon on a private network; do not expose its TCP port publicly.
+- Keep ClamAV signatures updated and monitor daemon health. If the scanner is down, uploads intentionally fail closed until service is restored.
+- This scans uploads at ingestion; it does not replace OS/container patching, archive limits, content validation, backups or access controls.
+
+Example production environment:
+
+```dotenv
+DOCUMENT_MALWARE_SCAN_MODE=clamd
+CLAMAV_HOST=clamav
+CLAMAV_PORT=3310
+CLAMAV_TIMEOUT_SECONDS=10
+```
+
 What each kind becomes: PDF pages, Word sections (at headings), PowerPoint slides (titles, text in reading order, tables and speaker notes), parts of each visible Excel sheet (hidden sheets are left out, with a warning), CSV rows, text lines, and a photo's text. A segment's `method` is `text`, or `ocr` with a `confidence` from 0 to 1.
 
 **OCR** reads PDF pages with no text layer, photos and picture-only slides with [Tesseract](https://github.com/tesseract-ocr/tesseract), which must be installed on the server running the API and worker (`apt-get install tesseract-ocr`, plus a language pack such as `tesseract-ocr-fra` for each extra language in `OCR_LANGUAGES`). Text read with less than `OCR_MIN_CONFIDENCE` (60%) is flagged `low_confidence` and never used for AI drafts. Without Tesseract, scanned pages are flagged as unreadable and photos are refused. The OCR tests run when Tesseract is installed; set `REQUIRE_OCR=1` (as CI does) to make them fail instead of skipping when it isn't.
