@@ -183,4 +183,6 @@ export type LabReply<T> = { ok: true; value: T } | { ok: false; error: string };
 /** What the preload script exposes as `window.lab`. */
 export interface LabBridge {
   call<M extends LabMethod>(method: M, input: LabCalls[M][0]): Promise<LabReply<LabCalls[M][1]>>;
+  trustStatus(): Promise<{ enabled: boolean }>;
+  importTrustSet(): Promise<LabReply<{ generation: number; changed: boolean } | null>>;
 }
