@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import json
 import os
+import stat
 import secrets
 from functools import lru_cache
 from pathlib import Path
@@ -62,27 +63,66 @@ def new_signing_seed() -> str:
     return b64(secrets.token_bytes(32))
 
 
+def _read_private_key_file(filename: str) -> str:
+    """Read a mounted secret without following symlinks or accepting broad POSIX permissions."""
+    path = Path(filename)
+    try:
+        info = path.lstat()
+    except OSError as error:
+        raise SigningNotConfigured("The configured offline signing-key file cannot be read.") from error
+    if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+        raise SigningNotConfigured("The offline signing-key path must be a regular, non-symlink file.")
+    if os.name != "nt" and info.st_mode & 0o077:
+        raise SigningNotConfigured(
+            "The offline signing-key file must not be readable or writable by group or others (use 0400 or 0600)."
+        )
+    try:
+        return path.read_text(encoding="ascii").strip()
+    except (OSError, UnicodeError) as error:
+        raise SigningNotConfigured("The configured offline signing-key file cannot be read.") from error
+
+
 @lru_cache
-def _signing_key(seed: str | None, environment: str, storage_dir: str) -> Ed25519PrivateKey:
+def _signing_key(
+    seed: str | None, key_file: str | None, environment: str, storage_dir: str
+) -> Ed25519PrivateKey:
+    if seed and key_file:
+        raise SigningNotConfigured(
+            "Configure only one of OFFLINE_SIGNING_KEY or OFFLINE_SIGNING_KEY_FILE."
+        )
+    if key_file:
+        seed = _read_private_key_file(key_file)
     if seed:
         return _key_from_seed(seed)
     if environment not in ("development", "test"):
         raise SigningNotConfigured(
-            "Offline exams aren't set up on this server: it needs OFFLINE_SIGNING_KEY."
+            "Offline exams aren't set up on this server: configure OFFLINE_SIGNING_KEY or OFFLINE_SIGNING_KEY_FILE."
         )
     # Development: keep one key across restarts, so registered lab computers keep trusting it.
     path = Path(storage_dir) / DEV_KEY_FILE
     if not path.exists():
         path.parent.mkdir(parents=True, exist_ok=True)
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "w") as file:
-            file.write(new_signing_seed())
-    return _key_from_seed(path.read_text())
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            # Another API worker may have created the same development key concurrently.
+            pass
+        else:
+            with os.fdopen(fd, "w", encoding="ascii") as file:
+                file.write(new_signing_seed())
+                file.flush()
+                os.fsync(file.fileno())
+    return _key_from_seed(_read_private_key_file(str(path)))
 
 
 def signing_key(settings: Settings | None = None) -> Ed25519PrivateKey:
     settings = settings or get_settings()
-    return _signing_key(settings.offline_signing_key, settings.environment, settings.storage_dir)
+    return _signing_key(
+        settings.offline_signing_key,
+        settings.offline_signing_key_file,
+        settings.environment,
+        settings.storage_dir,
+    )
 
 
 def public_key_b64(key: Ed25519PrivateKey | Ed25519PublicKey) -> str:
@@ -92,6 +132,11 @@ def public_key_b64(key: Ed25519PrivateKey | Ed25519PublicKey) -> str:
 
 def signing_public_key(settings: Settings | None = None) -> str:
     return public_key_b64(signing_key(settings))
+
+
+def signing_key_fingerprint(settings: Settings | None = None) -> str:
+    """SHA-256 fingerprint of the public key, safe to record beside an encrypted backup."""
+    return hashlib.sha256(unb64(signing_public_key(settings))).hexdigest()
 
 
 def seal(format_: str, body: dict, key: Ed25519PrivateKey) -> dict:
