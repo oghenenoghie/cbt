@@ -1,6 +1,7 @@
 name: Build Windows offline trust-root utility
 
 on:
+  pull_request:
   workflow_dispatch:
   push:
     tags:
