@@ -2,7 +2,9 @@
 from __future__ import annotations
 import getpass
 from pathlib import Path
+
 from app.offline.root_tools import RootKeyToolError, generate_root_key
+
 
 def main() -> int:
     print("=" * 68)
@@ -49,6 +51,7 @@ def main() -> int:
     print("Never email, upload, or paste the private key or passphrase.")
     input("\nPress Enter to close.")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
