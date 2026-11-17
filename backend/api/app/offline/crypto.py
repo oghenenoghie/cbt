@@ -92,25 +92,40 @@ def _read_private_key_file(filename: str) -> str:
     path = Path(filename)
     try:
         info = path.lstat()
+        if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
+            raise SigningNotConfigured(
+                "The offline signing-key path must be a regular, non-symlink file."
+            )
+        flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(path, flags)
+    except SigningNotConfigured:
+        raise
     except OSError as error:
         raise SigningNotConfigured(
             "The configured offline signing-key file cannot be read."
         ) from error
-    if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
-        raise SigningNotConfigured(
-            "The offline signing-key path must be a regular, non-symlink file."
-        )
-    if os.name != "nt" and info.st_mode & 0o077:
-        raise SigningNotConfigured(
-            "The offline signing-key file must not be readable or writable by group or others "
-            "(use 0400 or 0600)."
-        )
+
     try:
-        return path.read_text(encoding="ascii").strip()
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode):
+            raise SigningNotConfigured(
+                "The offline signing-key path must be a regular, non-symlink file."
+            )
+        if os.name != "nt" and info.st_mode & 0o077:
+            raise SigningNotConfigured(
+                "The offline signing-key file must not be readable or writable by group or others "
+                "(use 0400 or 0600)."
+            )
+        with os.fdopen(fd, "r", encoding="ascii") as file:
+            fd = -1
+            return file.read().strip()
     except (OSError, UnicodeError) as error:
         raise SigningNotConfigured(
             "The configured offline signing-key file cannot be read."
         ) from error
+    finally:
+        if fd >= 0:
+            os.close(fd)
 
 
 @lru_cache
