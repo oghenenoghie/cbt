@@ -18,7 +18,6 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 
 from app.offline.crypto import b64, unb64
 from app.offline.trust import (
-    TRUST_SET_FORMAT,
     TrustSetError,
     public_key_id,
     sign_trust_set,
@@ -291,7 +290,3 @@ def root_key_public_details(public_key_b64: str) -> tuple[str, str]:
         raise RootKeyToolError("Root public key must be a base64 32-byte Ed25519 key.") from error
     return public_key_b64, public_key_id(public_key_b64)
 
-
-def trust_set_format() -> str:
-    """Return the protocol envelope identifier for operator-facing diagnostics."""
-    return TRUST_SET_FORMAT
