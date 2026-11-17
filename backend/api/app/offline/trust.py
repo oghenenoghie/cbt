@@ -5,7 +5,7 @@ contains protocol primitives only: it never loads or stores the root private key
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from cryptography.exceptions import InvalidSignature
@@ -34,7 +34,7 @@ def _utc_datetime(value: Any, field: str) -> datetime:
         raise TrustSetError(f"{field} must be an ISO-8601 UTC timestamp.") from error
     if parsed.tzinfo is None or parsed.utcoffset() is None or parsed.utcoffset().total_seconds() != 0:
         raise TrustSetError(f"{field} must include a UTC timezone.")
-    return parsed.astimezone(timezone.utc)
+    return parsed.astimezone(UTC)
 
 
 def _json_object_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
