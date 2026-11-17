@@ -13,9 +13,9 @@ from app.offline.trust import (
     active_signing_key,
     parse_trust_set_body,
     public_key_id,
+    load_pinned_root_public_key,
     sign_trust_set,
     verify_trust_set,
-    load_pinned_root_public_key,
 )
 
 
@@ -88,7 +88,7 @@ def test_rejects_public_key_fingerprint_mismatch() -> None:
     document["keys"][0]["key_id"] = "0" * 64
 
     with pytest.raises(TrustSetError, match="fingerprint"):
-        parse_trust_set_body(__import__("json").dumps(document))
+        parse_trust_set_body(json.dumps(document))
 
 
 def test_rejects_unknown_algorithm() -> None:
@@ -96,7 +96,7 @@ def test_rejects_unknown_algorithm() -> None:
     document["keys"][0]["algorithm"] = "RSA"
 
     with pytest.raises(TrustSetError, match="Only Ed25519"):
-        parse_trust_set_body(__import__("json").dumps(document))
+        parse_trust_set_body(json.dumps(document))
 
 
 def test_rejects_naive_timestamps() -> None:
@@ -104,7 +104,7 @@ def test_rejects_naive_timestamps() -> None:
     document["issued_at"] = "2026-11-17T11:59:00"
 
     with pytest.raises(TrustSetError, match="UTC timezone"):
-        parse_trust_set_body(__import__("json").dumps(document))
+        parse_trust_set_body(json.dumps(document))
 
 
 def test_rejects_duplicate_json_properties() -> None:
@@ -138,7 +138,7 @@ def test_requires_exactly_one_active_key() -> None:
     document, _ = _document(status="verify_only")
 
     with pytest.raises(TrustSetError, match="exactly one active"):
-        parse_trust_set_body(__import__("json").dumps(document))
+        parse_trust_set_body(json.dumps(document))
 
 
 
