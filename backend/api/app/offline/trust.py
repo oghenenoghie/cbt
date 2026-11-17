@@ -11,6 +11,7 @@ from typing import Any
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 
+from app.core.config import Settings, get_settings
 from app.offline.crypto import b64, sha256_hex, unb64
 
 TRUST_SET_FORMAT = "cbt-signing-trust/1"
@@ -193,3 +194,20 @@ def active_signing_key(document: dict[str, Any], *, now: datetime | None = None)
     if "not_after" in active and _utc_datetime(active["not_after"], "not_after") <= current:
         raise TrustSetError("Active operational key has expired.")
     return active
+
+
+def load_pinned_root_public_key(settings: Settings | None = None) -> Ed25519PublicKey:
+    """Load the configured public trust anchor; the API never loads the root private key."""
+    settings = settings or get_settings()
+    encoded = settings.offline_trust_root_public_key
+    if not encoded:
+        raise TrustSetError("Configure OFFLINE_TRUST_ROOT_PUBLIC_KEY before enabling trust sets.")
+    try:
+        raw = unb64(encoded)
+        if len(raw) != 32:
+            raise ValueError("wrong key length")
+        return Ed25519PublicKey.from_public_bytes(raw)
+    except (ValueError, TypeError) as error:
+        raise TrustSetError(
+            "OFFLINE_TRUST_ROOT_PUBLIC_KEY must be a base64-encoded 32-byte Ed25519 public key."
+        ) from error
