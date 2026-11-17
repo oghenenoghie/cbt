@@ -130,8 +130,6 @@ def public_key_id(public_key: Ed25519PublicKey | str) -> str:
         except (ValueError, TypeError) as error:
             raise TrustSetError("Public key must be valid base64.") from error
     else:
-        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-
         raw = public_key.public_bytes(Encoding.Raw, PublicFormat.Raw)
     if len(raw) != 32:
         raise TrustSetError("Ed25519 public keys must be exactly 32 bytes.")
@@ -212,7 +210,6 @@ def load_pinned_root_public_key(settings: Settings | None = None) -> Ed25519Publ
         raise TrustSetError(
             "OFFLINE_TRUST_ROOT_PUBLIC_KEY must be a base64-encoded 32-byte Ed25519 public key."
         ) from error
-
 
 
 def _validated_trust_document(document: dict[str, Any]) -> dict[str, Any]:
