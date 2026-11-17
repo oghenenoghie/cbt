@@ -4,7 +4,7 @@ import {
   Activity, Cable, Clock3, Copy, KeyRound, Plus, RefreshCw,
   ShieldCheck, SlidersHorizontal,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { ConfirmModal, Modal } from "@/components/Modal";
 import { ErrorAlert, Loaded, Notice } from "@/components/Feedback";
@@ -135,7 +135,7 @@ function IssueKey({ integration, onClose, onIssued }: {
       </div>
       <label className="field"><span>API key</span><div className={styles.secretField}><code>{issued.key}</code><button type="button" className="btn btn-secondary btn-small" onClick={copy}><Copy size={14} /> {copied ? "Copied" : "Copy key"}</button></div></label>
       <p className="hint">Key name: {issued.name} · Prefix: {issued.prefix}</p>
-      <div className="form-actions"><button type="button" className="btn btn-primary" onClick={onClose}>I've saved the key</button></div>
+      <div className="form-actions"><button type="button" className="btn btn-primary" onClick={onClose}>I&apos;ve saved the key</button></div>
     </div> : <form className="form" onSubmit={issue}>
       <p className="muted">Create a credential for <strong>{integration.name}</strong>. You can have up to five active keys for safe rotation.</p>
       <div className="field"><label htmlFor="key-name">Key name</label><input id="key-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} required /></div>
@@ -207,7 +207,7 @@ function IntegrationDetails({ integration, scopes, onClose, onChanged, onIssue }
         </div> : <ScopeList scopes={integration.scopes} />}
       </section>
       <section className={styles.detailSection}>
-        <div className={styles.sectionHead}><div><h3>API keys</h3><p>Secrets are displayed only at the moment they're issued.</p></div></div>
+        <div className={styles.sectionHead}><div><h3>API keys</h3><p>Secrets are displayed only at the moment they&apos;re issued.</p></div></div>
         {integration.keys.length ? <div className={styles.keyList}>{integration.keys.map((key) => <div className={styles.keyRow} key={key.id}>
           <div className={styles.keyIcon}><KeyRound size={17} /></div><div className={styles.keyInfo}><strong>{key.name}</strong><small><code>{key.prefix}••••••••</code> · Created {formatDateTime(key.created_at)} · Last used {when(key.last_used_at)}</small></div>
           <span className={key.status === "active" ? "badge badge-success" : "badge badge-danger"}>{key.status === "active" ? "Active" : "Revoked"}</span>
@@ -250,7 +250,7 @@ export default function IntegrationsPage() {
   const [dialog, setDialog] = useState<"create" | { details: Integration } | { issue: Integration } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const scopes = scopesApi.status === "ready" ? scopesApi.data : [];
-  const activeCount = useMemo(() => integrations.status === "ready" ? integrations.data.filter((item) => item.status === "active").length : 0, [integrations]);
+  const activeCount = integrations.status === "ready" ? integrations.data.filter((item) => item.status === "active").length : 0;
 
   function changed(message = "Integration settings saved.") {
     setNotice(message);
@@ -264,7 +264,7 @@ export default function IntegrationsPage() {
   return <>
     <div className="page-header">
       <div><h1 className="page-title">Integrations</h1><p className="page-intro">Connect trusted school software with controlled access to your CBT data.</p></div>
-      <button type="button" className="btn btn-primary" onClick={() => setDialog("create")}><Plus size={16} /> Register integration</button>
+      <button type="button" className="btn btn-primary" onClick={() => setDialog("create")} disabled={scopesApi.status !== "ready"}><Plus size={16} /> Register integration</button>
     </div>
     <Notice text={notice} onDismiss={() => setNotice(null)} />
     <div className={styles.summaryGrid}>
