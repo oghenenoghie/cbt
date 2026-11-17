@@ -35,6 +35,36 @@ def test_signing_key_fingerprint_command_does_not_need_a_database(monkeypatch, c
     assert capsys.readouterr().out.strip() == f"SHA-256 public-key fingerprint: {fingerprint}"
 
 
+
+def test_signing_public_key_command_does_not_need_a_database(monkeypatch, capsys) -> None:
+    from app.offline import crypto
+
+    public_key = "AA==" * 16
+    monkeypatch.setattr(crypto, "signing_public_key", lambda: public_key)
+
+    assert main(["signing-public-key"]) == 0
+    assert capsys.readouterr().out.strip() == public_key
+
+
+def test_generate_trust_root_cli_prompts_for_passphrase_without_database(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    answers = iter(["offline-root-passphrase-2026", "offline-root-passphrase-2026"])
+    monkeypatch.setattr(app.cli.getpass, "getpass", lambda prompt: next(answers))
+    private_file = tmp_path / "root-private.pem"
+    public_file = tmp_path / "root-public.txt"
+
+    assert main([
+        "generate-trust-root",
+        "--private-key-file", str(private_file),
+        "--public-key-file", str(public_file),
+    ]) == 0
+
+    output = capsys.readouterr().out
+    assert "Created encrypted Ed25519 root private key" in output
+    assert "SHA-256 fingerprint:" in output
+    assert private_file.exists() and public_file.exists()
+
 def test_school_admin_can_be_created_and_then_log_in(
     client: TestClient, db: Session, session_factory, capsys
 ) -> None:
