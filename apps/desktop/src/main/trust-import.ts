@@ -1,5 +1,5 @@
 import { dialog, ipcMain, type BrowserWindow } from "electron";
-import { readFileSync, statSync } from "node:fs";
+import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 
 import { TrustStore, TrustStoreError } from "../core/trust.js";
 import { Lab } from "../core/lab.js";
