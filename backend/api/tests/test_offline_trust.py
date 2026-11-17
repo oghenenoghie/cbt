@@ -14,7 +14,9 @@ from app.offline.trust import (
     parse_trust_set_body,
     public_key_id,
     load_pinned_root_public_key,
+    seal_artifact_v2,
     sign_trust_set,
+    verify_artifact_v2,
     verify_trust_set,
 )
 
@@ -176,7 +178,6 @@ def test_rejects_non_string_key_status() -> None:
 
 
 def test_v2_artifact_round_trips_with_authorized_active_key() -> None:
-    root = Ed25519PrivateKey.generate()
     document, operational = _document()
     envelope = seal_artifact_v2(
         {"package_id": "pkg-1", "exam": {"title": "Biology"}}, operational, document, now=NOW
@@ -218,8 +219,6 @@ def test_v2_artifact_rejects_revoked_key() -> None:
 
 
 def test_v2_signing_rejects_private_key_not_matching_active_key() -> None:
-    from app.offline.trust import seal_artifact_v2
-
     document, _ = _document()
     wrong_key = Ed25519PrivateKey.generate()
 
@@ -241,8 +240,6 @@ def test_v2_artifact_rejects_tampered_body_and_extra_fields() -> None:
 
 def test_v2_artifact_allows_verify_only_key_during_overlap() -> None:
     document, operational = _document()
-    from app.offline.trust import seal_artifact_v2
-
     envelope = seal_artifact_v2({"ok": True}, operational, document, now=NOW)
     replacement = Ed25519PrivateKey.generate()
     replacement_public = _public_b64(replacement)
