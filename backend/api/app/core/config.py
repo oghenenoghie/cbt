@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     offline_signing_key: str | None = None
     # Optional read-only secret mount; set this OR OFFLINE_SIGNING_KEY, never both.
     offline_signing_key_file: str | None = None
+    # Public half of the offline root trust key (raw Ed25519 bytes in base64). The private key
+    # is never configured on the API; operators keep it offline and sign trust sets separately.
+    offline_trust_root_public_key: str | None = None
     # How long a lab computer's registration code stays valid.
     device_registration_hours: int = 24
     # Packages can be downloaded from this many days before an exam opens.
