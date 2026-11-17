@@ -1,4 +1,6 @@
+import json
 from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -13,6 +15,7 @@ from app.offline.trust import (
     public_key_id,
     sign_trust_set,
     verify_trust_set,
+    load_pinned_root_public_key,
 )
 
 
@@ -77,7 +80,7 @@ def test_rejects_duplicate_key_ids() -> None:
     document["keys"].append(dict(document["keys"][0]))
 
     with pytest.raises(TrustSetError, match="duplicate key IDs"):
-        parse_trust_set_body(__import__("json").dumps(document))
+        parse_trust_set_body(json.dumps(document))
 
 
 def test_rejects_public_key_fingerprint_mismatch() -> None:
@@ -136,3 +139,36 @@ def test_requires_exactly_one_active_key() -> None:
 
     with pytest.raises(TrustSetError, match="exactly one active"):
         parse_trust_set_body(__import__("json").dumps(document))
+
+
+
+def test_loads_configured_pinned_root_public_key() -> None:
+    root = Ed25519PrivateKey.generate()
+    settings = SimpleNamespace(offline_trust_root_public_key=_public_b64(root))
+
+    loaded = load_pinned_root_public_key(settings)
+
+    assert loaded.public_bytes(Encoding.Raw, PublicFormat.Raw) == root.public_key().public_bytes(
+        Encoding.Raw, PublicFormat.Raw
+    )
+
+
+def test_requires_configured_pinned_root_public_key() -> None:
+    with pytest.raises(TrustSetError, match="Configure OFFLINE_TRUST_ROOT_PUBLIC_KEY"):
+        load_pinned_root_public_key(SimpleNamespace(offline_trust_root_public_key=None))
+
+
+def test_rejects_non_string_operational_public_key() -> None:
+    document, _ = _document()
+    document["keys"][0]["public_key"] = []
+
+    with pytest.raises(TrustSetError, match="base64 string"):
+        parse_trust_set_body(json.dumps(document))
+
+
+def test_rejects_non_string_key_status() -> None:
+    document, _ = _document()
+    document["keys"][0]["status"] = []
+
+    with pytest.raises(TrustSetError, match="status is invalid"):
+        parse_trust_set_body(json.dumps(document))
