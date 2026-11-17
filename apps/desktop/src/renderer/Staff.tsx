@@ -272,6 +272,7 @@ export function Staff({ status, onLocked }: { status: LabStatus; onLocked: (stat
           </div>
         )}
         <ErrorText error={error} />
+        <TrustSetPanel />
 
         <section className="card">
           <div className="card-header">
