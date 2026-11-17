@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 import stat
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -43,16 +44,15 @@ def _distinct_paths(first: Path, second: Path) -> None:
 
 
 def _write_new_file(path: Path, data: bytes, mode: int) -> None:
-    """Create a file without following or replacing an existing path."""
+    """Atomically create a file without following or replacing an existing path."""
     if not path.parent.exists() or not path.parent.is_dir():
         raise RootKeyToolError(f"Output directory does not exist: {path.parent}")
+    temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}.tmp")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
     try:
-        fd = os.open(path, flags, mode)
-    except FileExistsError as error:
-        raise RootKeyToolError(f"Refusing to overwrite existing file: {path}") from error
+        fd = os.open(temporary, flags, mode)
     except OSError as error:
-        raise RootKeyToolError(f"Cannot safely create output file: {path}") from error
+        raise RootKeyToolError(f"Cannot safely create temporary output file beside: {path}") from error
     try:
         if os.name != "nt":
             os.fchmod(fd, mode)
@@ -61,12 +61,16 @@ def _write_new_file(path: Path, data: bytes, mode: int) -> None:
             output.write(data)
             output.flush()
             os.fsync(output.fileno())
+        # A same-volume hard link atomically creates the final name and fails if it already exists.
+        os.link(temporary, path)
+    except FileExistsError as error:
+        raise RootKeyToolError(f"Refusing to overwrite existing file: {path}") from error
     except OSError as error:
-        path.unlink(missing_ok=True)
-        raise RootKeyToolError(f"Could not write output file: {path}") from error
+        raise RootKeyToolError(f"Could not safely write output file: {path}") from error
     finally:
         if fd >= 0:
             os.close(fd)
+        temporary.unlink(missing_ok=True)
 
 
 def _read_regular_file(path: Path, *, maximum: int, private: bool = False) -> bytes:
