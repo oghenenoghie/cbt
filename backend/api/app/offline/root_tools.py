@@ -18,7 +18,6 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 
 from app.offline.crypto import b64, unb64
 from app.offline.trust import (
-    TrustSetError,
     public_key_id,
     sign_trust_set,
     verify_trust_set,
