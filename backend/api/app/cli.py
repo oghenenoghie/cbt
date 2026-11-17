@@ -11,8 +11,8 @@ the school if the code doesn't exist yet.
 """
 
 import argparse
-import json
 import getpass
+import json
 import sys
 from collections.abc import Callable, Sequence
 
