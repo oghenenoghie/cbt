@@ -9,7 +9,7 @@ Authoritative sources:
 ## What exists today
 
 - `Tenant` (`app/models/tenant.py`) is a school or organisation, with a unique `slug` and a string `status` (`"active"`, ...). Authentication rejects any tenant that isn't `"active"`.
-- `AuditLog` has `tenant_id`, `actor_type`, `actor_id`, `action`, resource and `request_id`. Nothing writes to it yet.
+- `AuditLog` has `tenant_id`, `actor_type`, `actor_id`, `action`, resource and `request_id`. Integration-management actions write audit entries (ADR 0008); do not assume every identity or platform-admin action is already audited—verify the relevant implementation before relying on it.
 - Identity tables, from ADR 0001 and migration `0002` (`app/models/identity.py`, `app/models/candidate.py`):
   - `User`: one school, a role, and a username unique within the school.
   - `PlatformAdmin`: no school.
@@ -76,11 +76,10 @@ Subjects, topics and chapters later scope AI retrieval and generation (see `asse
 
 ## Still open: ask, don't assume
 
-- The offline (desktop lab) authentication policy. Decide it in Phase 8.
 - Whether throttling should also consider the device or IP address.
 - Whether users must change an admin-set or generated password at first sign-in.
 - Which SSO providers to support first.
 
 ## What Phase 2 unblocks
 
-**Integration management** is open (ADR 0008, Integrations A). School admins register integrations, grant scopes from `app/integrations/scopes.py`, issue keys (raw key shown once, up to five active, no expiry) and revoke them, and disable an integration. Each change writes an audit entry, and each integration is rate-limited. Next, the web Integrations page (`apps/web/src/app/integrations/page.tsx`, still a static preview) is connected to them (B), and then the first public endpoints arrive (C).
+**Integration management API (ADR 0008 stage A) is built.** School admins can register integrations, grant scopes from `app/integrations/scopes.py`, issue keys (raw key shown once, up to five active, no expiry), revoke keys and disable integrations. Changes are audited and each integration is rate-limited. The web Integrations page (`apps/web/src/app/integrations/page.tsx`) is still a static preview; stage B connects it, and stage C adds the first public customer-data endpoints.
