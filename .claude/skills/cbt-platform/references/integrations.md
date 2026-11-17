@@ -14,7 +14,7 @@ Purpose: let schools adopt CBT without replacing their portal, LMS, SIS, ERP, we
 | | Later resources: `/assessments`, `/exam-sessions`, `/attempts/{id}`, `/webhook-endpoints` |
 | | Signed webhooks with an event outbox, hosted exam launch, OIDC/SAML SSO, LTI 1.3, TypeScript and Python SDKs, CSV/XLSX import |
 
-Rollout order: (1) API foundation: credentials/OAuth, scopes, audit, OpenAPI, rate limits, idempotency, sandbox; (2) candidate provisioning, assessment catalogue, exam launch, attempt submission, result retrieval; (3) webhooks and SDKs; (4) OIDC/SAML and LTI 1.3 after conformance testing; (5) connector marketplace.
+Rollout order per ADR 0008: (1) management API foundation—API keys, scopes, audit, rate limits and security tests (built); (2) school-admin web screens; (3) first public resources for classes, candidate/enrolment sync and released results, with tenant checks, audit, limits and idempotency; (4) webhooks and SDKs; (5) OAuth client credentials, OIDC/SAML and LTI 1.3 after their own design and conformance work; (6) connector marketplace. OAuth is planned, not part of the completed management API.
 
 ## Contract rules
 
