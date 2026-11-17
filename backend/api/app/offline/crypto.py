@@ -14,8 +14,8 @@ import hashlib
 import hmac
 import json
 import os
-import stat
 import secrets
+import stat
 from functools import lru_cache
 from pathlib import Path
 
@@ -52,9 +52,12 @@ def sha256_hex(data: bytes | str) -> str:
 
 
 def _key_from_seed(seed_b64: str) -> Ed25519PrivateKey:
-    seed = unb64(seed_b64.strip())
+    try:
+        seed = unb64(seed_b64.strip())
+    except (ValueError, TypeError) as error:
+        raise SigningNotConfigured("The offline signing key must be valid base64.") from error
     if len(seed) != 32:
-        raise SigningNotConfigured("OFFLINE_SIGNING_KEY must be 32 bytes in base64.")
+        raise SigningNotConfigured("The offline signing key must be 32 bytes in base64.")
     return Ed25519PrivateKey.from_private_bytes(seed)
 
 
@@ -63,23 +66,51 @@ def new_signing_seed() -> str:
     return b64(secrets.token_bytes(32))
 
 
+def _ensure_development_key(path: Path) -> None:
+    """Create the development key atomically so concurrent API workers share one identity."""
+    if path.exists():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}.tmp")
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(fd, "w", encoding="ascii") as file:
+            file.write(new_signing_seed())
+            file.flush()
+            os.fsync(file.fileno())
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            # Another worker won the race; its complete file is the shared development key.
+            pass
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 def _read_private_key_file(filename: str) -> str:
     """Read a mounted secret without following symlinks or accepting broad POSIX permissions."""
     path = Path(filename)
     try:
         info = path.lstat()
     except OSError as error:
-        raise SigningNotConfigured("The configured offline signing-key file cannot be read.") from error
+        raise SigningNotConfigured(
+            "The configured offline signing-key file cannot be read."
+        ) from error
     if stat.S_ISLNK(info.st_mode) or not stat.S_ISREG(info.st_mode):
-        raise SigningNotConfigured("The offline signing-key path must be a regular, non-symlink file.")
+        raise SigningNotConfigured(
+            "The offline signing-key path must be a regular, non-symlink file."
+        )
     if os.name != "nt" and info.st_mode & 0o077:
         raise SigningNotConfigured(
-            "The offline signing-key file must not be readable or writable by group or others (use 0400 or 0600)."
+            "The offline signing-key file must not be readable or writable by group or others "
+            "(use 0400 or 0600)."
         )
     try:
         return path.read_text(encoding="ascii").strip()
     except (OSError, UnicodeError) as error:
-        raise SigningNotConfigured("The configured offline signing-key file cannot be read.") from error
+        raise SigningNotConfigured(
+            "The configured offline signing-key file cannot be read."
+        ) from error
 
 
 @lru_cache
@@ -96,22 +127,12 @@ def _signing_key(
         return _key_from_seed(seed)
     if environment not in ("development", "test"):
         raise SigningNotConfigured(
-            "Offline exams aren't set up on this server: configure OFFLINE_SIGNING_KEY or OFFLINE_SIGNING_KEY_FILE."
+            "Offline exams aren't set up on this server: configure "
+            "OFFLINE_SIGNING_KEY or OFFLINE_SIGNING_KEY_FILE."
         )
     # Development: keep one key across restarts, so registered lab computers keep trusting it.
     path = Path(storage_dir) / DEV_KEY_FILE
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        except FileExistsError:
-            # Another API worker may have created the same development key concurrently.
-            pass
-        else:
-            with os.fdopen(fd, "w", encoding="ascii") as file:
-                file.write(new_signing_seed())
-                file.flush()
-                os.fsync(file.fileno())
+    _ensure_development_key(path)
     return _key_from_seed(_read_private_key_file(str(path)))
 
 
