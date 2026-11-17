@@ -10,7 +10,10 @@ import { app } from "electron";
 import path from "node:path";
 
 import { Lab } from "./core/lab.js";
+import { TrustStore } from "./core/trust.js";
+import { OFFLINE_TRUST_ROOT_PUBLIC_KEY } from "./core/trust-anchor.js";
 import { registerBridge } from "./main/bridge.js";
+import { registerTrustImportIpc } from "./main/trust-import.js";
 import { systemVault } from "./main/vault.js";
 import { createLabWindow } from "./main/window.js";
 
@@ -29,6 +32,11 @@ if (!app.requestSingleInstanceLock()) {
 
     const labWindow = createLabWindow({ kiosk, devTools: !app.isPackaged });
     const bridge = registerBridge(lab, labWindow);
+    // The trust anchor is compiled into the release; USB data can never supply or replace it.
+    const trustStore = OFFLINE_TRUST_ROOT_PUBLIC_KEY
+      ? new TrustStore(path.join(dataDir, "security", "trust-set.json"), OFFLINE_TRUST_ROOT_PUBLIC_KEY)
+      : null;
+    registerTrustImportIpc(lab, labWindow, trustStore);
     void bridge.autoSync();
     setInterval(() => void bridge.autoSync(), SYNC_EVERY_MS).unref();
 
