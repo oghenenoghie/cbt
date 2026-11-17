@@ -267,7 +267,19 @@ Lab computers can sit published exams without the internet, with the desktop app
 
 **Lab app releases** (ADR 0007, decision 10). CI builds the Windows installer; on a tag `lab-vX.Y.Z` it attaches it to a GitHub release (`.github/workflows/lab-app-release.yml`). To offer it to a server's lab computers, run `python -m app.cli publish-lab-app Intelligent-CBT-Lab-Setup-X.Y.Z.exe --version X.Y.Z [--notes "..."]` on the server. It copies the installer to `LAB_APP_DIR` (default `STORAGE_DIR/lab-app`; keep it on persistent storage) and writes a manifest with its SHA-256, signed with `OFFLINE_SIGNING_KEY`. Only a newer version can be published, and the two newest installers are kept. Lab computers registered online download it, check the signature and checksum, and staff install it between exams.
 
-Packages are signed with `OFFLINE_SIGNING_KEY` (generate one with `python -m app.cli generate-signing-key` and keep it secret; lab computers trust packages signed with it). Development servers without one generate a key under `STORAGE_DIR`; other environments refuse to issue packages (503).
+Packages are signed with an Ed25519 key. Production must configure exactly one of `OFFLINE_SIGNING_KEY` (base64 seed in the deployment secret manager) or `OFFLINE_SIGNING_KEY_FILE` (a mounted secret file). Development servers without either setting generate a persistent key under `STORAGE_DIR`; other environments refuse to issue packages (503).
+
+#### Offline signing-key storage, backup and recovery
+
+- Prefer a deployment secret manager or a read-only mounted secret file. For `OFFLINE_SIGNING_KEY_FILE`, use a regular, non-symlink file with POSIX permissions `0400` or `0600`; the API refuses group/world-readable or writable files. Every API instance must receive the same key.
+- Never place the private key in the repository, database, public object storage, a container image, logs, or a general-purpose application data directory.
+- Generate a new seed only when provisioning a new signing identity: `python -m app.cli generate-signing-key`. Store it directly in the secret manager; do not paste it into source files or shell command arguments.
+- Record the public-key fingerprint separately from the secret: `python -m app.cli signing-key-fingerprint`. The fingerprint is SHA-256 over the raw Ed25519 public key and is safe to use when verifying a restored backup.
+- Keep an encrypted, access-controlled backup outside the production account/host. Test recovery by restoring the key into a non-production environment and confirming that its fingerprint matches the recorded value.
+- To recover, restore the exact original key and verify its fingerprint before starting the API. Generating a replacement is not recovery: it creates a different identity.
+- The development fallback is `STORAGE_DIR/offline-signing.key` with owner-only permissions. Preserve that file if local lab computers must continue trusting packages from that development server.
+
+**Rotation is deliberately not automated yet.** Each registered lab computer currently pins one signing public key. Replacing the server key immediately would make packages and app manifests signed by the old key fail verification on those computers, especially USB-only labs. Keep the current key stable until a versioned, dual-key trust-update flow is implemented for both online and USB-registered computers. See ADR 0007.
 
 | Endpoint | Who | What it does |
 |---|---|---|
