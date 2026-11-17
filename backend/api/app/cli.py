@@ -11,6 +11,7 @@ the school if the code doesn't exist yet.
 """
 
 import argparse
+import json
 import getpass
 import sys
 from collections.abc import Callable, Sequence
@@ -271,7 +272,7 @@ def main(
                     passphrase,
                 )
                 print(
-                    f"Signed trust-set generation {__import__('json').loads(envelope['body'])['generation']} "
+                    f"Signed trust-set generation {json.loads(envelope['body'])['generation']} "
                     f"using {envelope['format']}: {args.output_file}"
                 )
             else:
