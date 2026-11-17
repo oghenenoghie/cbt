@@ -6,7 +6,7 @@ The commands below run from `backend/api` with the project's Python dependencies
 
 ## 1. Generate the root key on an offline workstation
 
-Use a dedicated operator workstation. Disconnect it from networks for root-key generation and signing. Store the private key on an encrypted volume (for example, a BitLocker-protected removable drive on Windows).
+Use a dedicated operator workstation. Disconnect it from networks for root-key generation and signing. Store the private key on an encrypted NTFS volume (for example, a BitLocker-protected removable drive on Windows). The output filesystem must support same-volume hard links because the tools use them for atomic, no-overwrite file creation.
 
 Create the output directory first, then run:
 
