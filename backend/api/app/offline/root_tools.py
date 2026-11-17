@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 
 from app.offline.crypto import b64, unb64
 from app.offline.trust import (
+    parse_trust_set_body,
     public_key_id,
     sign_trust_set,
     verify_trust_set,
@@ -241,8 +242,6 @@ def create_trust_set_template(
         document["minimum_client_version"] = minimum_client_version
 
     # The protocol parser is the single source of truth for schema and key-state validation.
-    from app.offline.trust import parse_trust_set_body
-
     parse_trust_set_body(json.dumps(document, ensure_ascii=False, separators=(",", ":")))
     _write_json_new(Path(output_file), document)
     return document
@@ -276,16 +275,4 @@ def verify_trust_set_file(envelope_file: Path, root_public_key_file: Path) -> di
         raise RootKeyToolError("Signed trust-set envelope has unexpected or missing properties.")
     public_b64 = _load_root_public_key(Path(root_public_key_file))
     return verify_trust_set(envelope, public_b64)
-
-
-def root_key_public_details(public_key_b64: str) -> tuple[str, str]:
-    """Validate a base64 root public key and return (base64, SHA-256 fingerprint)."""
-    try:
-        raw = unb64(public_key_b64)
-        if len(raw) != 32:
-            raise ValueError("wrong length")
-        Ed25519PublicKey.from_public_bytes(raw)
-    except (ValueError, TypeError) as error:
-        raise RootKeyToolError("Root public key must be a base64 32-byte Ed25519 key.") from error
-    return public_key_b64, public_key_id(public_key_b64)
 
