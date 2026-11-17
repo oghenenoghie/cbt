@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  Activity, Cable, Check, Clock3, Copy, KeyRound, Plus, RefreshCw,
-  ShieldCheck, SlidersHorizontal, XCircle,
+  Activity, Cable, Clock3, Copy, KeyRound, Plus, RefreshCw,
+  ShieldCheck, SlidersHorizontal,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -251,13 +251,6 @@ export default function IntegrationsPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const scopes = scopesApi.status === "ready" ? scopesApi.data : [];
   const activeCount = useMemo(() => integrations.status === "ready" ? integrations.data.filter((item) => item.status === "active").length : 0, [integrations]);
-
-  function reload() {
-    integrations.reload();
-    setDialog((current) => current && typeof current === "object" && "details" in current
-      ? { details: integrations.status === "ready" ? integrations.data.find((item) => item.id === current.details.id) ?? current.details : current.details }
-      : current);
-  }
 
   function changed(message = "Integration settings saved.") {
     setNotice(message);
