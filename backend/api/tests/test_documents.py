@@ -604,3 +604,44 @@ def test_a_versions_file_and_extracted_text_never_change(school, db: Session) ->
     version = db.scalar(select(DocumentVersion))
     version.review_note = "Checked"
     db.flush()
+
+
+def test_infected_upload_is_rejected_before_a_document_or_file_is_created(
+    school, db: Session, storage, monkeypatch
+) -> None:
+    from app.documents.malware import MalwareDetected
+
+    def infected(_data: bytes) -> None:
+        raise MalwareDetected("Test malware signature.")
+
+    monkeypatch.setattr("app.documents.router.scan_upload", infected)
+
+    response = upload(school.teacher, school.science)
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Test malware signature."
+    assert db.scalar(select(func.count()).select_from(Document)) == 0
+    assert not list(storage.root.rglob("*"))
+
+
+def test_infected_new_version_does_not_replace_the_existing_version(
+    school, db: Session, storage, monkeypatch
+) -> None:
+    from app.documents.malware import MalwareDetected
+
+    document = uploaded(school.teacher, school.science)
+    before = db.scalar(select(func.count()).select_from(DocumentVersion))
+
+    def infected(_data: bytes) -> None:
+        raise MalwareDetected("Test malware signature.")
+
+    monkeypatch.setattr("app.documents.router.scan_upload", infected)
+    response = school.teacher.client.post(
+        f"{D}/{document['id']}/versions",
+        files={"file": ("new-notes.pdf", CLEAN_PDF, "application/pdf")},
+        headers=school.teacher.headers,
+    )
+
+    assert response.status_code == 422
+    assert db.scalar(select(func.count()).select_from(DocumentVersion)) == before
+    assert get(school.teacher, document["id"])["latest_version"] == 1
