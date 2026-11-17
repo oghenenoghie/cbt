@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import stat
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +33,7 @@ class RootKeyToolError(ValueError):
 
 
 def _utc_text(value: datetime) -> str:
-    return value.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return value.astimezone(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _distinct_paths(first: Path, second: Path) -> None:
@@ -205,10 +205,10 @@ def create_trust_set_template(
     if not isinstance(supplied, list) or not 1 <= len(supplied) <= 32:
         raise RootKeyToolError("The keys file must be a JSON array containing 1 to 32 key entries.")
 
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     if current.tzinfo is None or current.utcoffset() is None:
         raise RootKeyToolError("Template creation time must be timezone-aware.")
-    current = current.astimezone(timezone.utc)
+    current = current.astimezone(UTC)
     issued_at = _utc_text(current)
     document: dict[str, Any] = {
         "generation": generation,
