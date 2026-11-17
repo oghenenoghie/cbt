@@ -140,7 +140,10 @@ export function verifyTrustSet(input: unknown, pinnedRootPublicKey: string, now 
 
 /** Monotonic, crash-safe persistence. Invalid updates never replace the last accepted trust set. */
 export class TrustStore {
-  constructor(private readonly path: string, private readonly pinnedRootPublicKey: string, private readonly now: () => Date = () => new Date()) {}
+  constructor(private readonly path: string, private readonly pinnedRootPublicKey: string, private readonly now: () => Date = () => new Date()) {
+    // Fail closed at startup if a release accidentally ships an invalid trust anchor.
+    decodeBase64(pinnedRootPublicKey, 32, "Pinned root public key");
+  }
 
   current(): TrustDocument | null {
     const stored = readJson<StoredTrust>(this.path);

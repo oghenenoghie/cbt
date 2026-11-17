@@ -36,7 +36,7 @@ function readJsonFile(path: string): unknown {
   }
 }
 
-export function registerBridge(lab: Lab, labWindow: LabWindow): { autoSync(): Promise<void> } {
+export function registerBridge(lab: Lab, labWindow: LabWindow): { autoSync(): Promise<void>; isStaffOpen(): boolean } {
   let staffUntil = 0;
   let syncing: Promise<unknown> | null = null;
   const window: BrowserWindow = labWindow.window;
@@ -256,6 +256,7 @@ export function registerBridge(lab: Lab, labWindow: LabWindow): { autoSync(): Pr
 
   applyLock();
   return {
+    isStaffOpen: staffOpen,
     async autoSync() {
       if (lab.summary()?.method !== "online") return;
       await sync().catch(() => undefined);

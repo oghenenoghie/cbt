@@ -6,6 +6,8 @@ import type { LabBridge } from "./shared/api.js";
 
 const bridge: LabBridge = {
   call: (method, input) => ipcRenderer.invoke("lab", method, input),
+  trustStatus: () => ipcRenderer.invoke("lab-trust-status"),
+  importTrustSet: () => ipcRenderer.invoke("lab-trust-import"),
 };
 
 contextBridge.exposeInMainWorld("lab", bridge);

@@ -149,6 +149,60 @@ function AppUpdates({ online, overview }: { online: boolean; overview: StaffOver
   );
 }
 
+/** Root-authenticated operational signing trust updates, imported from removable media. */
+function TrustSetPanel() {
+  const [enabled, setEnabled] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const { busy, error, run } = useAction();
+
+  useEffect(() => {
+    void window.lab.trustStatus().then((result) => {
+      setEnabled(result.enabled);
+      setChecked(true);
+    }).catch(() => setChecked(true));
+  }, []);
+
+  async function importTrustSet() {
+    setNotice(null);
+    const message = await run(async () => {
+      const reply = await window.lab.importTrustSet();
+      if (!reply.ok) throw new Error(reply.error);
+      if (!reply.value) return null;
+      return reply.value.changed
+        ? `Signing trust set generation ${reply.value.generation} was verified and saved.`
+        : `Signing trust set generation ${reply.value.generation} is already installed.`;
+    });
+    if (message) setNotice(message);
+  }
+
+  return (
+    <section className="card">
+      <div className="card-header">
+        <div>
+          <h2>Signing trust updates</h2>
+          <p className="muted">
+            Import a school-issued trust-set JSON file from USB. The app verifies it against its
+            built-in root key and rejects invalid signatures, expired sets and rollback attempts.
+          </p>
+        </div>
+        <button type="button" className="btn btn-secondary" disabled={!enabled || busy || !checked} onClick={() => void importTrustSet()}>
+          {busy ? "Verifying…" : "Import trust set from USB"}
+        </button>
+      </div>
+      {!checked && <p className="muted">Checking trust-update support…</p>}
+      {checked && !enabled && (
+        <div className="alert alert-warning">
+          Trust updates are not active in this app release. The approved offline root public key
+          must be pinned into a trusted desktop release before USB trust sets can be accepted.
+        </div>
+      )}
+      {notice && <div className="alert alert-success" role="status">{notice}</div>}
+      <ErrorText error={error} />
+    </section>
+  );
+}
+
 /** For teachers and invigilators, after the lab PIN: exams, results, files and the lock. */
 export function Staff({ status, onLocked }: { status: LabStatus; onLocked: (status: LabStatus) => void }) {
   const [overview, setOverview] = useState<StaffOverview | null>(null);
@@ -218,6 +272,7 @@ export function Staff({ status, onLocked }: { status: LabStatus; onLocked: (stat
           </div>
         )}
         <ErrorText error={error} />
+        <TrustSetPanel />
 
         <section className="card">
           <div className="card-header">
