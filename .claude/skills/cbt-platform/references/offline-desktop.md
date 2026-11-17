@@ -10,7 +10,7 @@ Authoritative sources: `docs/architecture/overview.md` §4 and `apps/desktop/REA
 
 ## Responsibilities
 
-Managed Windows installation and updates (NSIS installer), school and device registration, secure download and verification of assigned exam packages, offline exams, local SQLite persistence with crash recovery, a signed submission queue with idempotent sync, and clear connectivity and sync status.
+Managed Windows installation and updates (NSIS installer), school and device registration, secure download and verification of assigned exam packages, offline exams, crash-safe file-based persistence (signed packages, append-only per-attempt journals and a sealed-results outbox), idempotent synchronization, and clear connectivity and sync status.
 
 ## Offline exam workflow (overview §4)
 
