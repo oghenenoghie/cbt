@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
 
 import pytest
+from pydantic import ValidationError
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
@@ -264,5 +265,5 @@ def test_v2_envelope_schema_requires_valid_key_id_and_format() -> None:
     parsed = SignedArtifactV2.model_validate(envelope)
     assert parsed.key_id == document["keys"][0]["key_id"]
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValidationError):
         SignedArtifactV2.model_validate({**envelope, "key_id": "not-a-fingerprint"})
