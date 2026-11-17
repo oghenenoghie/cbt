@@ -39,7 +39,7 @@ def test_signing_key_fingerprint_command_does_not_need_a_database(monkeypatch, c
 def test_signing_public_key_command_does_not_need_a_database(monkeypatch, capsys) -> None:
     from app.offline import crypto
 
-    public_key = "AA==" * 16
+    public_key = "A" * 43 + "="
     monkeypatch.setattr(crypto, "signing_public_key", lambda: public_key)
 
     assert main(["signing-public-key"]) == 0
