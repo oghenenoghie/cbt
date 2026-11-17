@@ -80,6 +80,7 @@ The work is built in stages:
 
 ## Still open
 
-- Rotating the school offline key and the signing key.
+- Rotating the school offline key.
+- Signing-key rotation remains open: the server can load a protected mounted secret and operators can verify backup recovery by public-key fingerprint, but registered lab computers still pin one signing public key. A future rotation protocol must distribute and authenticate a versioned trust set, support a staged overlap period, and provide a USB trust-update path before the old key can be retired.
 - Showing a computer's live state (which students have handed in) to staff while it's offline.
 - School network (LAN) mode, and diagrams or images in packages.
