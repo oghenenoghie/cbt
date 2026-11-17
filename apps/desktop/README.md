@@ -50,3 +50,9 @@ There's no test in CI that drives the app's window yet. To check it end to end:
 4. Confirm the result arrives in the web app.
 
 A Playwright script that does this (with `_electron` and Xvfb) was used for stage C.
+
+## Reproducible Windows installer build
+
+The Windows installer is built on a clean Windows GitHub Actions runner by `.github/workflows/lab-app-release.yml`. For a build without publishing a release, open a pull request that changes a file under `apps/desktop/`; the workflow runs the test suite and packages the x64 NSIS installer as the `lab-app-installer` artifact. Download the artifact from that workflow run. The output is `Intelligent-CBT-Lab-Setup-0.1.0.exe` for this app version.
+
+For a public versioned release, update the app version in `package.json`, merge that change, and push the matching `lab-vX.Y.Z` tag. The tag workflow checks that the tag and package version match, then attaches the installer to a GitHub release. Until Windows code-signing secrets are configured, the installer is unsigned and Windows SmartScreen may show an unknown-publisher warning.
