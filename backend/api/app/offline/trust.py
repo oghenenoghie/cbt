@@ -10,6 +10,7 @@ from typing import Any
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from app.core.config import Settings, get_settings
 from app.offline.crypto import b64, sha256_hex, unb64
@@ -129,8 +130,6 @@ def public_key_id(public_key: Ed25519PublicKey | str) -> str:
         except (ValueError, TypeError) as error:
             raise TrustSetError("Public key must be valid base64.") from error
     else:
-        from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-
         raw = public_key.public_bytes(Encoding.Raw, PublicFormat.Raw)
     if len(raw) != 32:
         raise TrustSetError("Ed25519 public keys must be exactly 32 bytes.")
@@ -211,3 +210,87 @@ def load_pinned_root_public_key(settings: Settings | None = None) -> Ed25519Publ
         raise TrustSetError(
             "OFFLINE_TRUST_ROOT_PUBLIC_KEY must be a base64-encoded 32-byte Ed25519 public key."
         ) from error
+
+
+def _validated_trust_document(document: dict[str, Any]) -> dict[str, Any]:
+    if not isinstance(document, dict):
+        raise TrustSetError("Operational trust document must be an object.")
+    try:
+        body = json.dumps(document, ensure_ascii=False, separators=(",", ":"))
+    except (TypeError, ValueError) as error:
+        raise TrustSetError("Operational trust document is malformed.") from error
+    return parse_trust_set_body(body)
+
+
+def _artifact_key_entry(
+    document: dict[str, Any], key_id: str, *, for_signing: bool, now: datetime | None = None
+) -> dict[str, Any]:
+    validated = _validated_trust_document(document)
+    if not isinstance(key_id, str) or len(key_id) != 64:
+        raise TrustSetError("Artifact key_id must be a lowercase SHA-256 fingerprint.")
+    entry = next((item for item in validated["keys"] if item["key_id"] == key_id), None)
+    if entry is None:
+        raise TrustSetError("Artifact was signed by an unknown operational key.")
+    if entry["status"] == "revoked":
+        raise TrustSetError("Artifact signing key has been revoked.")
+    if for_signing and entry["status"] != "active":
+        raise TrustSetError("Only the active operational key may sign new artifacts.")
+    current = now or datetime.now(timezone.utc)
+    if current.tzinfo is None or current.utcoffset() is None:
+        raise TrustSetError("Artifact verification time must be timezone-aware.")
+    current = current.astimezone(timezone.utc)
+    if _utc_datetime(validated["issued_at"], "issued_at") > current:
+        raise TrustSetError("Operational trust set is not valid yet.")
+    if _utc_datetime(validated["expires_at"], "expires_at") <= current:
+        raise TrustSetError("Operational trust set has expired.")
+    if _utc_datetime(entry["not_before"], "not_before") > current:
+        raise TrustSetError("Artifact signing key is not valid yet.")
+    if "not_after" in entry and _utc_datetime(entry["not_after"], "not_after") <= current:
+        raise TrustSetError("Artifact signing key has expired.")
+    return entry
+
+
+def seal_artifact_v2(
+    body: dict[str, Any],
+    operational_private_key: Ed25519PrivateKey,
+    trust_document: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> dict[str, str]:
+    """Sign a new artifact only when the private key matches the active authorized key."""
+    public_raw = operational_private_key.public_key().public_bytes(Encoding.Raw, PublicFormat.Raw)
+    key_id = sha256_hex(public_raw)
+    _artifact_key_entry(trust_document, key_id, for_signing=True, now=now)
+    body_text = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+    signature = operational_private_key.sign(body_text.encode("utf-8"))
+    return {
+        "format": ARTIFACT_FORMAT_V2,
+        "key_id": key_id,
+        "body": body_text,
+        "signature": b64(signature),
+    }
+
+
+def verify_artifact_v2(
+    envelope: dict[str, Any],
+    trust_document: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> bool:
+    """Verify a v2 artifact against an already root-authenticated operational trust document."""
+    if not isinstance(envelope, dict) or set(envelope) != {"format", "key_id", "body", "signature"}:
+        return False
+    if envelope.get("format") != ARTIFACT_FORMAT_V2:
+        return False
+    body = envelope.get("body")
+    signature = envelope.get("signature")
+    key_id = envelope.get("key_id")
+    if not isinstance(body, str) or not isinstance(signature, str) or not isinstance(key_id, str):
+        return False
+    try:
+        entry = _artifact_key_entry(trust_document, key_id, for_signing=False, now=now)
+        public = Ed25519PublicKey.from_public_bytes(unb64(entry["public_key"]))
+        public.verify(unb64(signature), body.encode("utf-8"))
+    except (TrustSetError, InvalidSignature, ValueError, TypeError):
+        return False
+    return True

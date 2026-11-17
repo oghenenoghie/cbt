@@ -255,3 +255,12 @@ class LabAppOut(BaseModel):
     sha256: str
     published_at: datetime
     notes: str | None
+
+
+class SignedArtifactV2(_Input):
+    """A server-signed v2 artifact, selected by an authorized operational key ID."""
+
+    format: Literal["cbt-signed-artifact/2"]
+    key_id: str = Field(pattern=r"^[0-9a-f]{64}$")
+    body: str = Field(max_length=MAX_BODY_CHARS)
+    signature: str = Field(max_length=200)
