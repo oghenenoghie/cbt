@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -17,7 +17,7 @@ from app.offline.root_tools import (
 from app.offline.trust import public_key_id
 
 PASSPHRASE = b"offline-root-passphrase-2026"
-NOW = datetime(2026, 11, 17, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 17, 12, 0, tzinfo=UTC)
 
 
 def _public_key_b64(key: Ed25519PrivateKey) -> str:
@@ -146,7 +146,7 @@ def test_sign_and_verify_trust_set_file_round_trip(tmp_path) -> None:
     envelope_file = tmp_path / "trust-set.json"
     generate_root_key(private_file, public_file, PASSPHRASE)
     _write_keys_file(keys_file)
-    create_trust_set_template(keys_file, template_file, generation=1, now=NOW)
+    create_trust_set_template(keys_file, template_file, generation=1, now=datetime.now(UTC) - timedelta(minutes=1))
 
     envelope = sign_trust_set_file(
         template_file, private_file, envelope_file, PASSPHRASE
@@ -166,7 +166,7 @@ def test_signing_rejects_wrong_passphrase_and_tampered_export(tmp_path) -> None:
     envelope_file = tmp_path / "trust-set.json"
     generate_root_key(private_file, public_file, PASSPHRASE)
     _write_keys_file(keys_file)
-    create_trust_set_template(keys_file, template_file, generation=1, now=NOW)
+    create_trust_set_template(keys_file, template_file, generation=1, now=datetime.now(UTC) - timedelta(minutes=1))
 
     with pytest.raises(RootKeyToolError, match="Cannot decrypt"):
         sign_trust_set_file(template_file, private_file, envelope_file, b"wrong-passphrase")
