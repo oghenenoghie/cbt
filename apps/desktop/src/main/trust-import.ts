@@ -16,6 +16,7 @@ export function registerTrustImportIpc(
   lab: Lab,
   labWindow: LabWindow,
   store: TrustStore | null,
+  isStaffOpen: () => boolean,
 ): void {
   const window: BrowserWindow = labWindow.window;
 
@@ -28,7 +29,7 @@ export function registerTrustImportIpc(
     if (event.sender !== window.webContents) {
       return { ok: false, error: "Not allowed." };
     }
-    if (lab.status().registered && (process.env.LAB_KIOSK === "0" || !labWindow.isLocked())) {
+    if (!isStaffOpen()) {
       return { ok: false, error: "Unlock the staff side with the lab PIN before importing a trust set." };
     }
     if (!store) {
@@ -67,7 +68,7 @@ export function registerTrustImportIpc(
 
       let envelope: unknown;
       try {
-        envelope = JSON.parse(contents.toString("utf8").replace(/^\\uFEFF/, ""));
+        envelope = JSON.parse(contents.toString("utf8").replace(/^\uFEFF/, ""));
       } catch {
         throw new TrustStoreError("The selected file is not valid JSON.");
       }
