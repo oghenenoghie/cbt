@@ -2,7 +2,6 @@ import { dialog, ipcMain, type BrowserWindow } from "electron";
 import { closeSync, fstatSync, openSync, readSync } from "node:fs";
 
 import { TrustStore, TrustStoreError } from "../core/trust.js";
-import { Lab } from "../core/lab.js";
 import type { LabWindow } from "./window.js";
 
 const MAX_TRUST_SET_BYTES = 64 * 1024;
@@ -13,7 +12,6 @@ const MAX_TRUST_SET_BYTES = 64 * 1024;
  * monotonic persistence. A packaged kiosk window is unlocked only during the staff session.
  */
 export function registerTrustImportIpc(
-  lab: Lab,
   labWindow: LabWindow,
   store: TrustStore | null,
   isStaffOpen: () => boolean,
@@ -47,6 +45,7 @@ export function registerTrustImportIpc(
       });
       const path = choice.filePaths[0];
       if (choice.canceled || !path) return { ok: true, value: null };
+      if (!isStaffOpen()) throw new TrustStoreError("The staff session expired. Unlock with the lab PIN and try again.");
 
       const fd = openSync(path, "r");
       let contents: Buffer;
