@@ -32,6 +32,7 @@ from app.models import (  # noqa: F401
     ExamItem,
     ExamPaperItem,
     Integration,
+    IntegrationRateWindow,
     IntegrationScope,
     LabDevice,
     LoginThrottle,

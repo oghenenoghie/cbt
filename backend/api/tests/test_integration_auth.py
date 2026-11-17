@@ -3,9 +3,10 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.api_keys import generate_api_key
+from app.core.api_keys import generate_api_key, hash_api_key
 from app.integrations.auth import IntegrationPrincipal
 
 ME_URL = "/api/v1/integrations/me"
@@ -140,12 +141,11 @@ def test_expired_credential_is_rejected(
     assert issued.credential.last_used_at is None
 
 
-@pytest.mark.parametrize("status", ["disabled", "suspended"])
-def test_inactive_integration_is_rejected(
-    client: TestClient, db: Session, make_credential, status: str
+def test_disabled_integration_is_rejected(
+    client: TestClient, db: Session, make_credential
 ) -> None:
     issued = make_credential()
-    issued.integration.status = status
+    issued.integration.status = "disabled"
     db.commit()
 
     response = client.get(ME_URL, headers=bearer(issued.raw_key))
@@ -169,17 +169,26 @@ def test_inactive_tenant_is_rejected(
 # --- Tenant isolation ------------------------------------------------------------------
 
 
-def test_credential_bound_to_a_different_tenant_than_its_integration_is_rejected(
-    client: TestClient, db: Session, make_credential, make_tenant
+def test_a_key_cant_belong_to_another_school_than_its_integration(
+    db: Session, make_credential, make_tenant
 ) -> None:
+    """The database refuses it (ADR 0008); the key check also refuses it, as a second line."""
     issued = make_credential()
     other_tenant = make_tenant()
     issued.credential.tenant_id = other_tenant.id
-    db.commit()
 
-    response = client.get(ME_URL, headers=bearer(issued.raw_key))
+    with pytest.raises(IntegrityError):
+        db.commit()
+    db.rollback()
 
-    assert_unauthorized(response, detail="Integration access is disabled.")
+
+def test_an_integration_status_outside_the_list_is_refused(db: Session, make_credential) -> None:
+    issued = make_credential()
+    issued.integration.status = "suspended"
+
+    with pytest.raises(IntegrityError):
+        db.commit()
+    db.rollback()
 
 
 def test_each_key_resolves_only_to_its_own_tenant_and_scopes(
@@ -219,3 +228,19 @@ def test_require_scope_allows_granted_and_forbids_missing_scopes() -> None:
     with pytest.raises(HTTPException) as excinfo:
         principal.require_scope("results:write")
     assert excinfo.value.status_code == 403
+
+
+def test_two_keys_sharing_a_prefix_each_work(
+    client: TestClient, db: Session, make_credential
+) -> None:
+    """The prefix only narrows the lookup; every active key with it is checked."""
+    first = make_credential(granted_scopes=("candidates:read",))
+    second = make_credential(granted_scopes=("results:read",))
+    # Give the second key the first one's prefix, as a chance collision would.
+    second_key = first.credential.key_prefix + second.raw_key[16:]
+    second.credential.key_prefix = first.credential.key_prefix
+    second.credential.secret_hash = hash_api_key(second_key)
+    db.commit()
+
+    assert client.get(ME_URL, headers=bearer(first.raw_key)).json()["scopes"] == ["candidates:read"]
+    assert client.get(ME_URL, headers=bearer(second_key)).json()["scopes"] == ["results:read"]

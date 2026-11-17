@@ -39,7 +39,7 @@ The default local database is SQLite. For PostgreSQL, start it with Docker Compo
 
 ## Database foundation
 
-The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)), and `0013_more_material_kinds` allows slides, spreadsheets, CSV and photos. `0012_ai_drafts` adds AI requests, their sources, drafts and citations (see [ADR 0005](../../docs/architecture/decisions/0005-ai-question-drafts.md)). `0014_question_types_marking` adds the new question types' answer keys, text answers and teachers' marks, and `0015_ai_question_types` gives AI drafts answer keys too (see [ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md)). `0016_offline_exams` adds lab computers, exam codes, offline packages and results (see [ADR 0007](../../docs/architecture/decisions/0007-offline-exams.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
+The first migration creates tenants, integrations, API credentials, integration scopes and audit logs. The second (`0002_school_identity`) adds school users, platform administrators, login sessions, candidates and candidate external IDs (see [ADR 0001](../../docs/architecture/decisions/0001-school-identity-model.md)). `0003_login_security` adds login throttling, and `0004_school_structure` adds sessions, terms, class levels and arms, subjects and topics, and `0005_classrooms` adds enrolments and teaching assignments (see [ADR 0002](../../docs/architecture/decisions/0002-school-structure.md)). `0006_question_bank` adds questions, their versions and topic tags, and `0007_passages` adds reading passages, `0008_exams` adds exams, their frozen papers and the exam coordinator designation, `0009_attempts` adds students' attempts, answer events and marked responses, and `0010_results` records results release (see [ADR 0003](../../docs/architecture/decisions/0003-exams.md)). `0011_documents` adds learning materials: documents, their uploaded versions, extracted segments and topic tags (see [ADR 0004](../../docs/architecture/decisions/0004-learning-materials.md)), and `0013_more_material_kinds` allows slides, spreadsheets, CSV and photos. `0012_ai_drafts` adds AI requests, their sources, drafts and citations (see [ADR 0005](../../docs/architecture/decisions/0005-ai-question-drafts.md)). `0014_question_types_marking` adds the new question types' answer keys, text answers and teachers' marks, and `0015_ai_question_types` gives AI drafts answer keys too (see [ADR 0006](../../docs/architecture/decisions/0006-question-types-and-marking.md)). `0016_offline_exams` adds lab computers, exam codes, offline packages and results (see [ADR 0007](../../docs/architecture/decisions/0007-offline-exams.md)). `0017_integration_management` records who registered each integration and issued or revoked each key, ties keys to their integration's school, and adds the per-minute request counter (see [ADR 0008](../../docs/architecture/decisions/0008-integrations.md)). Run `alembic upgrade head` to apply it and `alembic downgrade -1` to roll back one revision.
 
 API credentials are generated using cryptographically secure randomness. Persist only the SHA-256 digest and display the raw value once at creation time. The helper is in `app/core/api_keys.py`.
 
@@ -270,6 +270,25 @@ Packages are signed with `OFFLINE_SIGNING_KEY` (generate one with `python -m app
 
 Exams have `offline_allowed` (default on) and `offline_instant_scores` (default off; needs `results_release: "immediate"`). A published exam that can be sat offline lists `manage_offline` in `allowed_actions` for the people who may print its codes, export it and upload its results. Offline attempts appear with `source: "offline"`.
 
+### Integrations
+
+School admins connect their school's other software (a portal, SIS or LMS) by registering an integration, granting it permissions and issuing API keys. See [ADR 0008](../../docs/architecture/decisions/0008-integrations.md). The connected software sends `Authorization: Bearer cbt_live_...`; `app/integrations/auth.py` checks the key, its integration and school, and the rate limit.
+
+| Endpoint | Who | What it does |
+|---|---|---|
+| `GET /api/v1/school/integrations/scopes` | School admins | The permissions an integration can be granted |
+| `GET /api/v1/school/integrations`, `POST ...` | School admins | The school's integrations (active first, with their permissions and keys, never a key's secret); register one with `name`, `description` and `scopes` |
+| `GET /api/v1/school/integrations/{id}`, `PATCH ...` | School admins | One integration; rename it, describe it or replace its permissions (applies from the next request) |
+| `POST /api/v1/school/integrations/{id}/disable`, `.../enable` | School admins | Stop every key of the integration at once, or let them work again |
+| `POST /api/v1/school/integrations/{id}/keys` | School admins | Issue a key (`name`). The response is the only time the key is shown. At most 5 active keys, so one can be replaced without downtime |
+| `POST /api/v1/school/integrations/{id}/keys/{key_id}/revoke` | School admins | Stop one key for good |
+| `GET /api/v1/school/integrations/{id}/activity` | School admins | Who registered, changed, issued and revoked what, and what the integration did, newest first (`limit`, `after`) |
+| `GET /api/v1/integrations/me` | An integration | Its school, integration and granted permissions |
+
+- Keys don't expire; they last until revoked. Only a key's SHA-256 and first 16 characters are stored.
+- Each integration may make `INTEGRATION_RATE_LIMIT_PER_MINUTE` requests a minute (default 120) across all its keys. Over that, 429 with `Retry-After`. Responses carry `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset`.
+- Permissions: `classes:read`, `candidates:read`, `candidates:write`, `results:read`. Their endpoints arrive with Integrations C.
+
 ### Creating the first accounts
 
 Account management needs a signed-in school admin, so create the first accounts from the command line (it prompts for the password):
@@ -284,6 +303,6 @@ python -m app.cli create-platform-admin --email ops@example.com --display-name "
 
 ## Security implementation status
 
-Login, sessions, CSRF protection, role checks, failed-login throttling and audit writes for sign-in now exist. Don't expose integration-management or customer-data endpoints until the remaining pieces are in place: credential lifecycle routes, general rate limiting, and security tests for each endpoint. Never use a client-side-only check as access control.
+Login, sessions, CSRF protection, role checks, failed-login throttling and audit writes for sign-in exist, and so does integration management (ADR 0008): credential lifecycle routes for school admins, audit entries for every change, per-integration rate limits and security tests (`tests/test_integrations_admin.py`). Public customer-data endpoints for integrations stay closed until Integrations C adds each one with its own tenant, permission, audit and rate-limit tests. Never use a client-side-only check as access control.
 
 See [Integration Developer Guide](../../docs/integrations/README.md) and [Integration Architecture](../../docs/integrations/overview.md).
