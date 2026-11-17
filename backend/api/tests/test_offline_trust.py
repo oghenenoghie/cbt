@@ -7,6 +7,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from app.offline.crypto import b64
+from app.offline.schemas import SignedArtifactV2
 from app.offline.trust import (
     TRUST_SET_FORMAT,
     TrustSetError,
@@ -227,8 +228,6 @@ def test_v2_signing_rejects_private_key_not_matching_active_key() -> None:
 
 
 def test_v2_artifact_rejects_tampered_body_and_extra_fields() -> None:
-    from app.offline.trust import seal_artifact_v2
-
     document, operational = _document()
     envelope = seal_artifact_v2({"ok": True}, operational, document, now=NOW)
     envelope["body"] = '{"ok":false}'
@@ -255,3 +254,15 @@ def test_v2_artifact_allows_verify_only_key_during_overlap() -> None:
     assert verify_artifact_v2(envelope, document, now=NOW)
     with pytest.raises(TrustSetError, match="Only the active"):
         seal_artifact_v2({"new": True}, operational, document, now=NOW)
+
+
+
+def test_v2_envelope_schema_requires_valid_key_id_and_format() -> None:
+    document, operational = _document()
+    envelope = seal_artifact_v2({"ok": True}, operational, document, now=NOW)
+
+    parsed = SignedArtifactV2.model_validate(envelope)
+    assert parsed.key_id == document["keys"][0]["key_id"]
+
+    with pytest.raises(Exception):
+        SignedArtifactV2.model_validate({**envelope, "key_id": "not-a-fingerprint"})
