@@ -25,6 +25,16 @@ def run(session_factory, *args: str, password: str = STRONG) -> int:
     return main(list(args), session_factory=session_factory, read_password=lambda: password)
 
 
+def test_signing_key_fingerprint_command_does_not_need_a_database(monkeypatch, capsys) -> None:
+    from app.offline import crypto
+
+    fingerprint = "ab" * 32
+    monkeypatch.setattr(crypto, "signing_key_fingerprint", lambda: fingerprint)
+
+    assert main(["signing-key-fingerprint"]) == 0
+    assert capsys.readouterr().out.strip() == f"SHA-256 public-key fingerprint: {fingerprint}"
+
+
 def test_school_admin_can_be_created_and_then_log_in(
     client: TestClient, db: Session, session_factory, capsys
 ) -> None:

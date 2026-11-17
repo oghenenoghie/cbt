@@ -5,6 +5,7 @@ A lab computer is simulated with its own Ed25519 key pair; no desktop app is inv
 """
 
 import json
+import os
 import uuid
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
@@ -44,6 +45,59 @@ def offline_settings(monkeypatch):
     crypto._signing_key.cache_clear()
     yield settings
     crypto._signing_key.cache_clear()
+
+
+def test_production_signing_key_can_be_loaded_from_private_file(tmp_path, monkeypatch) -> None:
+    settings = get_settings()
+    seed = crypto.new_signing_seed()
+    key_file = tmp_path / "offline-signing.key"
+    key_file.write_text(seed, encoding="ascii")
+    if os.name != "nt":
+        key_file.chmod(0o600)
+    monkeypatch.setattr(settings, "offline_signing_key", None)
+    monkeypatch.setattr(settings, "offline_signing_key_file", str(key_file))
+    monkeypatch.setattr(settings, "environment", "production")
+    crypto._signing_key.cache_clear()
+    try:
+        expected = crypto._key_from_seed(seed)
+        expected_fingerprint = crypto.sha256_hex(crypto.unb64(crypto.public_key_b64(expected)))
+        assert crypto.signing_key_fingerprint(settings) == expected_fingerprint
+    finally:
+        crypto._signing_key.cache_clear()
+
+
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX file permission bits are not available on Windows"
+)
+def test_production_signing_key_file_rejects_group_or_world_permissions(
+    tmp_path, monkeypatch
+) -> None:
+    settings = get_settings()
+    key_file = tmp_path / "offline-signing.key"
+    key_file.write_text(crypto.new_signing_seed(), encoding="ascii")
+    key_file.chmod(0o644)
+    monkeypatch.setattr(settings, "offline_signing_key", None)
+    monkeypatch.setattr(settings, "offline_signing_key_file", str(key_file))
+    monkeypatch.setattr(settings, "environment", "production")
+    crypto._signing_key.cache_clear()
+    try:
+        with pytest.raises(crypto.SigningNotConfigured, match="group or others"):
+            crypto.signing_key(settings)
+    finally:
+        crypto._signing_key.cache_clear()
+
+
+def test_signing_key_configuration_rejects_two_secret_sources(monkeypatch) -> None:
+    settings = get_settings()
+    monkeypatch.setattr(settings, "offline_signing_key", crypto.new_signing_seed())
+    monkeypatch.setattr(settings, "offline_signing_key_file", "/unused/secret")
+    monkeypatch.setattr(settings, "environment", "production")
+    crypto._signing_key.cache_clear()
+    try:
+        with pytest.raises(crypto.SigningNotConfigured, match="only one"):
+            crypto.signing_key(settings)
+    finally:
+        crypto._signing_key.cache_clear()
 
 
 @pytest.fixture

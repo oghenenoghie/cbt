@@ -135,6 +135,10 @@ def _parser() -> argparse.ArgumentParser:
         "generate-signing-key",
         help="Print a new key for signing offline exam packages (OFFLINE_SIGNING_KEY).",
     )
+    commands.add_parser(
+        "signing-key-fingerprint",
+        help="Print the SHA-256 fingerprint of the configured offline signing public key.",
+    )
 
     release = commands.add_parser(
         "publish-lab-app",
@@ -158,6 +162,16 @@ def main(
 
         # Kept secret, like a password: lab computers trust packages signed with it (ADR 0007).
         print(new_signing_seed())
+        return 0
+    if args.command == "signing-key-fingerprint":
+        from app.offline.crypto import SigningNotConfigured, signing_key_fingerprint
+
+        try:
+            fingerprint = signing_key_fingerprint()
+        except SigningNotConfigured as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        print(f"SHA-256 public-key fingerprint: {fingerprint}")
         return 0
     if args.command == "publish-lab-app":
         from pathlib import Path
