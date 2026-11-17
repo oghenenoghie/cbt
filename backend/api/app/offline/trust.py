@@ -242,6 +242,10 @@ def _artifact_key_entry(
     if current.tzinfo is None or current.utcoffset() is None:
         raise TrustSetError("Artifact verification time must be timezone-aware.")
     current = current.astimezone(timezone.utc)
+    if _utc_datetime(validated["issued_at"], "issued_at") > current:
+        raise TrustSetError("Operational trust set is not valid yet.")
+    if _utc_datetime(validated["expires_at"], "expires_at") <= current:
+        raise TrustSetError("Operational trust set has expired.")
     if _utc_datetime(entry["not_before"], "not_before") > current:
         raise TrustSetError("Artifact signing key is not valid yet.")
     if "not_after" in entry and _utc_datetime(entry["not_after"], "not_after") <= current:
