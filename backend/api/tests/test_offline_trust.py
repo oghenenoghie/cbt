@@ -22,7 +22,6 @@ from app.offline.trust import (
     verify_trust_set,
 )
 
-
 NOW = datetime(2026, 11, 17, 12, 0, tzinfo=UTC)
 
 
