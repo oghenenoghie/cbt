@@ -1,0 +1,58 @@
+name: Build Windows offline trust-root utility
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    tags:
+      - "offline-trust-root-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    name: Build and verify Windows executable
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend/api
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/api/pyproject.toml
+      - name: Install minimal runtime and packager
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "cryptography>=42,<51" "pydantic-settings>=2.5,<3.0" "pyinstaller>=6.10,<7"
+      - name: Build standalone executable
+        shell: pwsh
+        run: pyinstaller --noconfirm --clean --onefile --console --name CBT-Offline-Trust-Root-Setup --paths . --collect-all cryptography tools/offline_trust_root.py
+      - name: Verify executable and calculate checksum
+        shell: pwsh
+        run: |
+          $exe = "dist/CBT-Offline-Trust-Root-Setup.exe"
+          if (!(Test-Path $exe)) { throw "Expected executable was not created." }
+          $hash = (Get-FileHash $exe -Algorithm SHA256).Hash.ToLower()
+          "$hash  CBT-Offline-Trust-Root-Setup.exe" | Out-File -Encoding ascii "dist/SHA256SUMS.txt"
+          Write-Output "SHA-256: $hash"
+      - name: Upload downloadable build artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: CBT-Offline-Trust-Root-Setup-Windows
+          path: |
+            backend/api/dist/CBT-Offline-Trust-Root-Setup.exe
+            backend/api/dist/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish versioned GitHub release asset
+        if: startsWith(github.ref, 'refs/tags/offline-trust-root-v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$env:GITHUB_REF_NAME" "dist/CBT-Offline-Trust-Root-Setup.exe" "dist/SHA256SUMS.txt" --repo "$env:GITHUB_REPOSITORY" --title "CBT Offline Trust-Root Setup $env:GITHUB_REF_NAME" --notes "Windows utility for generating an encrypted Ed25519 offline trust root. The private key is generated locally and is never uploaded by this utility. Verify SHA256SUMS.txt before running."
