@@ -1,10 +1,10 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
-import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
+import pytest
 from pydantic import ValidationError
 
 from app.offline.crypto import b64
@@ -23,7 +23,7 @@ from app.offline.trust import (
 )
 
 
-NOW = datetime(2026, 11, 17, 12, 0, tzinfo=timezone.utc)
+NOW = datetime(2026, 11, 17, 12, 0, tzinfo=UTC)
 
 
 def _public_b64(key: Ed25519PrivateKey) -> str:
