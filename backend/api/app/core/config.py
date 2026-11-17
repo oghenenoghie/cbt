@@ -92,6 +92,8 @@ class Settings(BaseSettings):
     # `python -m app.cli generate-signing-key`). Without it, development servers generate one and
     # keep it in STORAGE_DIR; other environments refuse to issue packages.
     offline_signing_key: str | None = None
+    # Optional read-only secret mount; set this OR OFFLINE_SIGNING_KEY, never both.
+    offline_signing_key_file: str | None = None
     # How long a lab computer's registration code stays valid.
     device_registration_hours: int = 24
     # Packages can be downloaded from this many days before an exam opens.
