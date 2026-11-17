@@ -79,7 +79,7 @@ def parse_trust_set_body(body: str) -> dict[str, Any]:
             raise TrustSetError("Operational key entry has missing or unknown properties.")
         if entry["algorithm"] != "Ed25519":
             raise TrustSetError("Only Ed25519 operational keys are supported.")
-        if entry["status"] not in KEY_STATUSES:
+        if not isinstance(entry["status"], str) or entry["status"] not in KEY_STATUSES:
             raise TrustSetError("Operational key status is invalid.")
         if not isinstance(entry["key_id"], str) or len(entry["key_id"]) != 64:
             raise TrustSetError("key_id must be a lowercase SHA-256 fingerprint.")
@@ -90,6 +90,8 @@ def parse_trust_set_body(body: str) -> dict[str, Any]:
         if entry["key_id"] in seen_ids:
             raise TrustSetError("Trust set contains duplicate key IDs.")
         seen_ids.add(entry["key_id"])
+        if not isinstance(entry["public_key"], str):
+            raise TrustSetError("Operational public_key must be a base64 string.")
         try:
             public_bytes = unb64(entry["public_key"])
             if len(public_bytes) != 32:
@@ -152,6 +154,8 @@ def verify_trust_set(
     signature = envelope.get("signature")
     if not isinstance(body, str) or not isinstance(signature, str):
         raise TrustSetError("Trust-set envelope is malformed.")
+    if not isinstance(root_public_key_b64, str):
+        raise TrustSetError("Pinned root public key must be a base64 string.")
     try:
         root_bytes = unb64(root_public_key_b64)
         if len(root_bytes) != 32:
