@@ -93,7 +93,8 @@ export interface DraftEdit {
 const PLACEHOLDERS: Record<QuestionType, string> = {
   mcq_single: "For example: Which of these is a living thing?",
   mcq_multiple: "For example: Which of these are mammals? Tick all that apply.",
-  true_false: "For example: Water boils at 100 °C at sea level.",
+  diagram_label: "For example: Name the numbered parts of the cell.",
+  true_false: "For example: Water boils at 100 Â°C at sea level.",
   short_answer: "For example: What gas do plants take in for photosynthesis?",
   numeric: "For example: A car travels 120 km in 2 hours. What is its average speed in km/h?",
   essay: "For example: Describe two ways that plants and animals depend on each other.",
@@ -135,6 +136,9 @@ export function QuestionEditor({
     initial?.diagram_spec ? JSON.stringify(initial.diagram_spec, null, 2) : "",
   );
   const [diagramMode, setDiagramMode] = useState<"labelled" | "blank">("labelled");
+  const [labelAnswerText, setLabelAnswerText] = useState<string[]>(
+    initial?.label_answers?.map((answers) => answers.join(" | ")) ?? [],
+  );
   const [options, setOptions] = useState<string[]>(initial?.options ?? ["", "", "", ""]);
   const [correctIndex, setCorrectIndex] = useState<number | null>(
     initial?.type === "mcq_single" ? (initial.correct as number) : null,
@@ -171,6 +175,22 @@ export function QuestionEditor({
     type,
     stem,
     diagram_spec: diagramSpec,
+    label_answers:
+      type === "diagram_label" && diagramSpec
+        ? diagramSpec.elements
+            .filter((element) => element.kind === "text")
+            .map((element, index) => {
+              const variants = (labelAnswerText[index] ?? element.label ?? "")
+                .split("|")
+                .map((answer) => answer.trim())
+                .filter(Boolean);
+              const canonical = element.label?.trim();
+              if (canonical && !variants.some((answer) => answer.toLocaleLowerCase() === canonical.toLocaleLowerCase())) {
+                variants.unshift(canonical);
+              }
+              return variants;
+            })
+        : null,
     options: hasOptions(type) ? options : null,
     correct:
       type === "mcq_single"
@@ -230,6 +250,19 @@ export function QuestionEditor({
   /** Problems the API would refuse, said in the editor's own words. */
   function check(): string | null {
     if (diagramError) return `Fix the diagram: ${diagramError}`;
+    if (type === "diagram_label" && !diagramSpec) return "Add a diagram with text labels to make numbered answer targets.";
+    if (type === "diagram_label" && !diagramSpec?.elements.some((element) => element.kind === "text")) {
+      return "Add at least one text label to the diagram; each label becomes an answer target.";
+    }
+    if (type === "diagram_label" && diagramSpec) {
+      const textElements = diagramSpec.elements.filter((element) => element.kind === "text");
+      if (textElements.some((element) => (element.label?.trim().length ?? 0) > 200)) {
+        return "Keep each diagram label to 200 characters so it can be used as an accepted answer.";
+      }
+      if (labelAnswerText.some((value) => value.split("|").some((answer) => answer.trim().length > 200))) {
+        return "Keep each accepted spelling to 200 characters or fewer.";
+      }
+    }
     if (hasOptions(type)) {
       const texts = options.map((o) => o.trim().toLocaleLowerCase());
       if (new Set(texts).size !== texts.length) return "Each option must be different.";
@@ -393,14 +426,40 @@ export function QuestionEditor({
             onChange={(event) => setDiagramText(event.target.value)}
             placeholder={'{\n  "title": "Plant cell",\n  "description": "Label the cell parts.",\n  "width": 640,\n  "height": 400,\n  "elements": []\n}'}
           />
+          {type === "diagram_label" && diagramSpec && (
+            <div className="stack" style={{ marginTop: 12 }}>
+              <strong>Accepted answers for each target</strong>
+              <span className="hint">The diagram label is accepted automatically. Add spelling variants separated by |.</span>
+              {diagramSpec.elements.filter((element) => element.kind === "text").map((element, index) => (
+                <div className="field" key={index}>
+                  <label htmlFor={`diagram-label-${index}`}>Target {index + 1}: {element.label}</label>
+                  <input
+                    id={`diagram-label-${index}`}
+                    maxLength={200}
+                    value={labelAnswerText[index] ?? element.label ?? ""}
+                    onChange={(event) => setLabelAnswerText((answers) => {
+                      const next = [...answers];
+                      next[index] = event.target.value;
+                      return next;
+                    })}
+                    placeholder="For example, cell membrane | plasma membrane"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
           {diagramError && <span className="hint" role="alert">{diagramError}</span>}
           {diagramSpec && (
             <>
               <div className="actions" style={{ marginTop: 8 }}>
                 <button type="button" className={`btn btn-small ${diagramMode === "labelled" ? "btn-primary" : "btn-secondary"}`} onClick={() => setDiagramMode("labelled")}>Labelled preview</button>
-                <button type="button" className={`btn btn-small ${diagramMode === "blank" ? "btn-primary" : "btn-secondary"}`} onClick={() => setDiagramMode("blank")}>Blank student preview</button>
+                <button type="button" className={`btn btn-small ${diagramMode === "blank" ? "btn-primary" : "btn-secondary"}`} onClick={() => setDiagramMode("blank")}>{type === "diagram_label" ? "Numbered student preview" : "Blank student preview"}</button>
               </div>
-              <DiagramPreview spec={diagramSpec} labelled={diagramMode === "labelled"} />
+              <DiagramPreview
+                spec={diagramSpec}
+                labelled={diagramMode === "labelled"}
+                numberedTargets={type === "diagram_label" && diagramMode === "blank"}
+              />
             </>
           )}
         </fieldset>
@@ -568,6 +627,8 @@ export function QuestionEditor({
               </span>
             </div>
           </div>
+        ) : type === "diagram_label" ? (
+          <p className={styles.explain}>Students type answers for the numbered text labels. They receive partial marks for correct labels.</p>
         ) : (
           <div className="field">
             <label htmlFor="question-guide">Marking guide (optional)</label>
@@ -687,10 +748,11 @@ export function QuestionEditor({
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={busy || (editing && !dirty)}>
-            {busy ? "Saving…" : editing ? "Save changes" : "Add question"}
+            {busy ? "Savingâ€¦" : editing ? "Save changes" : "Add question"}
           </button>
         </div>
       </form>
     </Modal>
   );
 }
+
