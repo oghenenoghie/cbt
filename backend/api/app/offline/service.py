@@ -196,7 +196,7 @@ def build_package(
                 "passage_id": passage.id if passage else None,
                 "type": version.type,
                 "stem": version.stem,
-                "diagram_spec": student_diagram(version.diagram_spec),
+                "diagram_spec": student_diagram(version.diagram_spec, version.type),
                 # The options' text only: which are right is never here.
                 "options": [{"id": o["id"], "text": o["text"]} for o in version.options],
                 "marks": item.marks,
@@ -554,3 +554,4 @@ def receive(
         at=max(as_utc(body.ended_at), started + timedelta(seconds=1)),
     )
     return store("accepted", None, attempt.id)
+
