@@ -69,14 +69,23 @@ class DiagramSpec(BaseModel):
         return self
 
 
-def student_diagram(spec: dict | None) -> dict | None:
+def student_diagram(spec: dict | None, question_type: str | None = None) -> dict | None:
     """Return a candidate-safe blank variant, removing labels and answer-like descriptions."""
     if spec is None:
         return None
+    elements = []
+    target_number = 0
+    for element in spec["elements"]:
+        if element["kind"] != "text":
+            elements.append(element)
+        elif question_type == "diagram_label":
+            target_number += 1
+            elements.append({**element, "label": str(target_number)})
     return {
         "title": "Question diagram",
         "description": "Unlabelled diagram for this question.",
         "width": spec["width"],
         "height": spec["height"],
-        "elements": [element for element in spec["elements"] if element["kind"] != "text"],
+        "elements": elements,
     }
+
