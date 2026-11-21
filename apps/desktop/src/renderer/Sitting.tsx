@@ -23,6 +23,8 @@ function given(answer: GivenAnswer | undefined, question?: SittingQuestion): boo
     return labelsFromText(answer?.text ?? "", 50).some((label) => label.trim());
   if (question?.type === "matching")
     return labelsFromText(answer?.text ?? "", question.matching_prompts?.length ?? 0).some((value) => value.trim());
+  if (question?.type === "calculation")
+    return labelsFromText(answer?.text ?? "", question.calculation_prompts?.length ?? 0).some((value) => value.trim());
   return Boolean(answer && (answer.selected.length > 0 || answer.text?.trim()));
 }
 
@@ -172,6 +174,22 @@ function QuestionInput({
         </div>
       ))}
       <span className="hint">Each answer can be used once. Partial marks are awarded.</span>
+    </fieldset>;
+  }
+  if (question.type === "calculation") {
+    const values = labelsFromText(text, question.calculation_prompts?.length ?? 0);
+    return <fieldset className="field">
+      <legend>Calculation steps</legend>
+      {(question.calculation_prompts ?? []).map((prompt, index) => (
+        <div className="field" key={index}>
+          <label htmlFor={`a-${question.item_id}-${index}`}>{prompt}</label>
+          <input id={`a-${question.item_id}-${index}`} inputMode="decimal" autoComplete="off" value={values[index] ?? ""} onChange={(event) => {
+            const next = [...values]; next[index] = event.target.value;
+            onChange({ selected: [], text: JSON.stringify(next) }, true);
+          }} />
+        </div>
+      ))}
+      <span className="hint">Enter one number for each step. Partial marks are awarded.</span>
     </fieldset>;
   }
   if (question.type === "diagram_label") {

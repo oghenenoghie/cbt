@@ -11,7 +11,8 @@ export type QuestionType =
   | "numeric"
   | "essay"
   | "diagram_label"
-  | "matching";
+  | "matching"
+  | "calculation";
 
 export interface DiagramElement {
   kind: "rect" | "ellipse" | "line" | "arrow" | "region" | "text";
@@ -88,6 +89,7 @@ export interface SittingQuestion {
   stem: string;
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
+  calculation_prompts?: string[];
   options: { id: string; text: string }[];
   marks: number;
   passage: { title: string; body: string } | null;

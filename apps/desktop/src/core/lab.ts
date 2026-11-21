@@ -229,6 +229,14 @@ export function checkedAnswer(item: PackageItem, given: GivenAnswer): GivenAnswe
       throw new LabError("Choose each answer at most once.");
     return { selected: [], text: supplied.some((id) => id !== "") ? JSON.stringify(supplied) : null };
   }
+  if (item.type === "calculation") {
+    const count = item.calculation_prompts?.length ?? 0;
+    let supplied: unknown;
+    try { supplied = text === null ? Array(count).fill("") : JSON.parse(text); } catch { throw new LabError("Enter one number for each calculation step."); }
+    if (!Array.isArray(supplied) || supplied.length !== count || supplied.some((value) => typeof value !== "string" || value.length > MAX_SHORT_ANSWER_CHARS))
+      throw new LabError("Enter one answer for each calculation step.");
+    return { selected: [], text: supplied.some((value) => value.trim()) ? JSON.stringify(supplied) : null };
+  }
   const limit = item.type === "essay" ? MAX_ANSWER_CHARS : MAX_SHORT_ANSWER_CHARS;
   if (text !== null && text.length > limit)
     throw new LabError(`Keep this answer to ${limit} characters or fewer.`);

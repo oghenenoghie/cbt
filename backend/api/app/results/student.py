@@ -182,6 +182,9 @@ def my_result(
                     matching_prompts=(version.answer_key or {}).get("matching_prompts", [])
                     if version.type == "matching"
                     else [],
+                    calculation_prompts=[step["prompt"] for step in (version.answer_key or {}).get("calculation_steps", [])]
+                    if version.type == "calculation"
+                    else [],
                     options=[
                         OptionText(id=o, text=texts[o]) for o in attempt.option_orders[item_id]
                     ],

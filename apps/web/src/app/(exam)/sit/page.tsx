@@ -54,6 +54,7 @@ function labelsFromText(text: string, count: number): string[] {
 function isAnswered(given: Given | undefined, type?: Question["type"]): boolean {
   if (type === "diagram_label") return labelsFromText(given?.text ?? "", 50).some((label) => label.trim());
   if (type === "matching") return labelsFromText(given?.text ?? "", 6).some((answer) => answer.trim());
+  if (type === "calculation") return labelsFromText(given?.text ?? "", 6).some((answer) => answer.trim());
   return Boolean(given && (given.selected.length > 0 || given.text.trim()));
 }
 
@@ -261,7 +262,24 @@ function QuestionView({
         labelled={false}
         numberedTargets={question.type === "diagram_label"}
       />
-      {question.type === "matching" ? (
+      {question.type === "calculation" ? (
+        <fieldset className="field" aria-describedby={stemId}>
+          <legend>Calculation steps</legend>
+          {(() => {
+            const values = labelsFromText(given.text, question.calculation_prompts?.length ?? 0);
+            return (question.calculation_prompts ?? []).map((prompt, index) => (
+              <div className="field" key={index}>
+                <label htmlFor={`calc-${question.item_id}-${index}`}>{prompt}</label>
+                <input id={`calc-${question.item_id}-${index}`} inputMode="decimal" autoComplete="off" value={values[index] ?? ""} readOnly={readOnly} onChange={(event) => {
+                  const next = [...values]; next[index] = event.target.value;
+                  onChange({ ...given, text: JSON.stringify(next) }, true);
+                }} onBlur={onLeave} />
+              </div>
+            ));
+          })()}
+          <span className="hint">Enter one number for each step. Partial marks are awarded.</span>
+        </fieldset>
+      ) : question.type === "matching" ? (
         <fieldset className="field" aria-describedby={stemId}>
           <legend>Match each prompt to one answer</legend>
           {(() => {

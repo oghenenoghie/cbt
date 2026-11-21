@@ -200,6 +200,9 @@ def build_package(
                 "matching_prompts": (version.answer_key or {}).get("matching_prompts", [])
                 if version.type == "matching"
                 else [],
+                "calculation_prompts": [step["prompt"] for step in (version.answer_key or {}).get("calculation_steps", [])]
+                if version.type == "calculation"
+                else [],
                 # The options' text only: which are right is never here.
                 "options": [{"id": o["id"], "text": o["text"]} for o in version.options],
                 "marks": item.marks,
@@ -374,6 +377,7 @@ def _answers_problem(
                 match_option_ids=[option["id"] for option in version.options]
                 if version.type == "matching"
                 else [],
+                calculation_count=len((version.answer_key or {}).get("calculation_steps", [])),
             )
         except (HTTPException, ValidationError):
             return f"An answer doesn't fit its question (question {event.item_id[:8]})."

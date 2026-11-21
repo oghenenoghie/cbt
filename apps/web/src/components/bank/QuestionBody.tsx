@@ -88,6 +88,14 @@ export function AnswerKeyView({
       <span className="hint">Students receive partial marks for correct pairs.</span>
     </div>;
   }
+  if (type === "calculation") {
+    const steps = answerKey?.calculation_steps ?? [];
+    return <div className={styles.answerKey}>
+      <strong>Expected steps</strong>
+      <ol>{steps.map((step, index) => <li key={index}>{step.prompt}: {step.value}{step.tolerance ? ` ± ${step.tolerance}` : ""}</li>)}</ol>
+      <span className="hint">Students receive partial marks for correct steps.</span>
+    </div>;
+  }
   return null;
 }
 

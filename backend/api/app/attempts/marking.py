@@ -113,6 +113,22 @@ def mark(
         ]
         score = int(marks * sum(matches) / len(correct) + 0.5) if correct else 0
         return Marked(is_correct=bool(matches) and all(matches), score=score, needs_marking=False)
+    elif question_type == "calculation":
+        steps = (answer_key or {}).get("calculation_steps", [])
+        try:
+            supplied = json.loads(answer.text or "[]")
+        except (json.JSONDecodeError, TypeError):
+            supplied = []
+        if not isinstance(supplied, list):
+            supplied = []
+        matches = []
+        for index, step in enumerate(steps):
+            value = parse_number(supplied[index]) if index < len(supplied) and isinstance(supplied[index], str) else None
+            expected = float(step["value"])
+            tolerance = float(step.get("tolerance") or 0)
+            matches.append(value is not None and abs(value - expected) <= tolerance + 1e-9 * max(1.0, abs(expected)))
+        score = int(marks * sum(matches) / len(steps) + 0.5) if steps else 0
+        return Marked(is_correct=bool(matches) and all(matches), score=score, needs_marking=False)
     else:
         right = bool(answer.selected) and sorted(answer.selected) == sorted(correct_option_ids)
     return Marked(is_correct=right, score=marks if right else 0, needs_marking=False)

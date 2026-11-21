@@ -24,6 +24,7 @@ export const TYPE_LABELS: Record<QuestionType, string> = {
   essay: "Essay",
   diagram_label: "Diagram labelling",
   matching: "Matching",
+  calculation: "Calculation",
 };
 
 /** What each type is, in the editor's words (ADR 0006). */
@@ -36,6 +37,7 @@ export const TYPE_HINTS: Record<QuestionType, string> = {
   essay: "A written answer that a teacher marks",
   diagram_label: "Type a label for each numbered target",
   matching: "Match each prompt to a different answer; partial marks are awarded",
+  calculation: "2 to 6 numeric steps with partial marks for correct steps",
 };
 
 /** The bank question types supported by AI drafting (ADR 0005, ADR 0006 stage C). */
@@ -87,6 +89,11 @@ export function describeAnswerKey(type: QuestionType, key: AnswerKey | null): st
     const answers = key?.matching_options ?? [];
     const byId = new Map(answers.map((answer, index) => [OPTION_IDS[index], answer]));
     return prompts.map((prompt, index) => `${prompt}: ${byId.get(correct[index]) ?? ""}`).join(" · ") || null;
+  }
+  if (type === "calculation") {
+    return key?.calculation_steps?.map((step) =>
+      `${step.prompt}: ${formatNumber(step.value)}${step.tolerance ? ` (± ${formatNumber(step.tolerance)})` : ""}`,
+    ).join(" · ") ?? null;
   }
   return null;
 }
@@ -170,6 +177,7 @@ export function contentOf(
       type === "matching"
         ? (key?.correct_matches ?? []).map((id) => version.options.findIndex((option) => option.id === id))
         : null,
+    calculation_steps: type === "calculation" ? (key?.calculation_steps ?? []) : null,
     explanation: version.explanation,
     marks: version.marks,
     difficulty: version.difficulty,

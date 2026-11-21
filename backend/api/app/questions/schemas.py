@@ -1,3 +1,4 @@
+import math
 from datetime import datetime
 from typing import Annotated, Literal
 
@@ -7,12 +8,12 @@ from app.diagrams import DiagramSpec
 
 QuestionType = Literal[
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
-    "diagram_label", "matching",
+    "diagram_label", "matching", "calculation",
 ]
 # Marked automatically, from the answer key.
 AUTO_MARKED = (
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "diagram_label",
-    "matching",
+    "matching", "calculation",
 )
 # Answered by choosing options; the others are answered with text.
 CHOICE_TYPES = ("mcq_single", "mcq_multiple", "true_false")
@@ -39,6 +40,12 @@ class _Input(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class CalculationStep(_Input):
+    prompt: OptionText
+    value: float
+    tolerance: float = Field(default=0, ge=0)
+
+
 def normalize_answer(text: str) -> str:
     """A short answer as compared: case, spacing and surrounding punctuation don't matter."""
     text = " ".join(text.split()).casefold()
@@ -61,6 +68,7 @@ class QuestionContent(_Input):
       answers in the same order as the labelled text elements in `diagram_spec`.
     - `matching`: each prompt in `matching_prompts` is paired with one distinct answer from
       `options`; `correct_matches` lists the answer position for each prompt.
+    - `calculation`: 2-6 named numeric steps, each with its expected value and optional tolerance.
     """
 
     type: QuestionType
@@ -73,6 +81,7 @@ class QuestionContent(_Input):
     label_answers: list[LabelVariants] | None = Field(default=None, max_length=50)
     matching_prompts: list[OptionText] | None = Field(default=None, min_length=2, max_length=6)
     correct_matches: list[int] | None = Field(default=None, min_length=2, max_length=6)
+    calculation_steps: list[CalculationStep] | None = Field(default=None, min_length=2, max_length=6)
     value: float | None = None
     tolerance: float | None = Field(default=None, ge=0)
     guide: str | None = Field(default=None, max_length=10000)
@@ -96,10 +105,11 @@ class QuestionContent(_Input):
             "essay": {"guide"},
             "diagram_label": {"label_answers"},
             "matching": {"options", "matching_prompts", "correct_matches"},
+            "calculation": {"calculation_steps"},
         }[self.type]
         for name in (
             "options", "correct", "accepted_answers", "label_answers", "matching_prompts",
-            "correct_matches", "value", "tolerance", "guide"
+            "correct_matches", "calculation_steps", "value", "tolerance", "guide",
         ):
             if name not in used and getattr(self, name) is not None:
                 raise ValueError(f"`{name}` isn't used by {self.type} questions.")
@@ -173,6 +183,14 @@ class QuestionContent(_Input):
                 self.tolerance = 0.0
             elif self.tolerance == float("inf"):
                 raise ValueError("`tolerance` must be a number.")
+        elif self.type == "calculation":
+            steps = self.calculation_steps or []
+            if not 2 <= len(steps) <= 6:
+                raise ValueError("Calculation questions need 2 to 6 steps.")
+            if len({step.prompt.casefold() for step in steps}) != len(steps):
+                raise ValueError("Each calculation step prompt must be different.")
+            if any(not math.isfinite(step.value) or not math.isfinite(step.tolerance) for step in steps):
+                raise ValueError("Each calculation step needs a finite answer and tolerance.")
         return self
 
     def to_storage(self) -> tuple[list[dict], list[str], dict | None]:
@@ -199,6 +217,8 @@ class QuestionContent(_Input):
                 "matching_options": self.options,
             }
             return options, [], key
+        if self.type == "calculation":
+            return [], [], {"calculation_steps": [step.model_dump() for step in self.calculation_steps or []]}
         if self.type == "numeric":
             return [], [], {"value": self.value, "tolerance": self.tolerance}
         return [], [], {"guide": self.guide} if self.guide else None
