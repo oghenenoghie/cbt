@@ -4,6 +4,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from app.diagrams import DiagramSpec
+
 QuestionType = Literal[
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
     "diagram_label",
