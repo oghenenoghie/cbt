@@ -31,8 +31,17 @@ Browser and mobile clients must never contain a platform client secret. They sho
 
 School admins can manage their school's integrations through the API ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations A): register an integration, grant it permissions from a fixed list (`classes:read`, `candidates:read`, `candidates:write`, `results:read`), issue API keys (shown once, stored only as hashes, valid until revoked, up to five at a time so a key can be replaced without downtime), revoke keys, disable the integration and see its activity. Each integration is rate-limited per minute across its keys. The endpoints are listed in the [API README](../../backend/api/README.md#integrations).
 
-An integration can so far only call `GET /api/v1/integrations/me`. Next:
-- **Integrations B:** the web Integrations page, which is still a static design preview.
-- **Integrations C:** the first public endpoints, for classes, student and enrolment sync and released results.
+School admins do all of this from the web app's Integrations screen (`/school/integrations`, Integrations B).
+
+What a connected system can do (Integrations C, listed in the [API README](../../backend/api/README.md#what-integrations-can-do-integrations-c)):
+- **Read the school's structure** (`classes:read`): sessions and terms, classes, subjects.
+- **Sync students** (`candidates:read`, `candidates:write`): `PUT /api/v1/candidates/{your-id}` with the student's name, username and class.
+  - It creates the student with an account that has no password; a school admin sets it. Or it links an existing student account with that username.
+  - It enrols the student or moves them between classes in a session.
+  - Sending the same student again changes nothing, so retries are safe.
+  - Disabling accounts and removing students from classes stay with school admins.
+- **Read released results** (`results:read`): score, total marks and percentage per student and exam, only once the school's release policy shows them.
+
+Errors use the contract's envelope, `{"error": {"code", "message", "request_id"}}`. Every request is audited and shows in the integration's activity.
 
 Webhook delivery, exam launch, OAuth client credentials, SDKs, SSO and LTI remain future work. Don't treat the example exam-launch and webhook endpoints as live.

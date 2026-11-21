@@ -318,7 +318,28 @@ School admins connect their school's other software (a portal, SIS or LMS) by re
 
 - Keys don't expire; they last until revoked. Only a key's SHA-256 and first 16 characters are stored.
 - Each integration may make `INTEGRATION_RATE_LIMIT_PER_MINUTE` requests a minute (default 120) across all its keys. Over that, 429 with `Retry-After`. Responses carry `X-RateLimit-Limit`, `X-RateLimit-Remaining` and `X-RateLimit-Reset`.
-- Permissions: `classes:read`, `candidates:read`, `candidates:write`, `results:read`. Their endpoints arrive with Integrations C.
+- Permissions: `classes:read`, `candidates:read`, `candidates:write`, `results:read`.
+
+#### What integrations can do (Integrations C)
+
+These are what a school's SIS, LMS or portal calls with its key (`app/integrations/public.py`, ADR 0008 decisions 7 to 11). Each needs one permission, sees only its own school, and writes an audit entry for the integration's activity, reads included.
+
+| Endpoint | Permission | What it does |
+|---|---|---|
+| `GET /api/v1/academic-sessions` | `classes:read` | The school's sessions, newest first, with their terms |
+| `GET /api/v1/classes?session_id=` | `classes:read` | The classes (arms) of a session (the current one by default): id, name like "JSS1 A", level |
+| `GET /api/v1/subjects` | `classes:read` | The subjects, with the class levels that take each |
+| `GET /api/v1/candidates?limit=&after=` | `candidates:read` | The school's students, newest first: name, username, this integration's ID, account status, whether a password is set, current class |
+| `GET /api/v1/candidates/{external_id}` | `candidates:read` | One student, by this integration's ID |
+| `PUT /api/v1/candidates/{external_id}` | `candidates:write` | `display_name`, `username`, optional `class_id`. Creates the student with an account without a password (201), links an existing student account with that username, or updates name, username and class. Sending it again changes nothing. Never sets passwords, disables accounts or removes enrolments |
+| `GET /api/v1/released-results?limit=&after=` | `results:read` | Published exams whose results students can see (released, or shown immediately) |
+| `GET /api/v1/released-results/{exam_id}` | `results:read` | Each student's score, total marks, percentage and hand-in time, with teachers' marks. 409 until released |
+| `GET /api/v1/candidates/{external_id}/results` | `results:read` | One student's released results |
+
+- **Errors** from every integration endpoint, `/integrations/me` included, are `{"error": {"code", "message", "request_id"}}` (`app/integrations/envelope.py`). A request that doesn't validate adds `details` (field and reason). Codes: `unauthenticated` (401), `permission_denied` (403), `not_found` (404), `conflict` (409), `payload_too_large` (413), `validation_failed` (422), `rate_limited` (429), `internal_error` (500).
+- **Request ids:** send `X-Request-ID` to have it echoed in the response header, the error and the audit entry; otherwise the API makes a `req_...` one.
+- **Size:** bodies over `INTEGRATION_MAX_BODY_KB` (default 64) are refused with 413.
+- **External IDs** are the integration's own, separate from other integrations': letters, digits and `. _ : @ -`, up to 255 characters.
 
 ### Creating the first accounts
 
@@ -334,6 +355,6 @@ python -m app.cli create-platform-admin --email ops@example.com --display-name "
 
 ## Security implementation status
 
-Login, sessions, CSRF protection, role checks, failed-login throttling and audit writes for sign-in exist, and so does integration management (ADR 0008): credential lifecycle routes for school admins, audit entries for every change, per-integration rate limits and security tests (`tests/test_integrations_admin.py`). Public customer-data endpoints for integrations stay closed until Integrations C adds each one with its own tenant, permission, audit and rate-limit tests. Never use a client-side-only check as access control.
+Login, sessions, CSRF protection, role checks, failed-login throttling and audit writes for sign-in exist, and so does integration management (ADR 0008): credential lifecycle routes for school admins, audit entries for every change, per-integration rate limits and security tests (`tests/test_integrations_admin.py`). The first public customer-data endpoints for integrations (Integrations C) each have a permission check, tenant filtering, an audit entry, the rate limit and their own security tests (`tests/test_integration_api.py`); any new one needs the same. Never use a client-side-only check as access control.
 
 See [Integration Developer Guide](../../docs/integrations/README.md) and [Integration Architecture](../../docs/integrations/overview.md).

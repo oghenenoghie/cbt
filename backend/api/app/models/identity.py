@@ -39,6 +39,14 @@ def normalize_username(username: str) -> str:
     return username.strip().lower()
 
 
+USERNAME_RULE = "Usernames may contain only letters, digits, '.', '_' and '-' (1-100 characters)."
+
+
+def valid_username(username: str) -> bool:
+    """Whether an already normalized username is allowed."""
+    return _USERNAME_PATTERN.fullmatch(username) is not None
+
+
 def normalize_email(email: str) -> str:
     return email.strip().lower()
 
@@ -83,10 +91,8 @@ class User(Base):
     @validates("username")
     def _validate_username(self, _key: str, value: str) -> str:
         username = normalize_username(value)
-        if not _USERNAME_PATTERN.fullmatch(username):
-            raise ValueError(
-                "Usernames may contain only letters, digits, '.', '_' and '-' (1-100 characters)."
-            )
+        if not valid_username(username):
+            raise ValueError(USERNAME_RULE)
         return username
 
     @validates("role")

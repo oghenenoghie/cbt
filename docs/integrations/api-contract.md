@@ -2,6 +2,8 @@
 
 This document defines the first public contract shape. It is a design baseline, not a claim that all endpoints are implemented.
 
+**Live today** ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations C): API-key authentication (`Authorization: Bearer cbt_live_...`), the error envelope below, and `/academic-sessions`, `/classes`, `/subjects`, `/candidates` (read, and `PUT /candidates/{external_id}` to sync a student), `/released-results` and `/candidates/{external_id}/results`. The [API README](../../backend/api/README.md#what-integrations-can-do-integrations-c) lists them. OAuth, `/assessments`, `/exam-sessions`, `/attempts`, webhooks and exam launch below are still the plan.
+
 ## Base URL and versioning
 
 `https://{customer-domain-or-platform}/api/v1`

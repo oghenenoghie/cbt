@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
 
 from app.integrations.auth import IntegrationPrincipal, get_integration_principal
+from app.integrations.envelope import EnvelopeRoute
 
-router = APIRouter(prefix="/integrations", tags=["integrations"])
+router = APIRouter(prefix="/integrations", tags=["integration API"], route_class=EnvelopeRoute)
 
 
 @router.get("/me")

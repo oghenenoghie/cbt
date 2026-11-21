@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     # Integrations (ADR 0008): requests each integration may make per minute, across all its keys.
     integration_rate_limit_per_minute: int = 120
+    # The largest request body an integration may send, in KB (larger is 413).
+    integration_max_body_kb: int = 64
 
     # Learning materials (ADR 0004).
     # Where uploaded originals are kept: a directory on local disk for now.

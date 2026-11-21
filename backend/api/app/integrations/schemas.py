@@ -1,8 +1,8 @@
-"""Canonical request/response schemas for external integrations.
+"""Canonical request/response schemas for later integration resources (exam sessions, webhooks).
 
-These schemas intentionally contain no authentication implementation. Public
-routes must not be enabled until tenant-scoped authentication, scopes,
-validation, audit logging, and rate limiting are in place.
+No route uses these yet. The live public endpoints (ADR 0008, Integrations C) have their own
+schemas in `public_schemas.py`. A route that adopts these needs the same permission check, tenant
+filtering, audit entry, rate limit and security tests as those endpoints.
 """
 
 from datetime import datetime
