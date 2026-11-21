@@ -1,0 +1,21 @@
+.subjectChecks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px 16px;
+}
+
+.subjectChecks .hint {
+  display: block;
+}
+
+.rowActions {
+  display: inline-flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ungrouped {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}

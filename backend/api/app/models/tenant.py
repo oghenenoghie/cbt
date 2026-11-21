@@ -34,6 +34,15 @@ class Tenant(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="active", nullable=False, index=True)
+    # The school profile, which school admins edit (ADR 0002 decision 12). The school code
+    # (`slug`) never changes, because everyone signs in with it.
+    address: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(254), nullable=True)
+    motto: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # The logo as the server re-encoded it (PNG), in storage; None when the school has none.
+    logo_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    logo_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 

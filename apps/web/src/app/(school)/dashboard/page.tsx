@@ -195,7 +195,9 @@ export default function DashboardPage() {
       <div className={styles.grid}>
         {user.role === "student" && <MyExamsCard />}
         {user.role !== "student" && <ReleaseCard />}
-        {(user.role === "school_admin" || user.is_exam_coordinator) && <ApprovalsCard />}
+        {(user.role === "school_admin" || user.is_exam_coordinator || user.heads_department) && (
+          <ApprovalsCard />
+        )}
         {user.role === "school_admin" && <SetupChecklist />}
         <ClassesCard />
       </div>

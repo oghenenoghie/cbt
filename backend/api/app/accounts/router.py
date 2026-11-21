@@ -32,7 +32,7 @@ from app.core.passwords import (
     validate_new_password,
 )
 from app.db.session import get_db
-from app.models import Tenant, User
+from app.models import Department, Tenant, User
 from app.models.identity import STAFF_ROLES, normalize_email, normalize_username
 
 router = APIRouter(prefix="/school/users", tags=["accounts"])
@@ -236,6 +236,20 @@ def update_user(
             detail="Only staff accounts (teachers and school admins) can be exam coordinators. "
             "Remove the designation before making this account a student.",
         )
+    if "role" in changed and changes["role"] not in STAFF_ROLES:
+        headed = list(
+            db.scalars(
+                select(Department.name)
+                .where(Department.tenant_id == principal.tenant_id, Department.head_id == user.id)
+                .order_by(Department.name)
+            )
+        )
+        if headed:
+            raise HTTPException(
+                422,
+                detail=f"This account heads {', '.join(headed)}. Choose another head on the "
+                "Departments page before making this account a student.",
+            )
     for field in changed:
         setattr(user, field, changes[field])
 

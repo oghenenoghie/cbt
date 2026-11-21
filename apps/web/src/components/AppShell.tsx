@@ -46,9 +46,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {menuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
         <Link href="/dashboard" className={styles.brand}>
-          <span className={styles.mark} aria-hidden="true">
-            C
-          </span>
+          {school.logo_url ? (
+            // The school's own logo, served by the API; next/image adds nothing for one small PNG.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={school.logo_url} alt="" className={styles.logo} />
+          ) : (
+            <span className={styles.mark} aria-hidden="true">
+              C
+            </span>
+          )}
           <span className={styles.schoolName}>{school.name}</span>
         </Link>
         <div className={styles.who}>
@@ -57,6 +63,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="muted">
               {ROLE_LABELS[user.role]}
               {user.is_exam_coordinator ? " · Exam coordinator" : ""}
+              {user.heads_department ? " · Head of department" : ""}
             </span>
           </span>
           <button type="button" className="btn btn-secondary" onClick={onSignOut} disabled={signingOut}>

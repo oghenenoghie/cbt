@@ -1,7 +1,14 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 
 def _name(max_length: int) -> type[str]:
@@ -134,13 +141,15 @@ class SubjectCreate(_Input):
     name: Name100
     code: SubjectCode | None = None
     level_ids: list[str] = Field(default_factory=list, max_length=100)
+    department_id: str | None = None
 
 
 class SubjectUpdate(_Input):
-    """Omitted fields stay as they are; `code` set to null is cleared."""
+    """Omitted fields stay as they are; `code` or `department_id` set to null is cleared."""
 
     name: Name100 | None = None
     code: SubjectCode | None = None
+    department_id: str | None = None
 
 
 class SubjectLevels(_Input):
@@ -166,8 +175,98 @@ class SubjectOut(BaseModel):
     id: str
     name: str
     code: str | None
+    department_id: str | None
     level_ids: list[str]
     topics: list[TopicOut]
+
+
+# --- Departments ---------------------------------------------------------------------------------
+
+
+class DepartmentCreate(_Input):
+    name: Name100
+    # An active teacher or school admin at the school.
+    head_id: str | None = None
+
+
+class DepartmentUpdate(_Input):
+    """Omitted fields stay as they are; `head_id` set to null removes the head."""
+
+    name: Name100 | None = None
+    head_id: str | None = None
+
+
+class PersonRef(BaseModel):
+    id: str
+    display_name: str
+
+
+class DepartmentOut(BaseModel):
+    id: str
+    name: str
+    head: PersonRef | None
+    # Its subjects, in name order.
+    subject_ids: list[str]
+
+
+# --- The school profile --------------------------------------------------------------------------
+
+
+def _optional(max_length: int) -> type[str]:
+    return Annotated[str, StringConstraints(strip_whitespace=True, max_length=max_length)]
+
+
+_PHONE_CHARACTERS = set("0123456789+-()/,. ")
+
+
+class SchoolProfileUpdate(_Input):
+    """Omitted fields stay as they are; null or an empty string clears an optional field. The
+    school code can't be changed: everyone signs in with it."""
+
+    name: Name200 | None = None
+    address: _optional(500) | None = None
+    phone: _optional(50) | None = None
+    email: _optional(254) | None = None
+    motto: _optional(200) | None = None
+
+    @field_validator("address", "phone", "email", "motto")
+    @classmethod
+    def _blank_is_none(cls, value: str | None) -> str | None:
+        return value or None
+
+    @field_validator("phone")
+    @classmethod
+    def _phone(cls, value: str | None) -> str | None:
+        if value is not None and (
+            not set(value) <= _PHONE_CHARACTERS or sum(c.isdigit() for c in value) < 3
+        ):
+            raise ValueError(
+                "Use digits, spaces and + - ( ) / , . only, for example +234 803 123 4567."
+            )
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def _email(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        local, at, domain = value.lower().rpartition("@")
+        if not at or not local or "." not in domain.strip(".") or any(c.isspace() for c in value):
+            raise ValueError("Enter an email address such as office@school.example.")
+        return f"{local}@{domain}"
+
+
+class SchoolProfile(BaseModel):
+    """What every member of the school can see about it."""
+
+    name: str
+    code: str
+    address: str | None
+    phone: str | None
+    email: str | None
+    motto: str | None
+    # Where to fetch the logo (it changes when the logo does), or null without one.
+    logo_url: str | None
 
 
 # --- People in classes ---------------------------------------------------------------------------

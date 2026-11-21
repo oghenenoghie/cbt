@@ -6,6 +6,7 @@
   - structure: `backend/api/app/models/academic.py`, `backend/api/app/school/` (migration `0004_school_structure`)
   - people in classes: `backend/api/app/models/classroom.py`, `backend/api/app/school/enrolments.py`, `assignments.py`, `me.py`, `access.py` (migration `0005_classrooms`)
   - class lists (decisions 8 to 10, 2026-11-21): `backend/api/app/school/class_lists.py`, and the Enrolment page's upload in `apps/web` (`ClassListUpload.tsx`)
+  - departments and the school profile (decisions 11 and 12, 2026-11-21): `backend/api/app/school/departments.py`, `profile.py` (migration `0022_school_profile_departments`), and the Departments and School profile pages in `apps/web`
 
 ## Context
 
@@ -56,12 +57,21 @@ The user decided decisions 8 to 10 on 2026-11-21, so that schools can put everyo
 
 10. **Moves.** A student already in another class of the session is **moved** to the file's class, and the preview says from where (chosen over refusing such rows). A student already in that class is left as they are, so the same file can be imported again safely. Nobody is removed from a class: students missing from the file keep their enrolment.
 
+11. **Departments group subjects, and a head of department approves their exams.** A department (such as "Sciences") has a name, unique in the school, and an optional head; a subject belongs to at most one. School admins manage them (`/school/departments`, and `department_id` on a subject); staff can list them.
+    - The head is an active teacher or school admin at the school. Heading a department lets them **see, approve, send back and withdraw teachers' exams in its subjects**, and see those exams' results, like an exam coordinator limited to the department (ADR 0003 decision 2). Chosen over departments as labels only, which nothing would have needed.
+    - It gives nothing else: no releasing results, marking or lab computers unless they also teach the subject, no question bank access, and never their own exam or a school admin's.
+    - The powers follow the data: removing the head, or moving a subject out, ends them at once. An account that heads a department can't be made a student until someone else heads it. Deleting a department leaves its subjects without one.
+
+12. **The school profile.** School admins edit the school's name, address, phone, email and motto (`PATCH /school/profile`); every member of the school can read it. The **school code doesn't change**, because everyone signs in with it.
+    - A **logo** is uploaded as a PNG or JPEG of up to 2 MB and 25 million pixels (`PUT /school/profile/logo`). The server re-encodes it as a PNG of at most 512 pixels a side and keeps only that, so metadata such as where a photo was taken, and anything else hidden in the file, never reaches anyone. Each logo gets a new storage key, so its URL (`logo_url`) changes with it.
+    - The web app shows it beside the school's name on every page and on printed exam-code slips. The logo is served only to signed-in members of its own school; its URL names no school.
+
 ## Consequences
 
 - Deleting is refused (409, with an explanation) whenever something still points at the record. Mistakes are fixed by renaming or moving, not by forcing a delete.
 - A session always keeps at least one term.
 - Topics are ordered by `position`, then name. Positions are plain sort keys, not unique, so moving a topic is a single update.
-- Departments, from the requirements list, aren't modelled yet. Add them when something needs them, such as reporting or access.
+- Exam approval now has three kinds of approver: coordinators (school-wide), school admins (teachers' exams) and heads of department (teachers' exams in their subjects). The rules stay in one place, `app/exams/access.py`.
 
 ## Still open
 

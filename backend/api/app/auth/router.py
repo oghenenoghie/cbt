@@ -38,9 +38,10 @@ from app.core.passwords import (
     verify_password,
 )
 from app.db.session import get_db
-from app.models import AuthSession, PlatformAdmin, Tenant, User
+from app.models import AuthSession, Department, PlatformAdmin, Tenant, User
 from app.models.identity import STAFF_ROLES, normalize_email, normalize_username
 from app.models.tenant import as_utc, normalize_school_code
+from app.school.profile import logo_url
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -91,8 +92,17 @@ def _session_info(db: Session, principal: SessionPrincipal) -> SessionInfo:
                 display_name=user.display_name,
                 role=user.role,
                 is_exam_coordinator=user.is_exam_coordinator,
+                heads_department=user.role in STAFF_ROLES
+                and db.scalar(
+                    select(Department.id)
+                    .where(Department.tenant_id == tenant.id, Department.head_id == user.id)
+                    .limit(1)
+                )
+                is not None,
             ),
-            school=SchoolSummary(id=tenant.id, name=tenant.name, code=tenant.slug),
+            school=SchoolSummary(
+                id=tenant.id, name=tenant.name, code=tenant.slug, logo_url=logo_url(tenant)
+            ),
         )
     admin = db.get(PlatformAdmin, principal.platform_admin_id)
     return SessionInfo(

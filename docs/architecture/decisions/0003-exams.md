@@ -1,7 +1,7 @@
 # ADR 0003: Exams and the question bank
 
 - **Status:** Accepted (all four stages are built)
-- **Date:** 2026-11-07 (decision 2 revised 2026-11-08: exam coordinators approve exams)
+- **Date:** 2026-11-07 (decision 2 revised 2026-11-08: exam coordinators approve exams; 2026-11-21: heads of department approve teachers' exams in their subjects)
 - **Implemented in:**
   - question bank: `backend/api/app/models/questions.py`, `backend/api/app/questions/` (migrations `0006_question_bank` and `0007_passages`)
   - exam builder and publishing: `backend/api/app/models/exams.py`, `backend/api/app/exams/`; the coordinator designation in `backend/api/app/accounts/` (migration `0008_exams`)
@@ -29,6 +29,7 @@ The work is built in four stages, each its own change:
    - A teacher or school admin prepares an exam and submits it. An approver publishes it, or sends it back with a note.
    - **Exam coordinators approve exams.** Being a coordinator is a designation on a staff account, not a separate role: a school admin marks teachers or school admins as exam coordinators, and they keep their own role and classes. A school can have several.
    - A **school admin can also approve a teacher's exam**. An exam prepared by a school admin must be approved by an exam coordinator.
+   - The **head of a subject's department** can approve, send back and withdraw teachers' exams in that subject, and sees them and their results (ADR 0002 decision 11). Like a school admin, a head never approves a school admin's exam.
    - **Nobody approves an exam they prepared**, including coordinators. A coordinator's own exam goes to another coordinator or, if they're a teacher, to a school admin.
    - One exam can be set for several arms, as long as they're at the same level and take the exam's subject. The author must be allowed to teach each one (`require_teaching`, ADR 0002).
    - Publishing freezes an **immutable snapshot**: the exact question and passage versions, their order, marks and settings. Later edits to the bank or the exam template never change a published exam.

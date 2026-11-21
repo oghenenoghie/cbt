@@ -12,8 +12,10 @@ export interface SessionInfo {
     display_name: string;
     role: SchoolRole;
     is_exam_coordinator: boolean;
+    /** Heads a department, so approves teachers' exams in its subjects. */
+    heads_department: boolean;
   } | null;
-  school: { id: string; name: string; code: string } | null;
+  school: { id: string; name: string; code: string; logo_url: string | null } | null;
   platform_admin: { id: string; email: string; display_name: string } | null;
 }
 
@@ -119,8 +121,29 @@ export interface Subject {
   id: string;
   name: string;
   code: string | null;
+  department_id: string | null;
   level_ids: string[];
   topics: Topic[];
+}
+
+/** A group of subjects, such as Sciences. Its head approves teachers' exams in its subjects. */
+export interface Department {
+  id: string;
+  name: string;
+  head: { id: string; display_name: string } | null;
+  /** Its subjects, in name order. */
+  subject_ids: string[];
+}
+
+/** What every member of the school sees about it. The school code never changes. */
+export interface SchoolProfile {
+  name: string;
+  code: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  motto: string | null;
+  logo_url: string | null;
 }
 
 export interface Enrolment {

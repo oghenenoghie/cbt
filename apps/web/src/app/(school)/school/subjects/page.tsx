@@ -8,7 +8,7 @@ import { ErrorAlert, Loaded, Notice } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
 import { api } from "@/lib/api";
 import { count } from "@/lib/format";
-import type { ClassLevel, Subject, Topic } from "@/lib/types";
+import type { ClassLevel, Department, Subject, Topic } from "@/lib/types";
 import { useAction } from "@/lib/useAction";
 import { useApi } from "@/lib/useApi";
 
@@ -55,17 +55,51 @@ function LevelChecks({
   );
 }
 
+function DepartmentSelect({
+  id,
+  departments,
+  value,
+  onChange,
+}: {
+  id: string;
+  departments: Department[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="field">
+      <label htmlFor={id}>Department (optional)</label>
+      <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
+        <option value="">No department</option>
+        {departments.map((d) => (
+          <option key={d.id} value={d.id}>
+            {d.name}
+          </option>
+        ))}
+      </select>
+      {departments.length === 0 && (
+        <span className="hint">
+          Add departments on the <Link href="/school/departments">Departments</Link> page.
+        </span>
+      )}
+    </div>
+  );
+}
+
 function NewSubject({
   levels,
+  departments,
   onClose,
   onCreated,
 }: {
   levels: ClassLevel[];
+  departments: Department[];
   onClose: () => void;
   onCreated: (subject: Subject) => void;
 }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const { busy, error, run } = useAction();
 
@@ -75,7 +109,12 @@ function NewSubject({
       onCreated(
         await api<Subject>("/school/subjects", {
           method: "POST",
-          body: { name: name.trim(), code: code.trim() || null, level_ids: [...selected] },
+          body: {
+            name: name.trim(),
+            code: code.trim() || null,
+            level_ids: [...selected],
+            department_id: departmentId || null,
+          },
         }),
       );
     });
@@ -108,6 +147,12 @@ function NewSubject({
             />
           </div>
         </div>
+        <DepartmentSelect
+          id="subject-department"
+          departments={departments}
+          value={departmentId}
+          onChange={setDepartmentId}
+        />
         <fieldset>
           <legend>Levels that take it</legend>
           <LevelChecks levels={levels} selected={selected} onChange={setSelected} idPrefix="new-level" />
@@ -125,19 +170,31 @@ function NewSubject({
   );
 }
 
-function Details({ subject, onChanged }: { subject: Subject; onChanged: () => void }) {
+function Details({
+  subject,
+  departments,
+  onChanged,
+}: {
+  subject: Subject;
+  departments: Department[];
+  onChanged: () => void;
+}) {
   const [name, setName] = useState(subject.name);
   const [code, setCode] = useState(subject.code ?? "");
+  const [departmentId, setDepartmentId] = useState(subject.department_id ?? "");
   const [saved, setSaved] = useState(false);
   const { busy, error, run } = useAction();
-  const dirty = name.trim() !== subject.name || (code.trim() || null) !== subject.code;
+  const dirty =
+    name.trim() !== subject.name ||
+    (code.trim() || null) !== subject.code ||
+    (departmentId || null) !== subject.department_id;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     const ok = await run(() =>
       api(`/school/subjects/${subject.id}`, {
         method: "PATCH",
-        body: { name: name.trim(), code: code.trim() || null },
+        body: { name: name.trim(), code: code.trim() || null, department_id: departmentId || null },
       }),
     );
     setSaved(ok);
@@ -173,6 +230,12 @@ function Details({ subject, onChanged }: { subject: Subject; onChanged: () => vo
           />
         </div>
       </div>
+      <DepartmentSelect
+        id="edit-subject-department"
+        departments={departments}
+        value={departmentId}
+        onChange={setDepartmentId}
+      />
       <div className="form-actions">
         <button type="submit" className="btn btn-primary" disabled={busy || !dirty}>
           {busy ? "Saving…" : "Save"}
@@ -461,12 +524,14 @@ function DeleteSubject({ subject, onDeleted }: { subject: Subject; onDeleted: ()
 function ManageSubject({
   subject,
   levels,
+  departments,
   onClose,
   onChanged,
   onDeleted,
 }: {
   subject: Subject;
   levels: ClassLevel[];
+  departments: Department[];
   onClose: () => void;
   onChanged: () => void;
   onDeleted: () => void;
@@ -475,7 +540,7 @@ function ManageSubject({
     <Modal title={subject.name} onClose={onClose} wide>
       <section className={styles.section} aria-labelledby="subject-details">
         <h3 id="subject-details">Details</h3>
-        <Details subject={subject} onChanged={onChanged} />
+        <Details subject={subject} departments={departments} onChanged={onChanged} />
       </section>
       <section className={styles.section} aria-labelledby="subject-levels">
         <h3 id="subject-levels">Levels that take it</h3>
@@ -496,6 +561,7 @@ function ManageSubject({
 export default function SubjectsPage() {
   const subjects = useApi<Subject[]>("/school/subjects");
   const levels = useApi<ClassLevel[]>("/school/levels");
+  const departments = useApi<Department[]>("/school/departments");
   const [dialog, setDialog] = useState<"new" | { manage: string } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -512,89 +578,106 @@ export default function SubjectsPage() {
         </button>
       </div>
       <Notice text={notice} onDismiss={() => setNotice(null)} />
-      <Loaded value={levels}>
-        {(levelList) => (
-          <Loaded value={subjects}>
-            {(list) => {
-              const managed =
-                dialog && typeof dialog === "object" ? list.find((s) => s.id === dialog.manage) : undefined;
-              return (
-                <>
-                  <div className="table-wrap">
-                    <table className="table">
-                      <thead>
-                        <tr>
-                          <th scope="col">Subject</th>
-                          <th scope="col">Levels</th>
-                          <th scope="col">Topics</th>
-                          <th scope="col" className="end">
-                            <span className="visually-hidden">Actions</span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {list.map((subject) => {
-                          const names = levelList
-                            .filter((l) => subject.level_ids.includes(l.id))
-                            .map((l) => l.name);
-                          return (
-                            <tr key={subject.id}>
-                              <td>
-                                <strong>{subject.name}</strong>
-                                {subject.code && <span className="sub">{subject.code}</span>}
-                              </td>
-                              <td>
-                                {names.length ? (
-                                  names.join(", ")
-                                ) : (
-                                  <span className="badge badge-warning">No levels yet</span>
-                                )}
-                              </td>
-                              <td>{count(subject.topics.length, "topic")}</td>
-                              <td className="end">
-                                <button
-                                  type="button"
-                                  className="btn btn-secondary btn-small"
-                                  aria-label={`Manage ${subject.name}`}
-                                  onClick={() => setDialog({ manage: subject.id })}
-                                >
-                                  Manage
-                                </button>
-                              </td>
+      <Loaded value={departments}>
+        {(departmentList) => (
+          <Loaded value={levels}>
+            {(levelList) => (
+              <Loaded value={subjects}>
+                {(list) => {
+                  const departmentName = new Map(departmentList.map((d) => [d.id, d.name]));
+                  const managed =
+                    dialog && typeof dialog === "object"
+                      ? list.find((s) => s.id === dialog.manage)
+                      : undefined;
+                  return (
+                    <>
+                      <div className="table-wrap">
+                        <table className="table">
+                          <thead>
+                            <tr>
+                              <th scope="col">Subject</th>
+                              <th scope="col">Department</th>
+                              <th scope="col">Levels</th>
+                              <th scope="col">Topics</th>
+                              <th scope="col" className="end">
+                                <span className="visually-hidden">Actions</span>
+                              </th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    {list.length === 0 && <p className="empty">No subjects yet.</p>}
-                  </div>
-                  {dialog === "new" && (
-                    <NewSubject
-                      levels={levelList}
-                      onClose={() => setDialog(null)}
-                      onCreated={(subject) => {
-                        subjects.reload();
-                        setDialog({ manage: subject.id });
-                      }}
-                    />
-                  )}
-                  {managed && (
-                    <ManageSubject
-                      key={managed.id}
-                      subject={managed}
-                      levels={levelList}
-                      onClose={() => setDialog(null)}
-                      onChanged={subjects.reload}
-                      onDeleted={() => {
-                        setDialog(null);
-                        setNotice(`${managed.name} was deleted.`);
-                        subjects.reload();
-                      }}
-                    />
-                  )}
-                </>
-              );
-            }}
+                          </thead>
+                          <tbody>
+                            {list.map((subject) => {
+                              const names = levelList
+                                .filter((l) => subject.level_ids.includes(l.id))
+                                .map((l) => l.name);
+                              return (
+                                <tr key={subject.id}>
+                                  <td>
+                                    <strong>{subject.name}</strong>
+                                    {subject.code && <span className="sub">{subject.code}</span>}
+                                  </td>
+                                  <td>
+                                    {subject.department_id ? (
+                                      departmentName.get(subject.department_id)
+                                    ) : (
+                                      <span className="muted">None</span>
+                                    )}
+                                  </td>
+                                  <td>
+                                    {names.length ? (
+                                      names.join(", ")
+                                    ) : (
+                                      <span className="badge badge-warning">No levels yet</span>
+                                    )}
+                                  </td>
+                                  <td>{count(subject.topics.length, "topic")}</td>
+                                  <td className="end">
+                                    <button
+                                      type="button"
+                                      className="btn btn-secondary btn-small"
+                                      aria-label={`Manage ${subject.name}`}
+                                      onClick={() => setDialog({ manage: subject.id })}
+                                    >
+                                      Manage
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {list.length === 0 && <p className="empty">No subjects yet.</p>}
+                      </div>
+                      {dialog === "new" && (
+                        <NewSubject
+                          levels={levelList}
+                          departments={departmentList}
+                          onClose={() => setDialog(null)}
+                          onCreated={(subject) => {
+                            subjects.reload();
+                            setDialog({ manage: subject.id });
+                          }}
+                        />
+                      )}
+                      {managed && (
+                        <ManageSubject
+                          key={managed.id}
+                          subject={managed}
+                          levels={levelList}
+                          departments={departmentList}
+                          onClose={() => setDialog(null)}
+                          onChanged={subjects.reload}
+                          onDeleted={() => {
+                            setDialog(null);
+                            setNotice(`${managed.name} was deleted.`);
+                            subjects.reload();
+                          }}
+                        />
+                      )}
+                    </>
+                  );
+                }}
+              </Loaded>
+            )}
           </Loaded>
         )}
       </Loaded>
