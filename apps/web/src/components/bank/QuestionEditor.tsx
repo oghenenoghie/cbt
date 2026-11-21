@@ -95,6 +95,7 @@ const PLACEHOLDERS: Record<QuestionType, string> = {
   mcq_multiple: "For example: Which of these are mammals? Tick all that apply.",
   diagram_label: "For example: Name the numbered parts of the cell.",
   matching: "For example: Match each animal to its habitat.",
+  calculation: "For example: Calculate speed, time and distance from the information given.",
   true_false: "For example: Water boils at 100 °C at sea level.",
   short_answer: "For example: What gas do plants take in for photosynthesis?",
   numeric: "For example: A car travels 120 km in 2 hours. What is its average speed in km/h?",
@@ -144,6 +145,11 @@ export function QuestionEditor({
   const [matchingPrompts, setMatchingPrompts] = useState<string[]>(initial?.matching_prompts ?? ["", ""]);
   const [matchingAnswers, setMatchingAnswers] = useState<number[]>(initial?.matching_answers ?? [0, 1]);
   const [matchingConfigured, setMatchingConfigured] = useState(initial?.type === "matching");
+  const [calculationSteps, setCalculationSteps] = useState<{ prompt: string; value: string; tolerance: string }[]>(
+    initial?.calculation_steps?.map((step) => ({ prompt: step.prompt, value: String(step.value ?? ""), tolerance: step.tolerance ? String(step.tolerance) : "" })) ??
+    [{ prompt: "", value: "", tolerance: "" }, { prompt: "", value: "", tolerance: "" }],
+  );
+  const [calculationConfigured, setCalculationConfigured] = useState(initial?.type === "calculation");
   const [correctIndex, setCorrectIndex] = useState<number | null>(
     initial?.type === "mcq_single" ? (initial.correct as number) : null,
   );
@@ -198,6 +204,9 @@ export function QuestionEditor({
     options: hasOptions(type) || type === "matching" ? options : null,
     matching_prompts: type === "matching" ? matchingPrompts : null,
     matching_answers: type === "matching" ? matchingAnswers : null,
+    calculation_steps: type === "calculation"
+      ? calculationSteps.map((step) => ({ prompt: step.prompt, value: numberOf(step.value), tolerance: numberOf(step.tolerance) ?? 0 }))
+      : null,
     correct:
       type === "mcq_single"
         ? (correctIndex ?? -1)
@@ -221,6 +230,7 @@ export function QuestionEditor({
         stem.trim() ||
         diagramText.trim() ||
         options.some((o) => o.trim()) || matchingPrompts.some((p) => p.trim()) ||
+        calculationSteps.some((step) => step.prompt.trim() || step.value.trim() || step.tolerance.trim()) ||
         accepted.some((a) => a.trim()) ||
         value.trim() ||
         guide.trim() ||
@@ -261,6 +271,10 @@ export function QuestionEditor({
       setMatchingAnswers([0, 1]);
       setMatchingConfigured(true);
     }
+    if (next === "calculation" && !calculationConfigured) {
+      setCalculationSteps([{ prompt: "", value: "", tolerance: "" }, { prompt: "", value: "", tolerance: "" }]);
+      setCalculationConfigured(true);
+    }
   }
 
   /** Problems the API would refuse, said in the editor's own words. */
@@ -285,6 +299,11 @@ export function QuestionEditor({
       if (matchingPrompts.length !== options.length || matchingPrompts.some((prompt) => !prompt.trim())) return "Give one prompt for each answer.";
       if (new Set(matchingPrompts.map((prompt) => prompt.trim().toLocaleLowerCase())).size !== matchingPrompts.length) return "Each prompt must be different.";
       if (matchingAnswers.length !== matchingPrompts.length || new Set(matchingAnswers).size !== options.length || matchingAnswers.some((answer) => answer < 0 || answer >= options.length)) return "Choose each answer exactly once.";
+    } else if (type === "calculation") {
+      if (calculationSteps.length < 2 || calculationSteps.length > 6) return "Give 2 to 6 calculation steps.";
+      if (calculationSteps.some((step) => !step.prompt.trim() || numberOf(step.value) === null)) return "Give each step a prompt and numeric answer.";
+      if (new Set(calculationSteps.map((step) => step.prompt.trim().toLocaleLowerCase())).size !== calculationSteps.length) return "Each step prompt must be different.";
+      if (calculationSteps.some((step) => step.tolerance.trim() && (numberOf(step.tolerance) === null || Number(step.tolerance) < 0))) return "Each tolerance must be a number of 0 or more.";
     } else if (hasOptions(type)) {
       const texts = options.map((o) => o.trim().toLocaleLowerCase());
       if (new Set(texts).size !== texts.length) return "Each option must be different.";
@@ -486,7 +505,21 @@ export function QuestionEditor({
           )}
         </fieldset>
 
-        {type === "matching" ? (
+        {type === "calculation" ? (
+          <fieldset>
+            <legend>Calculation steps</legend>
+            <p className={styles.explain}>Students enter one number per step and receive partial marks for correct steps.</p>
+            {calculationSteps.map((step, index) => (
+              <div className="field-row" key={index} style={{ alignItems: "end" }}>
+                <div className="field"><label htmlFor={`calc-prompt-${index}`}>Step {index + 1} prompt</label><input id={`calc-prompt-${index}`} maxLength={500} value={step.prompt} onChange={(event) => setCalculationSteps((rows) => rows.map((row, i) => i === index ? { ...row, prompt: event.target.value } : row))} /></div>
+                <div className="field"><label htmlFor={`calc-value-${index}`}>Correct number</label><input id={`calc-value-${index}`} type="number" inputMode="decimal" step="any" value={step.value} onChange={(event) => setCalculationSteps((rows) => rows.map((row, i) => i === index ? { ...row, value: event.target.value } : row))} /></div>
+                <div className="field"><label htmlFor={`calc-tolerance-${index}`}>Tolerance</label><input id={`calc-tolerance-${index}`} type="number" inputMode="decimal" min={0} step="any" value={step.tolerance} onChange={(event) => setCalculationSteps((rows) => rows.map((row, i) => i === index ? { ...row, tolerance: event.target.value } : row))} /></div>
+                <button type="button" className="btn btn-ghost btn-icon" aria-label={`Remove calculation step ${index + 1}`} disabled={calculationSteps.length <= 2} onClick={() => setCalculationSteps((rows) => rows.filter((_, i) => i !== index))}><X size={16} aria-hidden="true" /></button>
+              </div>
+            ))}
+            {calculationSteps.length < 6 && <button type="button" className="btn btn-secondary btn-small" onClick={() => setCalculationSteps((rows) => [...rows, { prompt: "", value: "", tolerance: "" }])}><Plus size={16} aria-hidden="true" /> Add step</button>}
+          </fieldset>
+        ) : type === "matching" ? (
           <fieldset>
             <legend>Prompts and shared answer bank</legend>
             <p className={styles.explain}>Each answer is used once. Students receive partial marks for correct pairs.</p>

@@ -18,6 +18,7 @@ export interface PackageItem {
   stem: string;
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
+  calculation_prompts?: string[];
   options: { id: string; text: string }[];
   marks: number;
 }

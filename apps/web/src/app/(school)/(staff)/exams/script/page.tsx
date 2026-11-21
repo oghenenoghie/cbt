@@ -96,6 +96,17 @@ function Marked({
           </ol>
           <p className={examStyles.markNote}>Automatic score: {question.auto_score}.</p>
         </>
+      ) : question.type === "calculation" ? (
+        <>
+          <ol>
+            {(question.answer_key?.calculation_steps ?? []).map((step, index) => {
+              const value = diagramAnswers(question.text)[index] ?? "";
+              return <li key={index}>{step.prompt}: {value || "Not answered"} <span className="muted">(correct: {step.value}{step.tolerance ? ` ± ${step.tolerance}` : ""})</span></li>;
+            })}
+          </ol>
+          <AnswerKeyView type={question.type} answerKey={question.answer_key} />
+          <p className={examStyles.markNote}>Automatic score: {question.auto_score}.</p>
+        </>
       ) : written ? (
         <>
           {answered ? (

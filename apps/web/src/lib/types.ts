@@ -154,9 +154,10 @@ export type QuestionType =
   | "numeric"
   | "essay"
   | "diagram_label"
-  | "matching";
+  | "matching"
+  | "calculation";
 /** AI drafts can be any of the bank's types (ADR 0005, ADR 0006 stage C). */
-export type AiQuestionType = Exclude<QuestionType, "diagram_label" | "matching">;
+export type AiQuestionType = Exclude<QuestionType, "diagram_label" | "matching" | "calculation">;
 export type Difficulty = "easy" | "medium" | "hard";
 export type BankStatus = "active" | "archived";
 
@@ -178,6 +179,19 @@ export interface AnswerKey {
   matching_prompts?: string[];
   matching_options?: string[];
   correct_matches?: string[];
+  calculation_steps?: { prompt: string; value: number; tolerance: number }[];
+}
+
+export interface CalculationStep {
+  prompt: string;
+  value: number;
+  tolerance: number;
+}
+
+export interface CalculationStepInput {
+  prompt: string;
+  value: number | null;
+  tolerance: number | null;
 }
 
 export interface DiagramElement {
@@ -251,6 +265,7 @@ export interface QuestionContent {
   label_answers?: string[][] | null;
   matching_prompts?: string[] | null;
   matching_answers?: number[] | null;
+  calculation_steps?: CalculationStepInput[] | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;
@@ -361,6 +376,7 @@ export interface PaperQuestion {
   stem: string;
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
+  calculation_prompts?: string[];
   options: QuestionOption[];
   correct_option_ids: string[];
   answer_key: AnswerKey | null;
@@ -443,6 +459,7 @@ export interface AttemptQuestion {
   stem: string;
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
+  calculation_prompts?: string[];
   /** In this student's order. Empty for questions answered in writing. */
   options: QuestionOption[];
   marks: number;
@@ -501,6 +518,7 @@ export interface ReviewQuestion {
   stem: string;
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
+  calculation_prompts?: string[];
   options: QuestionOption[];
   selected_option_ids: string[];
   /** What the student wrote, for questions answered in writing. */

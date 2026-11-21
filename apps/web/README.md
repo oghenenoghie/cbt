@@ -93,7 +93,7 @@ it again). The subject, topic, passage and active/archived filters are kept in t
 
 | Screen | What staff do there |
 |---|---|
-| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write questions of eight types (ADR 0006): multiple choice with one right answer or several, true/false, short answer (the answers to accept), number (the answer and a margin), essay (an optional marking guide), diagram labelling and matching (a shared answer bank, each answer used once and partial marks per correct pair), with marks, difficulty, topics and an explanation; open one to see its answer key, edit it, see earlier versions, archive, restore or delete it |
+| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write questions of nine types (ADR 0006): multiple choice with one right answer or several, true/false, short answer (the answers to accept), number (the answer and a margin), essay (an optional marking guide), diagram labelling, matching (a shared answer bank, each answer used once and partial marks per correct pair) and calculation (2 to 6 numeric steps with partial marks), with marks, difficulty, topics and an explanation; open one to see its answer key, edit it, see earlier versions, archive, restore or delete it |
 | **Passages** (`/passages`) | List a subject's reading passages; add and edit them; see the questions about one and write more; archive, restore or delete |
 
 Choices worth knowing:

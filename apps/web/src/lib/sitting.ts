@@ -39,4 +39,3 @@ export function formatClock(seconds: number): string {
   const rest = String(s % 60).padStart(2, "0");
   return h ? `${h}:${String(m).padStart(2, "0")}:${rest}` : `${m}:${rest}`;
 }
-

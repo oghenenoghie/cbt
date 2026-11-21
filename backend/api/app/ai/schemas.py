@@ -188,4 +188,3 @@ class QuestionCitationOut(BaseModel):
     document_version: int
     location: str
     quote: str
-

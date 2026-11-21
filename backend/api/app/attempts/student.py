@@ -114,6 +114,9 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
                 matching_prompts=(version.answer_key or {}).get("matching_prompts", [])
                 if version.type == "matching"
                 else [],
+                calculation_prompts=[step["prompt"] for step in (version.answer_key or {}).get("calculation_steps", [])]
+                if version.type == "calculation"
+                else [],
                 options=[
                     AttemptOption(id=option_id, text=texts[option_id])
                     for option_id in attempt.option_orders[item_id]
@@ -329,6 +332,7 @@ def save_answer(
     )
     match_count = len((answer_key or {}).get("matching_prompts", []))
     match_option_ids = [option["id"] for option in options] if question_type == "matching" else []
+    calculation_count = len((answer_key or {}).get("calculation_steps", []))
     chosen, text = checked_answer(
         question_type,
         attempt.option_orders[item_id],
@@ -336,6 +340,7 @@ def save_answer(
         label_count,
         match_count,
         match_option_ids,
+        calculation_count,
     )
 
     latest = db.scalar(
@@ -381,6 +386,7 @@ def checked_answer(
     label_count: int = 0,
     match_count: int = 0,
     match_option_ids: list[str] | None = None,
+    calculation_count: int = 0,
 ) -> tuple[list[str], str | None]:
     """The answer to store for this question type: (chosen options, text)."""
     if question_type in CHOICE_TYPES:
@@ -432,6 +438,24 @@ def checked_answer(
             raise invalid("Choose each matching answer once.")
         encoded = json.dumps(matches)
         return [], encoded if any(matches) else None
+    if question_type == "calculation":
+        if text is None:
+            answers = [""] * calculation_count
+        else:
+            try:
+                answers = json.loads(text)
+            except json.JSONDecodeError as error:
+                raise invalid("Enter one number for each calculation step.") from error
+        if (
+            not isinstance(answers, list)
+            or len(answers) != calculation_count
+            or any(not isinstance(value, str) or len(value) > MAX_SHORT_ANSWER_CHARS for value in answers)
+        ):
+            raise invalid("Enter one answer for each calculation step.")
+        encoded = json.dumps(answers)
+        if len(encoded) > MAX_ANSWER_CHARS:
+            raise invalid("Shorten the calculation answers and try again.")
+        return [], encoded if any(value.strip() for value in answers) else None
     if text is not None and question_type != "essay" and len(text) > MAX_SHORT_ANSWER_CHARS:
         raise invalid(f"Keep this answer to {MAX_SHORT_ANSWER_CHARS} characters or fewer.")
     return [], text

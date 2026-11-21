@@ -13,7 +13,8 @@ export type QuestionType =
   | "numeric"
   | "essay"
   | "diagram_label"
-  | "matching";
+  | "matching"
+  | "calculation";
 
 export const CHOICE_TYPES: readonly QuestionType[] = ["mcq_single", "mcq_multiple", "true_false"];
 
@@ -25,6 +26,7 @@ export interface AnswerKey {
     label_answers?: string[][];
     matching_prompts?: string[];
     correct_matches?: string[];
+    calculation_steps?: { prompt: string; value: number; tolerance: number }[];
     value?: number;
     tolerance?: number;
     guide?: string;
@@ -108,6 +110,17 @@ export function mark(key: AnswerKey, marks: number, given: Given): Marked {
     const correctCount = expected.filter((id, index) => answers[index] === id).length;
     const score = Math.floor((marks * correctCount) / expected.length + 0.5);
     return { isCorrect: expected.length > 0 && correctCount === expected.length, score, needsMarking: false };
+  } else if (key.type === "calculation") {
+    let supplied: unknown = [];
+    try { supplied = JSON.parse(given.text ?? "[]"); } catch { supplied = []; }
+    const steps = key.answer_key?.calculation_steps ?? [];
+    const answers = Array.isArray(supplied) ? supplied : [];
+    const correctCount = steps.filter((step, index) => {
+      const value = typeof answers[index] === "string" ? parseNumber(answers[index] as string) : null;
+      return value !== null && Math.abs(value - step.value) <= step.tolerance + 1e-9 * Math.max(1, Math.abs(step.value));
+    }).length;
+    const score = Math.floor((marks * correctCount) / steps.length + 0.5);
+    return { isCorrect: steps.length > 0 && correctCount === steps.length, score, needsMarking: false };
   } else {
     const chosen = [...given.selected].sort();
     const correct = [...key.correct_option_ids].sort();

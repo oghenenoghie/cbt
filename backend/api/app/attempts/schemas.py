@@ -56,6 +56,7 @@ class AttemptQuestion(BaseModel):
     stem: str
     diagram_spec: DiagramSpec | None = None
     matching_prompts: list[str] = Field(default_factory=list)
+    calculation_prompts: list[str] = Field(default_factory=list)
     options: list[AttemptOption]
     marks: int
     selected_option_ids: list[str]

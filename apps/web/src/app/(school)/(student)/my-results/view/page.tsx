@@ -73,6 +73,13 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
               </li>
             ))}
           </ol>
+        ) : question.type === "calculation" ? (
+          <ol className={styles.options}>
+            {(question.calculation_prompts ?? []).map((prompt, index) => {
+              const value = labelsFromText(question.text ?? "")[index] ?? "";
+              return <li key={index}><span>{prompt}</span><span>{value || <em className="muted">Not answered</em>}</span></li>;
+            })}
+          </ol>
         ) : answered && (
           <div className={`${styles.written} ${styles.mine} ${outcome}`}>
             <span className={styles.tag}>Your answer</span>
