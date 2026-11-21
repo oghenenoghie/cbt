@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.diagrams import DiagramSpec
 
+
 class OptionText(BaseModel):
     id: str
     text: str
@@ -281,3 +282,4 @@ class MarkIn(BaseModel):
     @classmethod
     def _strip(cls, value: str | None) -> str | None:
         return (value.strip() or None) if value is not None else None
+
