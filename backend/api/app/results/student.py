@@ -178,7 +178,7 @@ def my_result(
                     number=number,
                     type=version.type,
                     stem=version.stem,
-                    diagram_spec=student_diagram(version.diagram_spec),
+                    diagram_spec=student_diagram(version.diagram_spec, version.type),
                     options=[
                         OptionText(id=o, text=texts[o]) for o in attempt.option_orders[item_id]
                     ],
@@ -191,3 +191,4 @@ def my_result(
                 )
             )
     return MyResultDetail(**detail, blocks=blocks)
+
