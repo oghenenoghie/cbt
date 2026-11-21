@@ -1,5 +1,5 @@
 from datetime import date
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
@@ -243,3 +243,44 @@ class MyClasses(BaseModel):
 
     enrolments: list[MyEnrolment]
     teaching: list[MyTeaching]
+
+
+# --- Class lists (app/school/class_lists.py) ---------------------------------------------------
+
+
+class ClassListRow(BaseModel):
+    # The row's number in the file, as the admin's spreadsheet shows it.
+    row: int
+    username: str
+    # The new student's name, or an existing student's (which stays as it is).
+    name: str
+    class_name: str | None
+    # create: a new student account; enrol: an existing student into the class; move: from
+    # another class of the session; unchanged: already in it; problem: see `problem`.
+    action: Literal["create", "enrol", "move", "unchanged", "problem"]
+    from_class: str | None
+    notes: list[str]
+    problem: str | None
+
+
+class ClassListPlan(BaseModel):
+    session_id: str
+    session_name: str
+    rows: list[ClassListRow]
+    counts: dict[str, int]
+    warnings: list[str]
+    # Whether importing it would succeed: no row has a problem.
+    ready: bool
+
+
+class NewStudent(BaseModel):
+    id: str
+    username: str
+    display_name: str
+    class_name: str | None
+    # Only when the admin asked for generated passwords; shown in this response only.
+    generated_password: str | None
+
+
+class ClassListImported(ClassListPlan):
+    created: list[NewStudent]

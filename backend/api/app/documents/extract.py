@@ -548,6 +548,11 @@ def _trimmed(values) -> list[str]:
     return cells
 
 
+# Shared with class lists (app/school/class_lists.py), which read spreadsheets the same way.
+cell_text = _cell
+row_cells = _trimmed
+
+
 def _extract_xlsx(data: bytes) -> Extraction:
     from openpyxl import load_workbook
 

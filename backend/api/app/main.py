@@ -24,6 +24,7 @@ from app.results.staff import router as results_staff_router
 from app.results.student import router as results_student_router
 from app.school.assignments import router as school_assignments_router
 from app.school.calendar import router as school_calendar_router
+from app.school.class_lists import router as class_lists_router
 from app.school.classes import router as school_classes_router
 from app.school.enrolments import router as school_enrolments_router
 from app.school.me import router as me_router
@@ -55,6 +56,7 @@ app.include_router(school_calendar_router, prefix=settings.api_v1_prefix)
 app.include_router(school_classes_router, prefix=settings.api_v1_prefix)
 app.include_router(school_subjects_router, prefix=settings.api_v1_prefix)
 app.include_router(school_enrolments_router, prefix=settings.api_v1_prefix)
+app.include_router(class_lists_router, prefix=settings.api_v1_prefix)
 app.include_router(school_assignments_router, prefix=settings.api_v1_prefix)
 app.include_router(me_router, prefix=settings.api_v1_prefix)
 app.include_router(questions_router, prefix=settings.api_v1_prefix)

@@ -1020,3 +1020,39 @@ export interface SubmissionResult {
   flags: string[];
   attempt_id: string | null;
 }
+
+// --- Class lists (POST /school/sessions/{id}/class-list[/preview]) ------------------------------
+
+export type ClassListAction = "create" | "enrol" | "move" | "unchanged" | "problem";
+
+export interface ClassListRow {
+  row: number;
+  username: string;
+  name: string;
+  class_name: string | null;
+  action: ClassListAction;
+  from_class: string | null;
+  notes: string[];
+  problem: string | null;
+}
+
+export interface ClassListPlan {
+  session_id: string;
+  session_name: string;
+  rows: ClassListRow[];
+  counts: Record<ClassListAction, number>;
+  warnings: string[];
+  ready: boolean;
+}
+
+export interface NewStudent {
+  id: string;
+  username: string;
+  display_name: string;
+  class_name: string | null;
+  generated_password: string | null;
+}
+
+export interface ClassListImported extends ClassListPlan {
+  created: NewStudent[];
+}
