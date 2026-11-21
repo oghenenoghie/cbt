@@ -7,7 +7,20 @@ import { Dialog, ErrorText } from "./ui";
 
 const TYPING_PAUSE_MS = 800;
 
-function given(answer: GivenAnswer | undefined): boolean {
+function labelsFromText(text: string, count: number): string[] {
+  try {
+    const value: unknown = JSON.parse(text);
+    return Array.isArray(value)
+      ? Array.from({ length: count }, (_, index) => String(value[index] ?? ""))
+      : Array(count).fill("");
+  } catch {
+    return Array(count).fill("");
+  }
+}
+
+function given(answer: GivenAnswer | undefined, question?: SittingQuestion): boolean {
+  if (question?.type === "diagram_label")
+    return labelsFromText(answer?.text ?? "", 50).some((label) => label.trim());
   return Boolean(answer && (answer.selected.length > 0 || answer.text?.trim()));
 }
 
@@ -140,6 +153,32 @@ function QuestionInput({
     );
   }
   const text = answer?.text ?? "";
+  if (question.type === "diagram_label") {
+    const count = question.diagram_spec?.elements.filter((element) => element.kind === "text").length ?? 0;
+    const labels = labelsFromText(text, count);
+    return (
+      <fieldset className="field">
+        <legend>Label the diagram</legend>
+        {Array.from({ length: count }, (_, index) => (
+          <div className="field" key={index}>
+            <label htmlFor={`a-${question.item_id}-${index}`}>Answer for target {index + 1}</label>
+            <input
+              id={`a-${question.item_id}-${index}`}
+              autoComplete="off"
+              maxLength={200}
+              value={labels[index] ?? ""}
+              onChange={(event) => {
+                const next = [...labels];
+                next[index] = event.target.value;
+                onChange({ selected: [], text: JSON.stringify(next) }, true);
+              }}
+            />
+          </div>
+        ))}
+        <span className="hint">Enter one label for each numbered target.</span>
+      </fieldset>
+    );
+  }
   if (question.type === "essay") {
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     return (
@@ -184,7 +223,7 @@ export function Sitting({
 }) {
   const [answers, setAnswers] = useState(initial.answers);
   const [index, setIndex] = useState(() => {
-    const first = initial.questions.findIndex((q) => !given(initial.answers[q.item_id]));
+    const first = initial.questions.findIndex((q) => !given(initial.answers[q.item_id], q));
     return first === -1 ? 0 : first;
   });
   const [confirming, setConfirming] = useState(false);
@@ -194,7 +233,7 @@ export function Sitting({
   const [secondsLeft, setSecondsLeft] = useState(initial.seconds_left);
   const { save, flush, unsaved, error } = useSaver();
   const question = initial.questions[index] as SittingQuestion;
-  const answered = initial.questions.filter((q) => given(answers[q.item_id])).length;
+  const answered = initial.questions.filter((q) => given(answers[q.item_id], q)).length;
 
   const handIn = useCallback(async () => {
     setHandingIn(true);
@@ -236,7 +275,7 @@ export function Sitting({
       <header className="sitting-bar">
         <div>
           <strong>{initial.exam_title}</strong>
-          <span className="muted"> · {initial.student_name}</span>
+          <span className="muted"> Â· {initial.student_name}</span>
         </div>
         <div className={`countdown ${lowTime ? "low" : ""}`} role="timer" aria-label="Time left">
           {clock(secondsLeft)}
@@ -245,7 +284,7 @@ export function Sitting({
           {error ? (
             <span className="danger">Not saved: {error}</span>
           ) : unsaved ? (
-            "Saving…"
+            "Savingâ€¦"
           ) : (
             "All answers saved"
           )}
@@ -269,12 +308,12 @@ export function Sitting({
         )}
         <section className="question" aria-labelledby="question-stem">
           <p className="eyebrow">
-            Question {question.number} of {initial.questions.length} · {count(question.marks, "mark")}
+            Question {question.number} of {initial.questions.length} Â· {count(question.marks, "mark")}
           </p>
           <p id="question-stem" className="stem">
             {question.stem}
           </p>
-          <Diagram spec={question.diagram_spec} />
+          <Diagram spec={question.diagram_spec} numberedTargets={question.type === "diagram_label"} />
           <QuestionInput question={question} answer={answers[question.item_id]} onChange={change} />
           <div className="actions">
             <button
@@ -307,9 +346,9 @@ export function Sitting({
             <li key={q.item_id}>
               <button
                 type="button"
-                className={`${i === index ? "current" : ""} ${given(answers[q.item_id]) ? "answered" : ""}`}
+                className={`${i === index ? "current" : ""} ${given(answers[q.item_id], q) ? "answered" : ""}`}
                 aria-current={i === index ? "step" : undefined}
-                aria-label={`Question ${q.number}${given(answers[q.item_id]) ? ", answered" : ""}`}
+                aria-label={`Question ${q.number}${given(answers[q.item_id], q) ? ", answered" : ""}`}
                 onClick={() => void go(i)}
               >
                 {q.number}
@@ -346,7 +385,7 @@ export function Sitting({
                 onClick={() => void handIn()}
                 disabled={handingIn}
               >
-                {handingIn ? "Handing in…" : "Hand in"}
+                {handingIn ? "Handing inâ€¦" : "Hand in"}
               </button>
             </div>
           </div>
@@ -360,3 +399,4 @@ export function Sitting({
     </div>
   );
 }
+
