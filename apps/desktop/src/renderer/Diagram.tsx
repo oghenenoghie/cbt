@@ -9,7 +9,7 @@ function color(value: string | undefined, fallback: string): string {
 }
 
 /** Candidate-safe SVG rendering. Diagram packages are label-stripped by the server as well. */
-export function Diagram({ spec }: { spec?: DiagramSpec | null }) {
+export function Diagram({ spec, numberedTargets = false }: { spec?: DiagramSpec | null; numberedTargets?: boolean }) {
   const rawId = useId();
   if (
     !spec || !Number.isInteger(spec.width) || spec.width < 1 || spec.width > 4096 ||
@@ -19,12 +19,15 @@ export function Diagram({ spec }: { spec?: DiagramSpec | null }) {
   const markerId = `lab-arrow-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
 
   function shape(node: DiagramElement, index: number) {
-    if (!node || node.kind === "text" || !Number.isFinite(node.x) || !Number.isFinite(node.y)) return null;
+    if (!node || (node.kind === "text" && !numberedTargets) || !Number.isFinite(node.x) || !Number.isFinite(node.y)) return null;
     const stroke = color(node.stroke, "#1f2937");
     const fill = color(node.fill, "none");
     const strokeWidth = node.stroke_width != null && Number.isFinite(node.stroke_width)
       ? node.stroke_width
       : 2;
+    if (node.kind === "text") {
+      return <text key={index} x={node.x} y={node.y} fill={stroke} fontSize={node.font_size ?? 16} fontWeight="bold">{node.label}</text>;
+    }
     if (node.kind === "rect" || node.kind === "region") {
       return <rect key={index} x={node.x} y={node.y} width={node.width} height={node.height} stroke={stroke} strokeWidth={strokeWidth} fill={fill} />;
     }
@@ -52,3 +55,4 @@ export function Diagram({ spec }: { spec?: DiagramSpec | null }) {
     </div>
   );
 }
+
