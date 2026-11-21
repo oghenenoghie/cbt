@@ -14,8 +14,9 @@ The engine receives a validated diagram specification grounded in approved learn
 
 The first implementation slice is the standalone `diagram_engine` Python package in this directory.
 It renders bounded, structured SVG primitives and creates labelled and blank variants. It currently
-supports rectangles, ellipses, lines and text labels. It is not yet connected to the API, question
-bank or AI draft pipeline. Keep specifications as structured data; never accept raw SVG markup.
+supports rectangles, ellipses, lines, arrows, highlighted rectangular regions and text labels. It
+is not yet connected to the API, question bank or AI draft pipeline. Keep specifications as
+structured data; never accept raw SVG markup.
 
 Import it by adding this directory to `PYTHONPATH`:
 
@@ -29,6 +30,10 @@ spec = DiagramSpec(
     height=220,
     elements=(
         DiagramElement("ellipse", 40, 30, width=240, height=160, fill="#ecfeff"),
+        DiagramElement(
+            "region", 100, 80, width=48, height=32, fill="#fef3c7", stroke="#b91c1c"
+        ),
+        DiagramElement("arrow", 300, 48, x2=245, y2=72, stroke="#0f766e"),
         DiagramElement("text", 110, 118, label="Cell membrane"),
     ),
 )
