@@ -9,7 +9,8 @@ export type QuestionType =
   | "true_false"
   | "short_answer"
   | "numeric"
-  | "essay";
+  | "essay"
+  | "diagram_label";
 
 export interface DiagramElement {
   kind: "rect" | "ellipse" | "line" | "arrow" | "region" | "text";
@@ -210,3 +211,4 @@ export interface LabBridge {
   trustStatus(): Promise<{ enabled: boolean }>;
   importTrustSet(): Promise<LabReply<{ generation: number; changed: boolean } | null>>;
 }
+
