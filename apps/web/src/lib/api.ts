@@ -65,13 +65,13 @@ export async function api<T>(path: string, options: { method?: Method; body?: un
  * Send a file with other form fields (multipart), as uploads need. The browser sets the content
  * type with its boundary; the CSRF token goes in the header as for any change.
  */
-export async function upload<T>(path: string, form: FormData): Promise<T> {
+export async function upload<T>(path: string, form: FormData, method: "POST" | "PUT" = "POST"): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
   if (csrfToken) headers["X-CSRF-Token"] = csrfToken;
   let response: Response;
   try {
     response = await fetch(`/api/v1${path}`, {
-      method: "POST",
+      method,
       headers,
       body: form,
       credentials: "same-origin",

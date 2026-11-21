@@ -331,8 +331,9 @@ def list_exams(
     principal: SessionPrincipal = Depends(staff_read),
     db: Session = Depends(get_db),
 ) -> ExamList:
-    """Exams newest first. Teachers see their own exams and those for classes they teach the
-    subject to; school admins and exam coordinators see every exam at the school."""
+    """Exams newest first. Teachers see their own exams, those for classes they teach the
+    subject to, and those in subjects of departments they head; school admins and exam
+    coordinators see every exam at the school."""
     viewer = viewer_for(db, principal)
     query = select(Exam).where(Exam.tenant_id == principal.tenant_id)
     if not (viewer.is_admin or viewer.is_coordinator):
@@ -347,7 +348,13 @@ def list_exams(
             )
             .correlate(Exam)
         )
-        query = query.where(or_(Exam.created_by_id == principal.user_id, teaches))
+        query = query.where(
+            or_(
+                Exam.created_by_id == principal.user_id,
+                teaches,
+                Exam.subject_id.in_(viewer.headed_subjects),
+            )
+        )
     if exam_status is not None:
         query = query.where(Exam.status == exam_status)
     if subject_id is not None:
@@ -355,17 +362,20 @@ def list_exams(
     if term_id is not None:
         query = query.where(Exam.term_id == term_id)
     if awaiting_my_approval:
-        if not (viewer.is_coordinator or viewer.is_admin):
+        if not (viewer.is_coordinator or viewer.is_admin or viewer.headed_subjects):
             return ExamList(exams=[], next_after=None)
         query = query.where(Exam.status == "submitted", Exam.created_by_id != principal.user_id)
         if not viewer.is_coordinator:
-            # An admin who isn't a coordinator approves only teachers' exams.
+            # Admins and heads of department who aren't coordinators approve only teachers'
+            # exams; heads only in their departments' subjects.
             by_teacher = (
                 exists()
                 .where(User.id == Exam.created_by_id, User.role == "teacher")
                 .correlate(Exam)
             )
             query = query.where(by_teacher)
+            if not viewer.is_admin:
+                query = query.where(Exam.subject_id.in_(viewer.headed_subjects))
     page, next_after = newest_first(db, principal, Exam, query, after, limit)
     return ExamList(exams=_outs(db, viewer, page), next_after=next_after)
 
@@ -696,11 +706,14 @@ def _approvable(db: Session, viewer: Viewer, exam: Exam) -> None:
     if viewer.is_author(exam):
         raise _forbidden("You can't approve an exam you prepared. Another approver must.")
     if not viewer.can_approve(exam, _author_role(db, exam)):
-        if viewer.is_admin:
+        if viewer.is_admin or viewer.heads_subject_of(exam):
             raise _forbidden(
                 "An exam prepared by a school admin must be approved by an exam coordinator."
             )
-        raise _forbidden("Only exam coordinators and school admins can approve exams.")
+        raise _forbidden(
+            "Only exam coordinators, school admins and the head of the subject's department "
+            "can approve exams."
+        )
 
 
 @router.post("/{exam_id}/return", response_model=ExamOut)

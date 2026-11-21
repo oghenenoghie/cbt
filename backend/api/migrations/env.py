@@ -19,6 +19,7 @@ from app.models import (  # noqa: F401
     ClassArm,
     ClassLevel,
     ClassLevelSubject,
+    Department,
     DeviceRegistration,
     Document,
     DocumentSegment,

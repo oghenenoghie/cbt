@@ -62,10 +62,12 @@ npm run build
 
 | Screen | What admins do there |
 |---|---|
+| **School profile** (`/school/profile`) | The school's name, motto, address, phone and email, and its logo (upload, replace, remove), which the header and printed exam-code slips show |
 | **Accounts** (`/school/accounts`) | Search and filter accounts; add one; manage one (details, exam coordinator, password, sign-in block, disable); import up to 200 from a CSV |
 | **Sessions and terms** (`/school/calendar`) | Create sessions (the first becomes current), mark one current, edit and delete sessions and terms |
 | **Classes** (`/school/classes`) | Class levels in order, and each level's arms per session; copy last session's arms into a new one |
-| **Subjects** (`/school/subjects`) | Subjects with codes, the levels that take them, and their topics in order |
+| **Departments** (`/school/departments`) | Groups of subjects with an optional head of department, who approves teachers' exams in them; add, change (name, head, which subjects) and delete |
+| **Subjects** (`/school/subjects`) | Subjects with codes, their department, the levels that take them, and their topics in order |
 | **Enrolment** (`/school/enrolment`) | A class's students: add (search and pick), move to another arm, remove. **Upload class list** (`ClassListUpload.tsx`): a CSV or Excel file for the session, checked by the API, a preview of every row, then the import and a download of new students (with generated passwords, if asked) |
 | **Teaching** (`/school/teaching`) | Assign a teacher to a class and subject (only subjects the class's level takes), filter and remove |
 | **Lab computers** (`/school/lab-computers`) | Computers where students sit exams without the internet (ADR 0007): register one over the internet with a one-time code (shown once with the school code), or by USB (upload the request file the lab app wrote, get back its setup file); rename and remove them; download the newest lab app installer when the server has one |
@@ -146,7 +148,7 @@ the API works out for the signed-in person and checks again on every action.
 |---|---|
 | **Exams** (`/exams`) | Every exam you can see, newest first, by status and subject; start a **New exam** (subject, term, classes, times and settings) |
 | **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** and, if it can be sat on lab computers, its **Lab computers** card |
-| **Approvals** (`/approvals`) | For exam coordinators and school admins: the exams waiting for them. The dashboard shows how many |
+| **Approvals** (`/approvals`) | For exam coordinators, school admins and heads of department: the exams waiting for them. The dashboard shows how many |
 | **Results** (`/exams/results?id=…`) | Whether students can see them yet, how many written answers wait for a mark, and **Release results** once the exam has closed and nothing waits. A summary (students, handed in, didn't sit, average, highest, lowest), then two tabs: **Students** (each student's counted attempt, by class or by score, with what's left to mark and a CSV download) and **Questions** (item analysis: the share who got each question right, or of the marks for written answers, and how many chose each option, in paper order or hardest first) |
 | **Marking** (`/exams/marking?id=…&item=…`) | For exams with written answers (ADR 0006): the short-answer, number and essay questions with how many answers wait; open one to read every student's answer beside the accepted answers or marking guide, and give a mark out of the question's marks with a comment the student sees. Essays wait for a mark; short answers and numbers were marked automatically and can be re-marked, for example to accept a spelling. Linked from the exam, its results and a waiting count |
 | **A marked script** (`/exams/script?exam=…&attempt=…`) | One student's attempt in paper order, each question marked, with the right answer and their answer, written answers with the key or guide, and who marked them; the exam's teachers can mark written answers here too. Opened from a name in the results, in who has started or in marking |
@@ -231,8 +233,9 @@ so pages render on school networks without internet access.
 The screens are being built in stages, each its own pull request:
 
 1. **Foundation** (built): sign-in, the signed-in shell, dashboard and account.
-2. **School setup** (built) for school admins: accounts (including exam coordinators and bulk
-   import), sessions and terms, classes, subjects and topics, enrolment and teaching assignments.
+2. **School setup** (built) for school admins: the school profile and logo, accounts (including exam
+   coordinators and bulk import), sessions and terms, classes, departments, subjects and topics,
+   enrolment and teaching assignments.
 3. **Teaching**, in three parts:
    1. **Question bank** (built): questions and passages.
    2. **Exams** (built): the exam builder, submitting, approvals, publishing, and who has started.

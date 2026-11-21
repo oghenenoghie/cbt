@@ -1,11 +1,12 @@
 """Who may do what with an exam (ADR 0003, decision 2).
 
-- **See**: school admins, exam coordinators, the exam's author, and teachers who teach its
-  subject to any of its classes. Never students.
+- **See**: school admins, exam coordinators, the exam's author, teachers who teach its subject
+  to any of its classes, and the head of the subject's department. Never students.
 - **Prepare** (create, edit, submit): school admins, and teachers who teach the subject to every
   one of its classes. Only the author edits and submits a draft.
 - **Approve** (publish or send back): never the author. An exam coordinator can approve any exam;
-  a school admin can approve a teacher's exam. An admin's own exam needs a coordinator.
+  a school admin, or the head of the subject's department, can approve a teacher's exam. An
+  admin's exam needs a coordinator (ADR 0002 decision 11).
 - **Withdraw** a published exam before it opens: whoever could approve it, or its author.
 - **Release results** once it has closed: its author, teachers who teach its subject to any of its
   classes, and school admins (ADR 0003, decision 1).
@@ -18,7 +19,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.auth.sessions import SessionPrincipal
-from app.models import Exam, ExamArm, TeachingAssignment, User
+from app.models import Department, Exam, ExamArm, Subject, TeachingAssignment, User
 from app.school.common import get_owned
 
 
@@ -31,6 +32,8 @@ class Viewer:
     is_coordinator: bool
     # (arm_id, subject_id) pairs they're assigned to teach.
     teaching: set[tuple[str, str]] = field(default_factory=set)
+    # Subjects in the departments they head.
+    headed_subjects: set[str] = field(default_factory=set)
 
     @property
     def user_id(self) -> str:
@@ -41,8 +44,12 @@ class Viewer:
             self.is_admin
             or self.is_coordinator
             or exam.created_by_id == self.user_id
+            or exam.subject_id in self.headed_subjects
             or any((arm_id, exam.subject_id) in self.teaching for arm_id in arm_ids)
         )
+
+    def heads_subject_of(self, exam: Exam) -> bool:
+        return exam.subject_id in self.headed_subjects
 
     def can_prepare(self, subject_id: str, arm_ids: list[str]) -> bool:
         return self.is_admin or all((arm_id, subject_id) in self.teaching for arm_id in arm_ids)
@@ -60,7 +67,9 @@ class Viewer:
     def can_approve(self, exam: Exam, author_role: str) -> bool:
         if self.is_author(exam):
             return False
-        return self.is_coordinator or (self.is_admin and author_role == "teacher")
+        if self.is_coordinator:
+            return True
+        return author_role == "teacher" and (self.is_admin or self.heads_subject_of(exam))
 
 
 def viewer_for(db: Session, principal: SessionPrincipal) -> Viewer:
@@ -73,11 +82,23 @@ def viewer_for(db: Session, principal: SessionPrincipal) -> Viewer:
             )
         ).all()
     )
+    headed = set(
+        db.scalars(
+            select(Subject.id)
+            .join(Department, Department.id == Subject.department_id)
+            .where(
+                Subject.tenant_id == principal.tenant_id,
+                Department.tenant_id == principal.tenant_id,
+                Department.head_id == principal.user_id,
+            )
+        )
+    )
     return Viewer(
         principal=principal,
         is_admin=principal.role == "school_admin",
         is_coordinator=bool(user and user.is_exam_coordinator),
         teaching={(arm_id, subject_id) for arm_id, subject_id in teaching},
+        headed_subjects=headed,
     )
 
 

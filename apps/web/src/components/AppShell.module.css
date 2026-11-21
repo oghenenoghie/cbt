@@ -37,6 +37,14 @@
   font-weight: 800;
 }
 
+.logo {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
 .schoolName {
   overflow: hidden;
   text-overflow: ellipsis;

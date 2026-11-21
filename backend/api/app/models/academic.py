@@ -6,6 +6,8 @@
   level (e.g. "JSS1 A").
 - Each school keeps one subject list. Subjects have ordered topics and are linked to the class
   levels that take them. AI question generation is later scoped to a subject and its topics.
+- Subjects can be grouped into departments (e.g. "Sciences"). A department's head can see and
+  approve teachers' exams in its subjects (ADR 0002 decision 11, ADR 0003 decision 2).
 
 Composite foreign keys on (id, tenant_id) keep every link inside one school. Children that only
 make sense with their parent (terms, a session's arms, topics, level-subject links) are deleted
@@ -162,6 +164,32 @@ class ClassArm(Base):
     updated_at: Mapped[datetime] = _updated_at()
 
 
+class Department(Base):
+    """A group of subjects, such as "Sciences", with an optional head of department.
+
+    The head is a staff account at the same school (checked where it's set). Deleting a
+    department leaves its subjects without one.
+    """
+
+    __tablename__ = "departments"
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "name", name="uq_departments_tenant_id_name"),
+        UniqueConstraint("id", "tenant_id", name="uq_departments_id_tenant_id"),
+        ForeignKeyConstraint(
+            ["head_id", "tenant_id"],
+            ["users.id", "users.tenant_id"],
+            name="fk_departments_head_same_tenant",
+        ),
+    )
+
+    id: Mapped[str] = _id()
+    tenant_id: Mapped[str] = _tenant_id()
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    head_id: Mapped[str | None] = mapped_column(String(36), index=True, nullable=True)
+    created_at: Mapped[datetime] = _created_at()
+    updated_at: Mapped[datetime] = _updated_at()
+
+
 class Subject(Base):
     """A subject in the school's single subject list, such as "Biology"."""
 
@@ -170,6 +198,11 @@ class Subject(Base):
         UniqueConstraint("tenant_id", "name", name="uq_subjects_tenant_id_name"),
         UniqueConstraint("tenant_id", "code", name="uq_subjects_tenant_id_code"),
         UniqueConstraint("id", "tenant_id", name="uq_subjects_id_tenant_id"),
+        ForeignKeyConstraint(
+            ["department_id", "tenant_id"],
+            ["departments.id", "departments.tenant_id"],
+            name="fk_subjects_department_same_tenant",
+        ),
     )
 
     id: Mapped[str] = _id()
@@ -177,6 +210,8 @@ class Subject(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     # Optional short code (e.g. "BIO"), unique within the school when set.
     code: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Optional department (at most one).
+    department_id: Mapped[str | None] = mapped_column(String(36), index=True, nullable=True)
     created_at: Mapped[datetime] = _created_at()
     updated_at: Mapped[datetime] = _updated_at()
 

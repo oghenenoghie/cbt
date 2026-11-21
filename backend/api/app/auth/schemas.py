@@ -31,6 +31,8 @@ class SchoolSummary(BaseModel):
     id: str
     name: str
     code: str
+    # Where to fetch the school's logo, or null without one (ADR 0002 decision 12).
+    logo_url: str | None = None
 
 
 class UserSummary(BaseModel):
@@ -40,6 +42,8 @@ class UserSummary(BaseModel):
     role: str
     # Can approve exams for publishing (ADR 0003).
     is_exam_coordinator: bool
+    # Heads at least one department, so approves teachers' exams in its subjects.
+    heads_department: bool = False
 
 
 class PlatformAdminSummary(BaseModel):

@@ -1,0 +1,36 @@
+.cards {
+  display: grid;
+  gap: 20px;
+  max-width: 760px;
+}
+
+.logoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.preview {
+  flex: none;
+  width: 128px;
+  height: 128px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  text-align: center;
+  font-size: 13px;
+}
+
+.preview img {
+  max-width: 112px;
+  max-height: 112px;
+  object-fit: contain;
+}
+
+.logoForm {
+  flex: 1;
+  min-width: 240px;
+}

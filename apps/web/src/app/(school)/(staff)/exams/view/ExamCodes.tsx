@@ -25,7 +25,14 @@ function Slips({ exam, subject, codes }: { exam: Exam; subject: string; codes: C
       {codes.codes.map((student) => (
         <div key={student.candidate_id} className="print-slip">
           <p className="print-slip-exam">
-            {school.name} · {exam.title} · {subject}
+            {school.logo_url && (
+              // The school's logo, served by the API at a small fixed size.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={school.logo_url} alt="" className="print-slip-logo" />
+            )}
+            <span>
+              {school.name} · {exam.title} · {subject}
+            </span>
           </p>
           <p className="print-slip-name">
             {student.name}

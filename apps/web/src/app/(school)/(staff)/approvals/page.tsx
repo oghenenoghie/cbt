@@ -38,6 +38,9 @@ export default function ApprovalsPage() {
         exactly what students will get.
         {user.role === "school_admin" && !user.is_exam_coordinator
           ? " As a school admin you approve teachers' exams; an admin's exam needs an exam coordinator."
+          : ""}
+        {user.role === "teacher" && !user.is_exam_coordinator && user.heads_department
+          ? " As a head of department you approve teachers' exams in your department's subjects."
           : ""}{" "}
         Nobody approves an exam they prepared.
       </p>
@@ -47,8 +50,8 @@ export default function ApprovalsPage() {
         <section className="card" style={{ maxWidth: 520 }}>
           <h2>Approving is for exam coordinators</h2>
           <p className="card-intro">
-            A school admin can make you an exam coordinator. Until then, your exams are approved by a
-            coordinator or a school admin.
+            A school admin can make you an exam coordinator or a head of department. Until then, your exams
+            are approved by a coordinator, your head of department or a school admin.
           </p>
           <Link href="/exams" className="btn btn-secondary">
             Go to exams

@@ -121,6 +121,7 @@ export default function AccountPage() {
             <dd>
               {ROLE_LABELS[user.role]}
               {user.is_exam_coordinator && <span className="badge badge-primary">Exam coordinator</span>}
+              {user.heads_department && <span className="badge badge-primary">Head of department</span>}
             </dd>
             <dt>School code</dt>
             <dd>{school.code}</dd>

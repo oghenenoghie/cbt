@@ -81,8 +81,14 @@ def test_login_returns_who_is_signed_in(client: TestClient, teacher) -> None:
         "display_name": "Synthetic User",
         "role": "teacher",
         "is_exam_coordinator": False,
+        "heads_department": False,
     }
-    assert body["school"] == {"id": school.id, "name": school.name, "code": school.slug}
+    assert body["school"] == {
+        "id": school.id,
+        "name": school.name,
+        "code": school.slug,
+        "logo_url": None,
+    }
     assert len(body["csrf_token"]) == 64
     assert body["platform_admin"] is None
 

@@ -1,4 +1,5 @@
-"""The school's subject list, each subject's ordered topics, and which levels take it (ADR 0002)."""
+"""The school's subject list, each subject's ordered topics, which levels take it, and its
+department (ADR 0002)."""
 
 from fastapi import APIRouter, Depends, Query, Request, Response, status
 from sqlalchemy import delete, func, select
@@ -6,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
-from app.models import ClassLevel, ClassLevelSubject, Subject, Topic
+from app.models import ClassLevel, ClassLevelSubject, Department, Subject, Topic
 from app.school.common import (
     audit,
     flush_or_conflict,
@@ -50,10 +51,28 @@ def _subjects_out(db: Session, subjects: list[Subject]) -> list[SubjectOut]:
             levels[link.subject_id].append(link.level_id)
     return [
         SubjectOut(
-            id=s.id, name=s.name, code=s.code, level_ids=sorted(levels[s.id]), topics=topics[s.id]
+            id=s.id,
+            name=s.name,
+            code=s.code,
+            department_id=s.department_id,
+            level_ids=sorted(levels[s.id]),
+            topics=topics[s.id],
         )
         for s in subjects
     ]
+
+
+def _check_department(db: Session, principal: SessionPrincipal, department_id: str | None) -> None:
+    """A department being set on a subject must belong to the caller's school."""
+    if department_id is None:
+        return
+    found = db.scalar(
+        select(Department.id).where(
+            Department.id == department_id, Department.tenant_id == principal.tenant_id
+        )
+    )
+    if found is None:
+        raise invalid("That department doesn't exist.")
 
 
 def _owned_level_ids(db: Session, principal: SessionPrincipal, level_ids: list[str]) -> set[str]:
@@ -107,7 +126,13 @@ def create_subject(
     db: Session = Depends(get_db),
 ) -> SubjectOut:
     level_ids = _owned_level_ids(db, principal, body.level_ids)
-    subject = Subject(tenant_id=principal.tenant_id, name=body.name, code=body.code)
+    _check_department(db, principal, body.department_id)
+    subject = Subject(
+        tenant_id=principal.tenant_id,
+        name=body.name,
+        code=body.code,
+        department_id=body.department_id,
+    )
     db.add(subject)
     flush_or_conflict(db, SUBJECT_TAKEN)
     _link_levels(db, principal, subject, level_ids)
@@ -119,7 +144,7 @@ def create_subject(
         "subject.created",
         "subject",
         subject.id,
-        {"name": subject.name, "levels": len(level_ids)},
+        {"name": subject.name, "levels": len(level_ids), "department_id": subject.department_id},
     )
     db.commit()
     return _subjects_out(db, [subject])[0]
@@ -138,11 +163,16 @@ def update_subject(
     if "name" in changes and changes["name"] is None:
         raise invalid("A subject's name can't be empty.")
     changed = sorted(f for f, v in changes.items() if getattr(subject, f) != v)
+    if "department_id" in changed:
+        _check_department(db, principal, changes["department_id"])
     for field in changed:
         setattr(subject, field, changes[field])
     flush_or_conflict(db, SUBJECT_TAKEN)
     if changed:
-        audit(db, principal, request, "subject.updated", "subject", subject.id, {"fields": changed})
+        details: dict = {"fields": changed}
+        if "department_id" in changed:
+            details["department_id"] = subject.department_id
+        audit(db, principal, request, "subject.updated", "subject", subject.id, details)
     db.commit()
     return _subjects_out(db, [subject])[0]
 

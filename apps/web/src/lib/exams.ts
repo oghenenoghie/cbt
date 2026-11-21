@@ -171,5 +171,5 @@ export function useTeachingArms() {
 /** Whether this person may approve exams at all: school admins and exam coordinators. */
 export function useCanApprove(): boolean {
   const { user } = useSignedIn();
-  return user.role === "school_admin" || user.is_exam_coordinator;
+  return user.role === "school_admin" || user.is_exam_coordinator || user.heads_department;
 }

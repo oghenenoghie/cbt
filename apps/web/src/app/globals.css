@@ -619,8 +619,18 @@ legend {
   }
 
   .print-slip-exam {
+    display: flex;
+    align-items: center;
+    gap: 6pt;
     font-size: 10pt;
     color: #333;
+  }
+
+  .print-slip-logo {
+    flex: none;
+    width: 22pt;
+    height: 22pt;
+    object-fit: contain;
   }
 
   .print-slip-name {
