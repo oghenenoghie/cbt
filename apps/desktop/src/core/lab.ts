@@ -208,6 +208,18 @@ export function checkedAnswer(item: PackageItem, given: GivenAnswer): GivenAnswe
   }
   if (given.selected.length) throw new LabError("Type your answer for this question.");
   const text = given.text !== null && given.text.trim() ? given.text : null;
+  if (item.type === "diagram_label") {
+    const count = item.diagram_spec?.elements.filter((element) => element.kind === "text").length ?? 0;
+    let labels: unknown;
+    try {
+      labels = JSON.parse(text ?? "[]");
+    } catch {
+      throw new LabError("Enter one answer in each diagram label box.");
+    }
+    if (!Array.isArray(labels) || labels.length !== count || labels.some((label) => typeof label !== "string" || label.length > 200))
+      throw new LabError("Enter one answer in each diagram label box.");
+    return { selected: [], text: labels.some((label) => label.trim()) ? JSON.stringify(labels) : null };
+  }
   const limit = item.type === "essay" ? MAX_ANSWER_CHARS : MAX_SHORT_ANSWER_CHARS;
   if (text !== null && text.length > limit)
     throw new LabError(`Keep this answer to ${limit} characters or fewer.`);
@@ -338,7 +350,7 @@ export class Lab {
     this.refuseIfRegistered();
     if (!validPin(input.pin)) throw new LabError(PIN_RULE);
     const name = input.name.trim();
-    if (!name) throw new LabError("Give this computer a name, such as “Lab A, PC 4”.");
+    if (!name) throw new LabError("Give this computer a name, such as â€œLab A, PC 4â€.");
     let address: string;
     try {
       address = serverAddress(input.server);
@@ -380,7 +392,7 @@ export class Lab {
     this.refuseIfRegistered();
     if (!validPin(input.pin)) throw new LabError(PIN_RULE);
     const name = input.name.trim();
-    if (!name) throw new LabError("Give this computer a name, such as “Lab A, PC 4”.");
+    if (!name) throw new LabError("Give this computer a name, such as â€œLab A, PC 4â€.");
     const keys = newSigningKeys();
     const exchange = newExchangeKeys();
     const request = seal(
@@ -1063,3 +1075,4 @@ export class Lab {
     }
   }
 }
+

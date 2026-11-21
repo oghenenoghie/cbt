@@ -40,7 +40,19 @@ interface Given {
   text: string;
 }
 
-function isAnswered(given: Given | undefined): boolean {
+function labelsFromText(text: string, count: number): string[] {
+  try {
+    const value: unknown = JSON.parse(text);
+    return Array.isArray(value)
+      ? Array.from({ length: count }, (_, index) => String(value[index] ?? ""))
+      : Array(count).fill("");
+  } catch {
+    return Array(count).fill("");
+  }
+}
+
+function isAnswered(given: Given | undefined, type?: Question["type"]): boolean {
+  if (type === "diagram_label") return labelsFromText(given?.text ?? "", 50).some((label) => label.trim());
   return Boolean(given && (given.selected.length > 0 || given.text.trim()));
 }
 
@@ -67,7 +79,7 @@ function SaveStatus({ state, unsaved }: { state: SaveState; unsaved: number }) {
     return (
       <span className={`${styles.saved} ${styles.retrying}`} role="status">
         <WifiOff size={16} aria-hidden="true" />
-        {unsaved === 1 ? "1 answer" : `${unsaved} answers`} not saved yet. Retrying…
+        {unsaved === 1 ? "1 answer" : `${unsaved} answers`} not saved yet. Retryingâ€¦
       </span>
     );
   }
@@ -75,7 +87,7 @@ function SaveStatus({ state, unsaved }: { state: SaveState; unsaved: number }) {
     return (
       <span className={`${styles.saved} ${styles.saving}`}>
         <Loader2 size={16} aria-hidden="true" />
-        Saving…
+        Savingâ€¦
       </span>
     );
   }
@@ -130,6 +142,35 @@ function WrittenAnswer({
 }) {
   const id = `answer-${question.item_id}`;
   const hintId = `${id}-hint`;
+  if (question.type === "diagram_label") {
+    const count = question.diagram_spec?.elements.filter((element) => element.kind === "text").length ?? 0;
+    const labels = labelsFromText(text, count);
+    return (
+      <fieldset className="field" aria-describedby={`${stemId} ${hintId}`}>
+        <legend>Label the diagram</legend>
+        {Array.from({ length: count }, (_, index) => (
+          <div className="field" key={index}>
+            <label htmlFor={`${id}-${index}`}>Answer for target {index + 1}</label>
+            <input
+              id={`${id}-${index}`}
+              type="text"
+              autoComplete="off"
+              maxLength={200}
+              value={labels[index] ?? ""}
+              readOnly={readOnly}
+              onChange={(event) => {
+                const next = [...labels];
+                next[index] = event.target.value;
+                onType(JSON.stringify(next));
+              }}
+              onBlur={onLeave}
+            />
+          </div>
+        ))}
+        <span id={hintId} className="hint">Enter one label for each numbered target.</span>
+      </fieldset>
+    );
+  }
   if (question.type === "essay") {
     const words = wordCount(text);
     return (
@@ -209,12 +250,16 @@ function QuestionView({
   return (
     <div>
       <p className={styles.number}>
-        Question {question.number} · {question.marks === 1 ? "1 mark" : `${question.marks} marks`}
+        Question {question.number} Â· {question.marks === 1 ? "1 mark" : `${question.marks} marks`}
       </p>
       <p id={stemId} className={styles.stem}>
         {question.stem}
       </p>
-      <DiagramPreview spec={question.diagram_spec} labelled={false} />
+      <DiagramPreview
+        spec={question.diagram_spec}
+        labelled={false}
+        numberedTargets={question.type === "diagram_label"}
+      />
       {answeredInWriting(question.type) ? (
         <WrittenAnswer
           question={question}
@@ -248,7 +293,7 @@ function QuestionView({
           </div>
         </fieldset>
       )}
-      {isAnswered(given) && !readOnly && (
+      {isAnswered(given, question.type) && !readOnly && (
         <button
           type="button"
           className="btn btn-ghost btn-small"
@@ -299,8 +344,8 @@ function InProgress({
   const handIn = useAction();
   const left = useCountdown(attempt.seconds_left);
   const question = questions[index];
-  const answered = questions.filter((q) => isAnswered(answers[q.item_id]));
-  const unanswered = questions.filter((q) => !isAnswered(answers[q.item_id])).map((q) => q.number);
+  const answered = questions.filter((q) => isAnswered(answers[q.item_id], q.type));
+  const unanswered = questions.filter((q) => !isAnswered(answers[q.item_id], q.type)).map((q) => q.number);
 
   /**
    * Time's up: let the last saves go through, then wait for the server to finish the attempt
@@ -378,7 +423,7 @@ function InProgress({
         <div className="stack">
           {timeUp && (
             <div className="alert alert-warning" role="alert">
-              Time&apos;s up. The answers you&apos;ve given are being handed in…
+              Time&apos;s up. The answers you&apos;ve given are being handed inâ€¦
             </div>
           )}
           {problem && (
@@ -437,7 +482,7 @@ function InProgress({
           <h2>Questions</h2>
           <div className={styles.grid}>
             {questions.map((q, i) => {
-              const done = isAnswered(answers[q.item_id]);
+              const done = isAnswered(answers[q.item_id], q.type);
               return (
                 <button
                   key={q.item_id}
@@ -571,7 +616,7 @@ function Sitting({ attemptId }: { attemptId: string }) {
     return (
       <div className="centered" aria-busy="true">
         <div className="spinner" />
-        <span className="visually-hidden">Loading…</span>
+        <span className="visually-hidden">Loadingâ€¦</span>
       </div>
     );
   }
@@ -598,3 +643,4 @@ export default function SitPage() {
   }
   return <Sitting attemptId={attemptId} />;
 }
+

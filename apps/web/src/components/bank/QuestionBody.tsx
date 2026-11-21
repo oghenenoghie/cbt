@@ -60,6 +60,21 @@ export function AnswerKeyView({
       </div>
     );
   }
+  if (type === "diagram_label") {
+    return (
+      <div className={styles.answerKey}>
+        <strong>Accepted diagram labels</strong>
+        <ol>
+          {(answerKey?.label_answers ?? []).map((answers, index) => (
+            <li key={index}>
+              Target {index + 1}: {answers.join(" Â· ")}
+            </li>
+          ))}
+        </ol>
+        <span className="hint">Students receive partial marks for correct targets.</span>
+      </div>
+    );
+  }
   return null;
 }
 
@@ -127,3 +142,4 @@ export function QuestionBody({
     </div>
   );
 }
+

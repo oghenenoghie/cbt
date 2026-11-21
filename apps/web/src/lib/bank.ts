@@ -22,6 +22,7 @@ export const TYPE_LABELS: Record<QuestionType, string> = {
   short_answer: "Short answer",
   numeric: "Number",
   essay: "Essay",
+  diagram_label: "Diagram labelling",
 };
 
 /** What each type is, in the editor's words (ADR 0006). */
@@ -32,9 +33,10 @@ export const TYPE_HINTS: Record<QuestionType, string> = {
   short_answer: "A word or phrase, marked against the answers you accept",
   numeric: "A number, marked within the margin you allow",
   essay: "A written answer that a teacher marks",
+  diagram_label: "Type a label for each numbered target",
 };
 
-/** The types AI drafts can be: all of the bank's (ADR 0005, ADR 0006 stage C). */
+/** The bank question types supported by AI drafting (ADR 0005, ADR 0006 stage C). */
 export const AI_TYPES: AiQuestionType[] = [
   "mcq_single",
   "mcq_multiple",
@@ -67,13 +69,16 @@ export function formatNumber(value: number): string {
 
 /** A written question's answer key in a line: accepted answers, the number, or the guide. */
 export function describeAnswerKey(type: QuestionType, key: AnswerKey | null): string | null {
-  if (type === "short_answer") return (key?.accepted_answers ?? []).join(" · ") || null;
+  if (type === "short_answer") return (key?.accepted_answers ?? []).join(" Â· ") || null;
   if (type === "numeric" && key?.value !== undefined) {
     return key.tolerance
-      ? `${formatNumber(key.value)} (± ${formatNumber(key.tolerance)})`
+      ? `${formatNumber(key.value)} (Â± ${formatNumber(key.tolerance)})`
       : formatNumber(key.value);
   }
   if (type === "essay") return key?.guide ?? null;
+  if (type === "diagram_label") {
+    return key?.label_answers?.map((answers, index) => `${index + 1}: ${answers[0] ?? ""}`).join(" Â· ") ?? null;
+  }
   return null;
 }
 
@@ -150,6 +155,7 @@ export function contentOf(
     value: type === "numeric" ? (key?.value ?? null) : null,
     tolerance: type === "numeric" ? (key?.tolerance ?? 0) : null,
     guide: type === "essay" ? (key?.guide ?? null) : null,
+    label_answers: type === "diagram_label" ? (key?.label_answers ?? []) : null,
     explanation: version.explanation,
     marks: version.marks,
     difficulty: version.difficulty,
@@ -162,3 +168,4 @@ export function describeType(version: QuestionVersion): string {
     ? `${TYPE_LABELS[version.type]}, ${version.options.length} options`
     : TYPE_LABELS[version.type];
 }
+

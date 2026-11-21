@@ -15,6 +15,15 @@ import styles from "../results.module.css";
 
 const LETTERS = "ABCDEF";
 
+function labelsFromText(text: string): string[] {
+  try {
+    const value: unknown = JSON.parse(text);
+    return Array.isArray(value) ? value.map((label) => String(label ?? "")) : [];
+  } catch {
+    return [];
+  }
+}
+
 /**
  * One of the student's answers, marked right or wrong. It shows what they chose or wrote, and any
  * teacher's comment, never which option was correct or the accepted answers: the API doesn't send
@@ -29,7 +38,7 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
     <div className={`card ${styles.question}`}>
       <div className={styles.head}>
         <strong>
-          Question {question.number} · {question.score} of {question.marks}{" "}
+          Question {question.number} Â· {question.score} of {question.marks}{" "}
           {question.marks === 1 ? "mark" : "marks"}
         </strong>
         {!answered ? (
@@ -49,9 +58,22 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
         )}
       </div>
       <p className={styles.stem}>{question.stem}</p>
-      <DiagramPreview spec={question.diagram_spec} labelled={false} />
+      <DiagramPreview
+        spec={question.diagram_spec}
+        labelled={false}
+        numberedTargets={question.type === "diagram_label"}
+      />
       {written ? (
-        answered && (
+        question.type === "diagram_label" ? (
+          <ol className={styles.options}>
+            {labelsFromText(question.text ?? "").map((label, index) => (
+              <li key={index}>
+                <span>{index + 1}.</span>
+                <span>{label || <em className="muted">Not answered</em>}</span>
+              </li>
+            ))}
+          </ol>
+        ) : answered && (
           <div className={`${styles.written} ${styles.mine} ${outcome}`}>
             <span className={styles.tag}>Your answer</span>
             <p>{question.text}</p>
@@ -183,3 +205,4 @@ export default function MyResultPage() {
     </Suspense>
   );
 }
+

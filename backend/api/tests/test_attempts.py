@@ -743,9 +743,11 @@ def test_the_attempt_json_stays_small_and_plain(school) -> None:
         "number",
         "type",
         "stem",
+        "diagram_spec",
         "options",
         "marks",
         "selected_option_ids",
         "text",
     }
     assert len(json.dumps(attempt)) < 5000
+

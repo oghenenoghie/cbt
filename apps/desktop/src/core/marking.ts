@@ -11,14 +11,21 @@ export type QuestionType =
   | "true_false"
   | "short_answer"
   | "numeric"
-  | "essay";
+  | "essay"
+  | "diagram_label";
 
 export const CHOICE_TYPES: readonly QuestionType[] = ["mcq_single", "mcq_multiple", "true_false"];
 
 export interface AnswerKey {
   type: QuestionType;
   correct_option_ids: string[];
-  answer_key: { accepted_answers?: string[]; value?: number; tolerance?: number; guide?: string } | null;
+  answer_key: {
+    accepted_answers?: string[];
+    label_answers?: string[][];
+    value?: number;
+    tolerance?: number;
+    guide?: string;
+  } | null;
 }
 
 export interface Given {
@@ -75,6 +82,21 @@ export function mark(key: AnswerKey, marks: number, given: Given): Marked {
       typeof expected === "number" &&
       // A hair of slack so 0.1 + 0.2 still counts as 0.3, as on the server.
       Math.abs(value - expected) <= tolerance + 1e-9 * Math.max(1, Math.abs(expected));
+  } else if (key.type === "diagram_label") {
+    const accepted = key.answer_key?.label_answers ?? [];
+    let supplied: unknown = [];
+    try {
+      supplied = JSON.parse(given.text ?? "[]");
+    } catch {
+      supplied = [];
+    }
+    const labels = Array.isArray(supplied) ? supplied : [];
+    const correctCount = accepted.filter((variants, index) =>
+      typeof labels[index] === "string" && variants.map(normalizeAnswer).includes(normalizeAnswer(labels[index] as string)),
+    ).length;
+    const ratio = accepted.length ? (marks * correctCount) / accepted.length : 0;
+    const score = Math.floor(ratio + 0.5);
+    return { isCorrect: correctCount === accepted.length && accepted.length > 0, score, needsMarking: false };
   } else {
     const chosen = [...given.selected].sort();
     const correct = [...key.correct_option_ids].sort();
@@ -83,3 +105,4 @@ export function mark(key: AnswerKey, marks: number, given: Given): Marked {
   }
   return { isCorrect: right, score: right ? marks : 0, needsMarking: false };
 }
+

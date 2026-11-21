@@ -5,7 +5,7 @@ import type { MyExam, QuestionType } from "@/lib/types";
 
 /** Questions a student answers by typing (a word, a number or an essay) rather than choosing. */
 export function answeredInWriting(type: QuestionType): boolean {
-  return type === "short_answer" || type === "numeric" || type === "essay";
+  return type === "short_answer" || type === "numeric" || type === "essay" || type === "diagram_label";
 }
 
 /** Words in a written answer, as a student would count them. */
@@ -39,3 +39,4 @@ export function formatClock(seconds: number): string {
   const rest = String(s % 60).padStart(2, "0");
   return h ? `${h}:${String(m).padStart(2, "0")}:${rest}` : `${m}:${rest}`;
 }
+

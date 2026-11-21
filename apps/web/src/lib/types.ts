@@ -152,9 +152,10 @@ export type QuestionType =
   | "true_false"
   | "short_answer"
   | "numeric"
-  | "essay";
+  | "essay"
+  | "diagram_label";
 /** AI drafts can be any of the bank's types (ADR 0005, ADR 0006 stage C). */
-export type AiQuestionType = QuestionType;
+export type AiQuestionType = Exclude<QuestionType, "diagram_label">;
 export type Difficulty = "easy" | "medium" | "hard";
 export type BankStatus = "active" | "archived";
 
@@ -172,6 +173,7 @@ export interface AnswerKey {
   value?: number;
   tolerance?: number;
   guide?: string;
+  label_answers?: string[][];
 }
 
 export interface DiagramElement {
@@ -242,6 +244,7 @@ export interface QuestionContent {
   value: number | null;
   tolerance: number | null;
   guide: string | null;
+  label_answers?: string[][] | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;
@@ -269,7 +272,7 @@ export interface Passage {
 
 // --- Exams (staff) -----------------------------------------------------------------------------
 
-/** draft → submitted → published (or back to draft when sent back); published → withdrawn. */
+/** draft â†’ submitted â†’ published (or back to draft when sent back); published â†’ withdrawn. */
 export type ExamStatus = "draft" | "submitted" | "published" | "withdrawn";
 export type ResultsRelease = "teacher" | "immediate";
 /** What the signed-in person may do with an exam now: a hint; the API checks every action. */
@@ -990,3 +993,4 @@ export interface SubmissionResult {
   flags: string[];
   attempt_id: string | null;
 }
+

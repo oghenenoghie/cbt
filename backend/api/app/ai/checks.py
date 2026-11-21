@@ -19,9 +19,9 @@ from dataclasses import dataclass, field
 
 from pydantic import ValidationError
 
-from app.diagrams import DiagramSpec
 from app.ai.provider import Checked, CheckItem, SourceText, Verdict
 from app.ai.text import normalize, phrase_in, quote_found, same_question
+from app.diagrams import DiagramSpec
 from app.questions.schemas import QuestionContent
 
 MAX_CITATIONS = 5
@@ -49,7 +49,7 @@ ANSWER_NOT_QUOTED = (
     "material."
 )
 NO_GUIDE = "Essay drafts need a marking guide drawn from the material."
-BANNED = "It uses an option like “all of the above”, which makes the answer hard to check."
+BANNED = "It uses an option like â€œall of the aboveâ€, which makes the answer hard to check."
 NOT_CHECKED = "The answer check didn't return a result for it, so it can't be accepted."
 
 
@@ -165,7 +165,7 @@ def screen(
         if candidate.passed:
             for stem, where in existing:
                 if same_question(candidate.stem, stem):
-                    candidate.reject(f"It's very like a question {where}: “{stem[:200]}”")
+                    candidate.reject(f"It's very like a question {where}: â€œ{stem[:200]}â€")
                     break
     return reviewed
 
@@ -372,3 +372,4 @@ def remove_repeats(reviewed: list[Reviewed]) -> None:
             candidate.reject(f"It asks the same as question {earlier.position} of this request.")
         else:
             kept.append(candidate)
+

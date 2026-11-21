@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Suspense, useState } from "react";
 
 import { AnswerKeyView } from "@/components/bank/QuestionBody";
+import { DiagramPreview } from "@/components/bank/DiagramPreview";
 import { MarkAnswer, markedBy } from "@/components/exams/MarkAnswer";
 import examStyles from "@/components/exams/exams.module.css";
 import { Loaded } from "@/components/Feedback";
@@ -18,6 +19,15 @@ import styles from "../results/results.module.css";
 const LETTERS = "ABCDEF";
 
 const WRITTEN = new Set(["short_answer", "numeric", "essay"]);
+
+function diagramAnswers(text: string | null): string[] {
+  try {
+    const value: unknown = JSON.parse(text ?? "[]");
+    return Array.isArray(value) ? value.map((answer) => String(answer ?? "")) : [];
+  } catch {
+    return [];
+  }
+}
 
 function Marked({
   question,
@@ -38,7 +48,7 @@ function Marked({
     <article className={`card ${styles.item}`} aria-label={`Question ${question.position}`}>
       <div className={styles.itemHead}>
         <strong>
-          Question {question.position} · {question.score} of {count(question.marks, "mark")}
+          Question {question.position} Â· {question.score} of {count(question.marks, "mark")}
         </strong>
         {!answered ? (
           <span className="badge">Not answered</span>
@@ -61,7 +71,18 @@ function Marked({
         )}
       </div>
       <p className={styles.stem}>{question.stem}</p>
-      {written ? (
+      <DiagramPreview spec={question.diagram_spec} />
+      {question.type === "diagram_label" ? (
+        <>
+          <ol>
+            {diagramAnswers(question.text).map((answer, index) => (
+              <li key={index}>Target {index + 1}: {answer || "Not answered"}</li>
+            ))}
+          </ol>
+          <AnswerKeyView type={question.type} answerKey={question.answer_key} />
+          <p className={examStyles.markNote}>Automatic score: {question.auto_score}.</p>
+        </>
+      ) : written ? (
         <>
           {answered ? (
             <p className={examStyles.writtenAnswer}>{question.text}</p>
@@ -140,7 +161,7 @@ function ScriptView({ examId, attemptId }: { examId: string; attemptId: string }
             <div>
               <h1 className="page-title">{s.candidate_name}</h1>
               <p className="page-intro" style={{ marginBottom: 0 }}>
-                Attempt {s.number} · handed in {formatDateTime(s.submitted_at)}
+                Attempt {s.number} Â· handed in {formatDateTime(s.submitted_at)}
                 {s.submitted_reason === "time_up" ? " when time ran out" : ""}
               </p>
             </div>
@@ -238,3 +259,4 @@ export default function ExamScriptPage() {
     </Suspense>
   );
 }
+

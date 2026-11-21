@@ -14,22 +14,26 @@ function validColor(value: string | undefined, fallback: string): string {
 export function DiagramPreview({
   spec,
   labelled = true,
+  numberedTargets = false,
 }: {
   spec?: DiagramSpec | null;
   labelled?: boolean;
+  numberedTargets?: boolean;
 }) {
   const rawId = useId();
   if (!spec || !Number.isFinite(spec.width) || !Number.isFinite(spec.height)) return null;
   const markerId = `diagram-arrow-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  let targetNumber = 0;
 
   function element(node: DiagramElement, index: number) {
     const stroke = validColor(node.stroke, "#1f2937");
     const fill = validColor(node.fill, "none");
     const common = { key: index, stroke, strokeWidth: node.stroke_width ?? 2, fill };
     if (node.kind === "text") {
-      return labelled && node.label ? (
+      const label = numberedTargets ? String(++targetNumber) : node.label;
+      return (labelled || numberedTargets) && label ? (
         <text key={index} x={node.x} y={node.y} fill={stroke} fontSize={node.font_size ?? 16}>
-          {node.label}
+          {label}
         </text>
       ) : null;
     }
@@ -80,3 +84,4 @@ export function DiagramPreview({
     </figure>
   );
 }
+

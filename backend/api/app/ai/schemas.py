@@ -1,12 +1,15 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.diagrams import DiagramSpec
-from app.questions.schemas import Difficulty, OptionOut, QuestionContent, QuestionType
+from app.questions.schemas import Difficulty, OptionOut, QuestionContent
 
 # AI drafts can be any of the bank's types (ADR 0005 decision 9, ADR 0006 stage C).
-AiQuestionType = QuestionType
+AiQuestionType = Literal[
+    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay"
+]
 
 
 class _Input(BaseModel):
@@ -185,3 +188,4 @@ class QuestionCitationOut(BaseModel):
     document_version: int
     location: str
     quote: str
+
