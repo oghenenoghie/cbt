@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.diagrams import DiagramSpec
+
 OptionId = str
 # Longest written answer a student can save; short answers and numbers have a lower limit.
 MAX_ANSWER_CHARS = 20000
@@ -139,3 +140,4 @@ class AttemptSummary(BaseModel):
 
 class AttemptList(BaseModel):
     attempts: list[AttemptSummary]
+
