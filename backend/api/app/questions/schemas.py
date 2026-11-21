@@ -5,10 +5,11 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 
 from app.diagrams import DiagramSpec
 QuestionType = Literal[
-    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay"
+    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
+    "diagram_label",
 ]
 # Marked automatically, from the answer key.
-AUTO_MARKED = ("mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric")
+AUTO_MARKED = ("mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "diagram_label")
 # Answered by choosing options; the others are answered with text.
 CHOICE_TYPES = ("mcq_single", "mcq_multiple", "true_false")
 Difficulty = Literal["easy", "medium", "hard"]
@@ -21,6 +22,7 @@ OptionText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=
 AcceptedAnswer = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
 ]
+LabelVariants = Annotated[list[AcceptedAnswer], Field(min_length=1, max_length=10)]
 PassageTitle = Annotated[
     str, StringConstraints(strip_whitespace=True, min_length=1, max_length=200)
 ]
@@ -51,6 +53,8 @@ class QuestionContent(_Input):
     - `numeric`: a number; `value` is the answer and `tolerance` how far from it still counts.
     - `essay`: a written answer a teacher marks; `guide` is the model answer or marking guide
       markers see. Never shown to students.
+    - `diagram_label`: the student types each missing label; `label_answers` lists accepted
+      answers in the same order as the labelled text elements in `diagram_spec`.
     """
 
     type: QuestionType
@@ -60,6 +64,7 @@ class QuestionContent(_Input):
     accepted_answers: list[AcceptedAnswer] | None = Field(
         default=None, max_length=MAX_ACCEPTED_ANSWERS
     )
+    label_answers: list[LabelVariants] | None = Field(default=None, max_length=50)
     value: float | None = None
     tolerance: float | None = Field(default=None, ge=0)
     guide: str | None = Field(default=None, max_length=10000)
@@ -81,8 +86,11 @@ class QuestionContent(_Input):
             "short_answer": {"accepted_answers"},
             "numeric": {"value", "tolerance"},
             "essay": {"guide"},
+            "diagram_label": {"label_answers"},
         }[self.type]
-        for name in ("options", "correct", "accepted_answers", "value", "tolerance", "guide"):
+        for name in (
+            "options", "correct", "accepted_answers", "label_answers", "value", "tolerance", "guide"
+        ):
             if name not in used and getattr(self, name) is not None:
                 raise ValueError(f"`{name}` isn't used by {self.type} questions.")
 
@@ -116,6 +124,22 @@ class QuestionContent(_Input):
             if any(not normalize_answer(a) for a in answers):
                 raise ValueError("Each accepted answer needs letters or numbers.")
             self.accepted_answers = list(dict.fromkeys(answers))
+        elif self.type == "diagram_label":
+            if self.diagram_spec is None:
+                raise ValueError("A diagram labelling question needs a diagram.")
+            labels = [element.label for element in self.diagram_spec.elements if element.kind == "text"]
+            answers = self.label_answers or []
+            if not labels or len(labels) != len(answers):
+                raise ValueError("Give accepted answers for each text label in the diagram.")
+            cleaned = []
+            for label, variants in zip(labels, answers, strict=True):
+                unique = list(dict.fromkeys(variants))
+                if not unique or normalize_answer(label or "") not in {
+                    normalize_answer(answer) for answer in unique
+                }:
+                    raise ValueError("Include each diagram label itself among its accepted answers.")
+                cleaned.append(unique)
+            self.label_answers = cleaned
         elif self.type == "numeric":
             if self.value is None or self.value != self.value or abs(self.value) == float("inf"):
                 raise ValueError("Give the answer as a number in `value`.")
@@ -139,6 +163,8 @@ class QuestionContent(_Input):
             return options, [OPTION_IDS[i] for i in positions], None
         if self.type == "short_answer":
             return [], [], {"accepted_answers": self.accepted_answers}
+        if self.type == "diagram_label":
+            return [], [], {"label_answers": self.label_answers}
         if self.type == "numeric":
             return [], [], {"value": self.value, "tolerance": self.tolerance}
         return [], [], {"guide": self.guide} if self.guide else None
@@ -242,3 +268,4 @@ class PassageOut(BaseModel):
 class PassageList(BaseModel):
     passages: list[PassageOut]
     next_after: str | None
+
