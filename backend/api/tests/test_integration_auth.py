@@ -17,9 +17,13 @@ def bearer(token: str) -> dict[str, str]:
 
 
 def assert_unauthorized(response, detail: str = "Invalid integration credentials.") -> None:
+    """401 in the public error envelope (ADR 0008, Integrations C)."""
     assert response.status_code == 401
     assert response.headers["www-authenticate"] == "Bearer"
-    assert response.json() == {"detail": detail}
+    error = response.json()["error"]
+    assert error["code"] == "unauthenticated"
+    assert error["message"] == detail
+    assert error["request_id"] == response.headers["x-request-id"]
 
 
 # --- Missing or malformed credentials -------------------------------------------------

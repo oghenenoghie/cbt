@@ -82,4 +82,7 @@ Subjects, topics and chapters later scope AI retrieval and generation (see `asse
 
 ## What Phase 2 unblocks
 
-**Integration management API (ADR 0008 stage A) is built.** School admins can register integrations, grant scopes from `app/integrations/scopes.py`, issue keys (raw key shown once, up to five active, no expiry), revoke keys and disable integrations. Changes are audited and each integration is rate-limited. The web Integrations page (`apps/web/src/app/integrations/page.tsx`) is still a static preview; stage B connects it, and stage C adds the first public customer-data endpoints.
+**Integration management API (ADR 0008 stage A) is built.** School admins can register integrations, grant scopes from `app/integrations/scopes.py`, issue keys (raw key shown once, up to five active, no expiry), revoke keys and disable integrations. Changes are audited and each integration is rate-limited. School admins use it from `/school/integrations` (stage B). Stage C added the first public endpoints:
+- Integrations sync students by their own external IDs (`CandidateExternalIdentity` with the integration as source system).
+- A new student gets a **student account without a password**, and an existing student account with the same username is linked, never a staff account.
+- Integrations can enrol and move students, but never disable accounts or remove enrolments: those stay with school admins.

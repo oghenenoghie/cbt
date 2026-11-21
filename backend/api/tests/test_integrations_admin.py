@@ -435,7 +435,8 @@ def test_each_integration_is_limited_per_minute(
     assert remaining == ["2", "1", "0"]
     assert refused.status_code == 429
     assert 1 <= int(refused.headers["Retry-After"]) <= 60
-    assert "too many requests" in refused.json()["detail"]
+    assert refused.json()["error"]["code"] == "rate_limited"
+    assert "too many requests" in refused.json()["error"]["message"]
 
     # A new minute starts a new count.
     db.execute(

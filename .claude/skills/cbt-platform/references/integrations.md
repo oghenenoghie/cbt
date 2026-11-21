@@ -9,8 +9,10 @@ Purpose: let schools adopt CBT without replacing their portal, LMS, SIS, ERP, we
 | Built | Planned |
 |---|---|
 | Hashed `cbt_live_` API keys, `IntegrationPrincipal`, scope checks, `GET /api/v1/integrations/me` | OAuth 2.0 client-credentials token endpoint (`POST /oauth/token`) |
-| Management by school admins (ADR 0008, Integrations A): `/api/v1/school/integrations` to register, set permissions from `app/integrations/scopes.py`, issue keys (shown once, up to 5 active), revoke, disable, and read the activity | The web Integrations page (Integrations B; `apps/web/src/app/integrations` is still a static preview) |
-| Per-integration rate limit (`app/integrations/limits.py`, 429 with `Retry-After`) | Public resources (Integrations C): classes, candidate and enrolment sync, released results, with the `{"error": ...}` envelope, size limits and idempotency keys |
+| Management by school admins (ADR 0008, Integrations A): `/api/v1/school/integrations` to register, set permissions from `app/integrations/scopes.py`, issue keys (shown once, up to 5 active), revoke, disable, and read the activity | Batch student sync, and removing enrolments through the API |
+| The school admins' screen (Integrations B): `apps/web/src/app/(school)/school/integrations/`. The public `/integrations` page is still a design preview | |
+| Per-integration rate limit (`app/integrations/limits.py`, 429 with `Retry-After`) | |
+| Public resources (Integrations C, `app/integrations/public.py`): `/academic-sessions`, `/classes`, `/subjects`, `/candidates` and `PUT /candidates/{external_id}`, `/released-results`, `/candidates/{external_id}/results`; the `{"error": ...}` envelope, request ids and a body size limit (`app/integrations/envelope.py`) | |
 | | Later resources: `/assessments`, `/exam-sessions`, `/attempts/{id}`, `/webhook-endpoints` |
 | | Signed webhooks with an event outbox, hosted exam launch, OIDC/SAML SSO, LTI 1.3, TypeScript and Python SDKs, CSV/XLSX import |
 
@@ -23,14 +25,16 @@ Rollout order per ADR 0008: (1) management API foundation—API keys, scopes, au
 - **Identity:** stable platform IDs (`tenant_id`, `assessment_id`, `exam_session_id`, `attempt_id`, `result_id`) plus separate external IDs (`external_system_id`, `external_id`), mapped per tenant.
 - **Idempotency:** required on exam-session creation and attempt submission (`Idempotency-Key` header). Retries return the original result.
 - **Pagination:** cursor-based.
-- **Errors:** the planned envelope is `{"error": {"code", "message", "request_id"}}`, for example `permission_denied`. Today the code returns FastAPI's `{"detail": ...}`. Switch deliberately, with tests, when the first public resource lands, not piecemeal.
+- **Errors:** integration endpoints answer `{"error": {"code", "message", "request_id"}}` (plus `details` for validation), for example `permission_denied`, through `EnvelopeRoute` (`app/integrations/envelope.py`). Endpoints for people keep FastAPI's `{"detail": ...}`.
 - **Limits:** rate limits, request size limits, schema validation (`extra="forbid"`, as in `app/integrations/schemas.py`) and audit logging on every public request and admin change.
 
 ## Security rules
 
 - Hash secrets at rest, show them once, and support rotation, revocation and audit history. All of this exists (ADR 0008). Keys don't expire, by the user's decision; rotation is several active keys per integration, and revoking is final.
 - Only scopes in the catalogue (`app/integrations/scopes.py`) can be granted. Adding one that touches answer keys, unpublished questions or AI drafts needs a new decision.
-- Every public request that reads or changes school data writes an audit entry with actor type `integration` (from Integrations C). It shows in the integration's activity.
+- Every public request that reads or changes school data writes an audit entry with actor type `integration`, the key's id and the request id (ADR 0008 decision 11). It shows in the integration's activity. Refused requests write none.
+- Student sync (ADR 0008 decision 8): external IDs are per integration. A new student gets an account **without a password**, and an existing student account with the same username is linked, never a staff account. Integrations may enrol and move, never disable accounts or remove enrolments. `PUT` by external ID is naturally idempotent, so no `Idempotency-Key` is needed there.
+- Results for integrations are scores only (score, total, percentage, times) from exams whose release policy shows them. Never per-question right/wrong, answers or keys.
 - **Exam launch tokens** are short-lived, single-use, and bound to tenant + candidate + assessment + permitted time window. Never trust a client-supplied candidate identity, and never put a reusable secret in the launch URL.
 - Browser, mobile and Electron renderer code never holds a client secret. They call the customer's own backend or use a short-lived, user-authorised flow.
 - Candidate-facing scopes never expose answer keys or unpublished questions. Results wait for the release policy.

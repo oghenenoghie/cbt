@@ -1,8 +1,7 @@
 """The permissions a school admin can grant an integration (ADR 0008 decision 4).
 
 Scope names are `resource:action`. Only names in this catalogue can be granted. The endpoints that
-use them arrive with Integrations C (candidate and enrolment sync, released results); until then
-a granted scope only shows in `GET /api/v1/integrations/me`.
+use them are in `app/integrations/public.py` (Integrations C).
 """
 
 SCOPES: dict[str, str] = {

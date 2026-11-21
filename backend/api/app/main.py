@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.documents.router import router as documents_router
 from app.exams.router import router as exams_router
 from app.integrations.manage import router as integrations_admin_router
+from app.integrations.public import router as integration_api_router
 from app.integrations.router import router as integrations_router
 from app.offline.router import admin_router as devices_admin_router
 from app.offline.router import device_router as devices_router
@@ -72,6 +73,7 @@ app.include_router(offline_public_router, prefix=settings.api_v1_prefix)
 app.include_router(results_student_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_admin_router, prefix=settings.api_v1_prefix)
+app.include_router(integration_api_router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/health", tags=["operations"])
