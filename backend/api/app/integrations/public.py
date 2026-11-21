@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.attempts import service as attempts
 from app.core.audit import record_audit
 from app.db.session import get_db
+from app.integrations import events
 from app.integrations.auth import IntegrationPrincipal, get_integration_principal
 from app.integrations.envelope import EnvelopeRoute, request_id_of
 from app.integrations.public_schemas import (
@@ -41,6 +42,8 @@ from app.integrations.public_schemas import (
     ClassOut,
     ExamResults,
     LevelOut,
+    PublishedExamList,
+    PublishedExamOut,
     ReleasedExamList,
     ReleasedExamOut,
     StudentScore,
@@ -93,6 +96,7 @@ classes_read = needs("classes:read")
 candidates_read = needs("candidates:read")
 candidates_write = needs("candidates:write")
 results_read = needs("results:read")
+exams_read = needs("exams:read")
 
 
 def _audit(
@@ -336,6 +340,11 @@ def _by_external_id(db: Session, principal: IntegrationPrincipal, external_id: s
 @router.get("/candidates", response_model=CandidateList)
 def list_candidates(
     request: Request,
+    candidate_id: list[str] | None = Query(
+        default=None,
+        max_length=100,
+        description="Only these students, by `id` (as webhook events give them).",
+    ),
     after: str | None = Query(default=None, description="The `next_after` of the previous page."),
     limit: int = Query(default=100, ge=1, le=200),
     principal: IntegrationPrincipal = Depends(candidates_read),
@@ -343,6 +352,8 @@ def list_candidates(
 ) -> CandidateList:
     """The school's students, newest first, with this integration's IDs for them."""
     query = select(Candidate).where(Candidate.tenant_id == principal.tenant_id)
+    if candidate_id:
+        query = query.where(Candidate.id.in_(candidate_id))
     page, next_after = newest_first(db, principal, Candidate, query, after, limit)
     _audit(db, principal, request, "candidates.read", "candidate", details={"count": len(page)})
     db.commit()
@@ -406,6 +417,7 @@ def sync_candidate(
 
     changes: list[str] = []
     outcome = None
+    new_candidate = False
     identity = db.scalar(
         select(CandidateExternalIdentity).where(
             CandidateExternalIdentity.tenant_id == tid,
@@ -437,12 +449,14 @@ def sync_candidate(
             flush_or_conflict(db, CLASH)
             candidate = Candidate(tenant_id=tid, user_id=user.id, display_name=body.display_name)
             db.add(candidate)
+            new_candidate = True
             outcome = "created"
         else:
             candidate = db.scalar(select(Candidate).where(Candidate.user_id == user.id))
             if candidate is None:
                 candidate = Candidate(tenant_id=tid, user_id=user.id, display_name=user.display_name)
                 db.add(candidate)
+                new_candidate = True
             else:
                 taken = db.scalar(
                     select(CandidateExternalIdentity.external_id).where(
@@ -469,6 +483,7 @@ def sync_candidate(
         changes.append("display_name")
 
     class_change = None
+    previous_class_id = None
     if body.class_id is not None:
         arm = db.scalar(select(ClassArm).where(ClassArm.id == body.class_id, ClassArm.tenant_id == tid))
         if arm is None:
@@ -486,12 +501,24 @@ def sync_candidate(
             )
             class_change = "enrolled"
         elif enrolment.arm_id != arm.id:
+            previous_class_id = enrolment.arm_id
             enrolment.arm_id = arm.id
             class_change = "moved"
         if class_change:
             changes.append(class_change)
 
     flush_or_conflict(db, CLASH)
+    caused = {"actor_integration_id": principal.integration_id}
+    if new_candidate:
+        events.student_added(db, tid, candidate.id, **caused)
+    else:
+        updated = [c for c in changes if c in ("username", "display_name", "account")]
+        if updated:
+            events.student_updated(db, tid, candidate.id, updated, **caused)
+    if class_change:
+        events.enrolment_changed(
+            db, tid, candidate.id, arm.session_id, arm.id, previous_class_id, **caused
+        )
     outcome = outcome or ("updated" if changes else "unchanged")
     details = {"external_id": external_id, "outcome": outcome, "changes": changes}
     if class_change:
@@ -545,6 +572,76 @@ def _exams_out(db: Session, exams: list[Exam]) -> dict[str, ReleasedExamOut]:
 def _finish_overdue(db: Session, query) -> None:
     if attempts.finish_overdue(db, list(db.scalars(query)), attempts.now()):
         db.commit()
+
+
+# --- exams:read ---------------------------------------------------------------------------------
+
+
+def _published(tenant_id: str):
+    """Exams that were published: still published, or withdrawn before they opened."""
+    return select(Exam).where(
+        Exam.tenant_id == tenant_id,
+        Exam.status.in_(("published", "withdrawn")),
+        Exam.published_at.is_not(None),
+    )
+
+
+def _published_out(db: Session, exams: list[Exam]) -> list[PublishedExamOut]:
+    base = _exams_out(db, exams)
+    return [
+        PublishedExamOut(
+            id=e.id,
+            title=e.title,
+            subject=base[e.id].subject,
+            term_id=e.term_id,
+            classes=base[e.id].classes,
+            status=e.status,
+            opens_at=as_utc(e.opens_at),
+            closes_at=as_utc(e.closes_at),
+            duration_minutes=e.duration_minutes,
+            results_release=e.results_release,
+            results_released_at=as_utc(e.results_released_at) if e.results_released_at else None,
+        )
+        for e in exams
+    ]
+
+
+@router.get("/published-exams", response_model=PublishedExamList)
+def list_exams(
+    request: Request,
+    exam_status: str | None = Query(default=None, alias="status", pattern="^(published|withdrawn)$"),
+    term_id: str | None = None,
+    after: str | None = Query(default=None, description="The `next_after` of the previous page."),
+    limit: int = Query(default=50, ge=1, le=100),
+    principal: IntegrationPrincipal = Depends(exams_read),
+    db: Session = Depends(get_db),
+) -> PublishedExamList:
+    """Published (and withdrawn) exams, newest first: when they run and for which classes."""
+    query = _published(principal.tenant_id)
+    if exam_status is not None:
+        query = query.where(Exam.status == exam_status)
+    if term_id is not None:
+        query = query.where(Exam.term_id == term_id)
+    page, next_after = newest_first(db, principal, Exam, query, after, limit)
+    _audit(db, principal, request, "exams.read", "exam", details={"count": len(page)})
+    db.commit()
+    return PublishedExamList(exams=_published_out(db, page), next_after=next_after)
+
+
+@router.get("/published-exams/{exam_id}", response_model=PublishedExamOut)
+def get_exam(
+    exam_id: str,
+    request: Request,
+    principal: IntegrationPrincipal = Depends(exams_read),
+    db: Session = Depends(get_db),
+) -> PublishedExamOut:
+    """One exam, once it's been published. Drafts and exams awaiting approval are 404."""
+    exam = db.scalar(_published(principal.tenant_id).where(Exam.id == exam_id))
+    if exam is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Exam not found.")
+    _audit(db, principal, request, "exams.read", "exam", exam.id, {"count": 1})
+    db.commit()
+    return _published_out(db, [exam])[0]
 
 
 @router.get("/released-results", response_model=ReleasedExamList)

@@ -43,9 +43,13 @@ Rollout order per ADR 0008: (1) management API foundation—API keys, scopes, au
 
 ## Webhooks
 
-Envelope: `id`, `type`, `created_at`, `tenant_id`, `data` (see `WebhookEvent` in `app/integrations/schemas.py`).
+**Built (ADR 0008 stage D, decisions 12 to 16).** Endpoints per integration (at most five, `app/integrations/webhook_admin.py`), events recorded with the change (`app/integrations/events.py`, `emit(...)`), signed delivery with retries and the public-address rule (`app/integrations/webhooks.py`), models in `app/models/webhooks.py`.
 
-Events: `candidate.created`, `assessment.published`, `exam_session.launched`, `attempt.started`, `attempt.submitted`, `grading.completed`, `result.released`.
+Envelope as sent: `id` (`evt_...`), `type`, `created_at`, `triggered_by_you`, `data` with **IDs only** (the user's decision): the receiver fetches details with its key (`/published-exams`, `/candidates?candidate_id=`, `/released-results/{id}`).
+
+Live events: `candidate.created`, `candidate.updated`, `enrolment.changed` (`candidates:read`), `exam.published`, `exam.withdrawn` (`exams:read`), `result.released` (`results:read`; once per exam, also when an exam that shows results at once closes), plus `webhook.test`. Planned: `assessment.published`, `exam_session.launched`, `attempt.started`, `attempt.submitted`, `grading.completed`.
+
+To report a new change, call an `events.*` helper in the same transaction as the change, before the commit; it records nothing when no endpoint wants the event. A new event type needs a catalogue entry with its scope, tests in `tests/test_webhooks.py`, and an ADR decision.
 
 Delivery:
 - Sign each delivery with **HMAC-SHA256** and include a timestamp, so stale or replayed deliveries can be rejected.

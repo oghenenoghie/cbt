@@ -32,7 +32,8 @@ from app.core.passwords import (
     validate_new_password,
 )
 from app.db.session import get_db
-from app.models import Department, Tenant, User
+from app.integrations import events
+from app.models import Candidate, Department, Tenant, User
 from app.models.identity import STAFF_ROLES, normalize_email, normalize_username
 
 router = APIRouter(prefix="/school/users", tags=["accounts"])
@@ -254,6 +255,11 @@ def update_user(
         setattr(user, field, changes[field])
 
     if changed:
+        reported = sorted({"display_name", "status"} & set(changed))
+        if reported and user.role == "student":
+            candidate_id = db.scalar(select(Candidate.id).where(Candidate.user_id == user.id))
+            if candidate_id is not None:
+                events.student_updated(db, principal.tenant_id, candidate_id, reported)
         details: dict = {"fields": changed}
         if "role" in changed:
             details["role"] = user.role

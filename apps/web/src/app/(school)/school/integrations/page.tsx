@@ -14,6 +14,7 @@ import { useAction } from "@/lib/useAction";
 import { useApi } from "@/lib/useApi";
 
 import styles from "./integrations.module.css";
+import { Webhooks } from "./Webhooks";
 
 type Scope = { name: string; description: string };
 type Key = {
@@ -38,6 +39,7 @@ const labels: Record<string, string> = {
   "candidates:read": "Read students",
   "candidates:write": "Manage students and enrolment",
   "results:read": "Read released results",
+  "exams:read": "Read published exams",
 };
 
 function when(value: string | null) {
@@ -214,6 +216,7 @@ function IntegrationDetails({ integration, scopes, onClose, onChanged, onIssue }
           {key.status === "active" && <RevokeKey integration={integration} apiKey={key} onRevoked={onChanged} />}
         </div>)}</div> : <p className="muted">No API keys yet. Issue a key when you&apos;re ready to connect the application.</p>}
       </section>
+      <Webhooks integrationId={integration.id} integrationActive={integration.status === "active"} granted={integration.scopes} />
       <section className={styles.detailSection}>
         <div className={styles.sectionHead}><div><h3>Activity log</h3><p>Recent changes and integration activity.</p></div><button type="button" className="btn btn-secondary btn-small" onClick={() => loadActivity()} disabled={busyActivity}><RefreshCw size={14} /> {busyActivity ? "Loading…" : activity ? "Refresh" : "Load activity"}</button></div>
         {activityError && <p className="alert alert-error">{activityError}</p>}

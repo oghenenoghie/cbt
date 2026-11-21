@@ -27,7 +27,7 @@ from app.models import (
 )
 
 V1 = "/api/v1"
-ALL = ("classes:read", "candidates:read", "candidates:write", "results:read")
+ALL = ("classes:read", "candidates:read", "candidates:write", "results:read", "exams:read")
 
 
 def bearer(key: str) -> dict[str, str]:
@@ -87,6 +87,8 @@ ENDPOINTS = [
     ("get", "/released-results", "results:read"),
     ("get", "/released-results/some-exam", "results:read"),
     ("get", "/candidates/S1/results", "results:read"),
+    ("get", "/published-exams", "exams:read"),
+    ("get", "/published-exams/some-exam", "exams:read"),
 ]
 
 

@@ -37,6 +37,7 @@ from app.models.questions import (
     QuestionVersion,
 )
 from app.models.tenant import AuditLog, Tenant
+from app.models.webhooks import WebhookDelivery, WebhookEndpoint, WebhookEvent
 
 __all__ = [
     "AcademicSession",
@@ -89,4 +90,7 @@ __all__ = [
     "Term",
     "Topic",
     "User",
+    "WebhookDelivery",
+    "WebhookEndpoint",
+    "WebhookEvent",
 ]

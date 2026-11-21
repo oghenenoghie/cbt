@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
+from app.integrations import events
 from app.models import Candidate, ClassArm, ClassLevel, Enrolment, User
 from app.school.access import require_teaching
 from app.school.common import (
@@ -152,7 +153,12 @@ def enrol(
         db, "Some of these students were enrolled elsewhere at the same time. Try again."
     )
     arm_name = _arm_name(db, arm)
-    for enrolment, _candidate, user, new_candidate in created:
+    for enrolment, candidate, user, new_candidate in created:
+        if new_candidate:
+            events.student_added(db, principal.tenant_id, candidate.id)
+        events.enrolment_changed(
+            db, principal.tenant_id, candidate.id, arm.session_id, arm.id, None
+        )
         audit(
             db,
             principal,
@@ -186,9 +192,18 @@ def move_enrolment(
     if target.session_id != enrolment.session_id:
         raise invalid("Students can only move to another arm in the same session.")
     if target.id != enrolment.arm_id:
+        previous_arm_id = enrolment.arm_id
         before = _arm_name(db, db.get(ClassArm, enrolment.arm_id))
         enrolment.arm_id = target.id
         flush_or_conflict(db, "That move clashed with another change. Try again.")
+        events.enrolment_changed(
+            db,
+            principal.tenant_id,
+            enrolment.candidate_id,
+            enrolment.session_id,
+            target.id,
+            previous_arm_id,
+        )
         audit(
             db,
             principal,
@@ -215,8 +230,10 @@ def unenrol(
     """Remove a student from their arm. Refused once exam records point at the enrolment."""
     enrolment = get_owned(db, Enrolment, enrolment_id, principal, "Enrolment")
     arm_name = _arm_name(db, db.get(ClassArm, enrolment.arm_id))
+    removed = (enrolment.candidate_id, enrolment.session_id, enrolment.arm_id)
     db.delete(enrolment)
     flush_or_conflict(db, "This enrolment is still in use, so it can't be removed.")
+    events.enrolment_changed(db, principal.tenant_id, removed[0], removed[1], None, removed[2])
     audit(db, principal, request, "enrolment.deleted", "enrolment", enrolment_id, {"arm": arm_name})
     db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

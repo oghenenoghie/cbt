@@ -56,6 +56,9 @@ from app.models import (  # noqa: F401
     Term,
     Topic,
     User,
+    WebhookDelivery,
+    WebhookEndpoint,
+    WebhookEvent,
 )
 
 config = context.config
