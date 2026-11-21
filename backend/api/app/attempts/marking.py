@@ -12,6 +12,7 @@
   one scores 0 straight away.
 """
 
+import json
 import re
 from typing import NamedTuple
 
@@ -81,6 +82,23 @@ def mark(
             # A hair of slack so 0.1 + 0.2 still counts as 0.3.
             and abs(value - float(expected)) <= tolerance + 1e-9 * max(1.0, abs(float(expected)))
         )
+    elif question_type == "diagram_label":
+        accepted = (answer_key or {}).get("label_answers", [])
+        try:
+            supplied = json.loads(answer.text or "[]")
+        except (json.JSONDecodeError, TypeError):
+            supplied = []
+        if not isinstance(supplied, list):
+            supplied = []
+        matches = [
+            index < len(supplied)
+            and normalize_answer(str(supplied[index]))
+            in {normalize_answer(value) for value in variants}
+            for index, variants in enumerate(accepted)
+        ]
+        score = int(marks * sum(matches) / len(accepted) + 0.5) if accepted else 0
+        return Marked(is_correct=bool(matches) and all(matches), score=score, needs_marking=False)
     else:
         right = bool(answer.selected) and sorted(answer.selected) == sorted(correct_option_ids)
     return Marked(is_correct=right, score=marks if right else 0, needs_marking=False)
+
