@@ -31,13 +31,14 @@ export function isBankShaped(draft: QuestionDraft): boolean {
 /** A draft as a bank version, for showing it with the right answer marked. */
 export function asVersion(draft: QuestionDraft): Pick<
   QuestionVersion,
-  "type" | "stem" | "options" | "correct_option_ids" | "answer_key"
+  "type" | "stem" | "diagram_spec" | "options" | "correct_option_ids" | "answer_key"
 > & {
   explanation: string | null;
 } {
   return {
     type: draft.type as QuestionVersion["type"],
     stem: draft.stem,
+    diagram_spec: draft.diagram_spec,
     options: draft.options,
     correct_option_ids: draft.correct_option_ids,
     answer_key: draft.answer_key,

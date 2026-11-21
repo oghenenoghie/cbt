@@ -13,6 +13,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.attempts import service
+from app.diagrams import student_diagram
 from app.attempts.schemas import (
     MAX_SHORT_ANSWER_CHARS,
     AnswerIn,
@@ -107,6 +108,7 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
                 number=number,
                 type=version.type,
                 stem=version.stem,
+                diagram_spec=student_diagram(version.diagram_spec),
                 options=[
                     AttemptOption(id=option_id, text=texts[option_id])
                     for option_id in attempt.option_orders[item_id]

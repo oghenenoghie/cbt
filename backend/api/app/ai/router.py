@@ -126,6 +126,7 @@ def _drafts_out(db: Session, drafts: list[QuestionDraft]) -> list[DraftOut]:
             status=d.status,
             type=d.type,
             stem=d.stem,
+            diagram_spec=d.diagram_spec,
             options=d.options,
             correct_option_ids=d.correct_option_ids,
             answer_key=d.answer_key,
@@ -539,6 +540,7 @@ def _content(draft: QuestionDraft) -> QuestionContent:
         type=draft.type,
         stem=draft.stem,
         explanation=draft.explanation,
+        diagram_spec=draft.diagram_spec,
         marks=draft.marks,
         difficulty=draft.difficulty,
         **fields,
@@ -560,6 +562,11 @@ def edit_draft(
         options, correct, answer_key = body.content.to_storage()
         draft.type = body.content.type
         draft.stem = body.content.stem
+        draft.diagram_spec = (
+            body.content.diagram_spec.model_dump(mode="json")
+            if body.content.diagram_spec
+            else None
+        )
         draft.options = options
         draft.correct_option_ids = correct
         draft.answer_key = answer_key
@@ -648,6 +655,7 @@ def approve_draft(
         version=1,
         type=content.type,
         stem=content.stem,
+        diagram_spec=content.diagram_spec.model_dump(mode="json") if content.diagram_spec else None,
         options=options,
         correct_option_ids=correct,
         answer_key=answer_key,

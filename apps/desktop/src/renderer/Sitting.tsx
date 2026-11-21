@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Finished, GivenAnswer, Sitting as SittingData, SittingQuestion } from "../shared/api";
+import { Diagram } from "./Diagram";
 import { call, count } from "./lab";
 import { Dialog, ErrorText } from "./ui";
 
@@ -273,6 +274,7 @@ export function Sitting({
           <p id="question-stem" className="stem">
             {question.stem}
           </p>
+          <Diagram spec={question.diagram_spec} />
           <QuestionInput question={question} answer={answers[question.item_id]} onChange={change} />
           <div className="actions">
             <button

@@ -229,6 +229,7 @@ def process_request(db: Session, request_id: str, provider: Provider | None = No
             status="pending" if candidate.passed else "rejected",
             type=candidate.type,
             stem=candidate.stem,
+            diagram_spec=candidate.diagram_spec,
             options=candidate.options,
             correct_option_ids=candidate.correct_option_ids,
             answer_key=candidate.answer_key,

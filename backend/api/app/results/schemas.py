@@ -10,6 +10,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.diagrams import DiagramSpec
 
 class OptionText(BaseModel):
     id: str
@@ -49,6 +50,7 @@ class ReviewQuestion(BaseModel):
     number: int
     type: str
     stem: str
+    diagram_spec: DiagramSpec | None = None
     options: list[OptionText]
     selected_option_ids: list[str]
     # What the student wrote, for questions answered with text.
@@ -125,6 +127,7 @@ class ItemStat(BaseModel):
     version: int
     type: str
     stem: str
+    diagram_spec: DiagramSpec | None = None
     passage_title: str | None
     marks: int
     correct_option_ids: list[str]
@@ -168,6 +171,7 @@ class ScriptQuestion(BaseModel):
     version: int
     type: str
     stem: str
+    diagram_spec: DiagramSpec | None = None
     options: list[OptionText]
     correct_option_ids: list[str]
     answer_key: dict | None

@@ -702,6 +702,7 @@ export class Lab {
           number: index + 1,
           type: item.type,
           stem: item.stem,
+          diagram_spec: item.diagram_spec ?? null,
           options: (meta.option_orders[itemId] ?? []).map((id) => options.get(id)!).filter(Boolean),
           marks: item.marks,
           passage: item.passage_id ? (pkg.passages[item.passage_id] ?? null) : null,

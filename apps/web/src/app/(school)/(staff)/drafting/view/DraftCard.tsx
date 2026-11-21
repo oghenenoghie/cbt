@@ -174,7 +174,7 @@ export function DraftCard({
         </div>
       )}
 
-      {shaped && (draft.options.length > 0 || draft.answer_key) ? (
+      {shaped && (draft.options.length > 0 || draft.answer_key || draft.diagram_spec) ? (
         <QuestionBody version={asVersion(draft)} />
       ) : (
         <div className="stack">

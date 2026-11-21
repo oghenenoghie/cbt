@@ -92,6 +92,7 @@ class FakeProvider:
             "citations": [{"source": label, "quote": sentence}],
             "type": kind,
             "stem": "",
+            "diagram_spec": None,
             "options": [],
             "correct_option": None,
             "correct_options": [],

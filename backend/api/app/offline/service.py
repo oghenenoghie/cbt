@@ -20,6 +20,7 @@ from app.attempts.schemas import AnswerIn
 from app.attempts.student import checked_answer
 from app.core.audit import record_audit
 from app.core.config import get_settings
+from app.diagrams import student_diagram
 from app.models import (
     AnswerEvent,
     Candidate,
@@ -195,6 +196,7 @@ def build_package(
                 "passage_id": passage.id if passage else None,
                 "type": version.type,
                 "stem": version.stem,
+                "diagram_spec": student_diagram(version.diagram_spec),
                 # The options' text only: which are right is never here.
                 "options": [{"id": o["id"], "text": o["text"]} for o in version.options],
                 "marks": item.marks,

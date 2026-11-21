@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.attempts import service as attempts
 from app.auth.dependencies import require_school_role
+from app.diagrams import student_diagram
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
 from app.models import (
@@ -177,6 +178,7 @@ def my_result(
                     number=number,
                     type=version.type,
                     stem=version.stem,
+                    diagram_spec=student_diagram(version.diagram_spec),
                     options=[
                         OptionText(id=o, text=texts[o]) for o in attempt.option_orders[item_id]
                     ],

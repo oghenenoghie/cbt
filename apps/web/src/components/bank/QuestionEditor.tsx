@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { ErrorAlert } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
+import { DiagramPreview } from "@/components/bank/DiagramPreview";
 import { api } from "@/lib/api";
 import {
   contentOf,
@@ -16,7 +17,15 @@ import {
   TYPE_LABELS,
 } from "@/lib/bank";
 import { useSignedIn } from "@/lib/session";
-import type { Difficulty, Passage, Question, QuestionContent, QuestionType, Subject } from "@/lib/types";
+import type {
+  DiagramSpec,
+  Difficulty,
+  Passage,
+  Question,
+  QuestionContent,
+  QuestionType,
+  Subject,
+} from "@/lib/types";
 import { useAction } from "@/lib/useAction";
 
 import styles from "./bank.module.css";
@@ -24,6 +33,21 @@ import styles from "./bank.module.css";
 const MIN_OPTIONS = 2;
 const MAX_ACCEPTED = 10;
 const ALL_TYPES = Object.keys(TYPE_LABELS) as QuestionType[];
+
+function parseDiagram(text: string): DiagramSpec | null {
+  if (!text.trim()) return null;
+  const value = JSON.parse(text) as DiagramSpec;
+  if (
+    !value || !Number.isInteger(value.width) || value.width < 1 || value.width > 4096 ||
+    !Number.isInteger(value.height) || value.height < 1 || value.height > 4096 ||
+    typeof value.title !== "string" || typeof value.description !== "string" ||
+    !Array.isArray(value.elements) || value.elements.length > 500 ||
+    value.elements.some((element) => !element || typeof element !== "object" ||
+      !["rect", "ellipse", "line", "arrow", "region", "text"].includes(element.kind) ||
+      !Number.isFinite(element.x) || !Number.isFinite(element.y))
+  ) throw new Error("Include title, description, canvas dimensions and up to 500 valid elements.");
+  return value;
+}
 
 /** The accepted answers worth sending: trimmed, without blank rows. */
 function acceptedOf(list: string[]): string[] {
@@ -107,6 +131,10 @@ export function QuestionEditor({
   const initialTopics = question?.topic_ids ?? draft?.topicIds ?? [];
   const [type, setType] = useState<QuestionType>(initial?.type ?? "mcq_single");
   const [stem, setStem] = useState(initial?.stem ?? "");
+  const [diagramText, setDiagramText] = useState(
+    initial?.diagram_spec ? JSON.stringify(initial.diagram_spec, null, 2) : "",
+  );
+  const [diagramMode, setDiagramMode] = useState<"labelled" | "blank">("labelled");
   const [options, setOptions] = useState<string[]>(initial?.options ?? ["", "", "", ""]);
   const [correctIndex, setCorrectIndex] = useState<number | null>(
     initial?.type === "mcq_single" ? (initial.correct as number) : null,
@@ -129,12 +157,20 @@ export function QuestionEditor({
   const [topics, setTopics] = useState<Set<string>>(() => new Set(initialTopics));
   const [passageId, setPassageId] = useState(passage?.id ?? defaultPassageId);
   const [problem, setProblem] = useState<string | null>(null);
+  let diagramError: string | null = null;
+  let diagramSpec: DiagramSpec | null = null;
+  try {
+    diagramSpec = parseDiagram(diagramText);
+  } catch (error) {
+    diagramError = error instanceof Error ? error.message : "Diagram JSON is invalid.";
+  }
   const [confirmClose, setConfirmClose] = useState(false);
   const { busy, error, run } = useAction();
 
   const content: QuestionContent = {
     type,
     stem,
+    diagram_spec: diagramSpec,
     options: hasOptions(type) ? options : null,
     correct:
       type === "mcq_single"
@@ -152,10 +188,12 @@ export function QuestionEditor({
     marks: Number(marks),
     difficulty: difficulty || null,
   };
+  const diagramDirty = diagramText !== (initial?.diagram_spec ? JSON.stringify(initial.diagram_spec, null, 2) : "");
   const contentDirty = initial
-    ? normalise(content) !== normalise(initial)
+    ? normalise(content) !== normalise(initial) || diagramDirty
     : Boolean(
         stem.trim() ||
+        diagramText.trim() ||
         options.some((o) => o.trim()) ||
         accepted.some((a) => a.trim()) ||
         value.trim() ||
@@ -191,6 +229,7 @@ export function QuestionEditor({
 
   /** Problems the API would refuse, said in the editor's own words. */
   function check(): string | null {
+    if (diagramError) return `Fix the diagram: ${diagramError}`;
     if (hasOptions(type)) {
       const texts = options.map((o) => o.trim().toLocaleLowerCase());
       if (new Set(texts).size !== texts.length) return "Each option must be different.";
@@ -340,6 +379,31 @@ export function QuestionEditor({
             placeholder={PLACEHOLDERS[type]}
           />
         </div>
+
+        <fieldset>
+          <legend>Diagram (optional)</legend>
+          <p className={styles.explain}>
+            Use structured JSON to add shapes, arrows and text labels. The blank preview removes text labels for students.
+          </p>
+          <label htmlFor="question-diagram">Diagram specification</label>
+          <textarea
+            id="question-diagram"
+            rows={8}
+            value={diagramText}
+            onChange={(event) => setDiagramText(event.target.value)}
+            placeholder={'{\n  "title": "Plant cell",\n  "description": "Label the cell parts.",\n  "width": 640,\n  "height": 400,\n  "elements": []\n}'}
+          />
+          {diagramError && <span className="hint" role="alert">{diagramError}</span>}
+          {diagramSpec && (
+            <>
+              <div className="actions" style={{ marginTop: 8 }}>
+                <button type="button" className={`btn btn-small ${diagramMode === "labelled" ? "btn-primary" : "btn-secondary"}`} onClick={() => setDiagramMode("labelled")}>Labelled preview</button>
+                <button type="button" className={`btn btn-small ${diagramMode === "blank" ? "btn-primary" : "btn-secondary"}`} onClick={() => setDiagramMode("blank")}>Blank student preview</button>
+              </div>
+              <DiagramPreview spec={diagramSpec} labelled={diagramMode === "labelled"} />
+            </>
+          )}
+        </fieldset>
 
         {hasOptions(type) ? (
           <fieldset>

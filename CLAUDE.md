@@ -1,172 +1,189 @@
-YªçŠx-®éÜj×¢ëiºÚ+Š§j[h‘éÜ¢éí×_uñ:-jZ.¶›­–)Þ³R24ÄTDRæÖ@Ð Ð¥F†—2f–ÆR&÷f–FW2wV–Fæ6RFò6ÆVFR6öFR†6ÆVFRæ’ö6öFR’v†Vâv÷&¶–ærv—F‚6öFR–âF†—2&W÷6—F÷'’àÐ Ð¢22v†BF†—2—0Ð Ð¤–çFVÆÆ–vVçB4%C¢6ö×WFW"Ö&6VBFW7F–ærÆFf÷&Òf÷"66†ööÇ2Âv—F‚Gvò6Æ–VçG2„æW‡Bæ§2vV"ÂVÆV7G&öâv–æF÷w2FW6·F÷f÷"öffÆ–æRÆ"W†×2’6†&–æröæR—F†öâôf7D’&6¶VæBâ66†ööÇ2WÆöBF†V—"÷vâÆV&æ–ærÖFW&–Ç3²’G&gG2W†ÒVW7F–öç2w&÷VæFVBöæÇ’–âF†÷6RÖFW&–Ç3²FV6†W'2&÷fR&Vf÷&RV&Æ—6†–æràÐ Ð¢¢¤7W'&VçB7FFR†6†V6¶VBv–ç7BF†R–×ÆVÖVçFF–öâæBE'2öâ##bÓÓr“¢¢¢†6R"w26÷&R66†ööÂ–FVçF—G’Â66÷VçG2æB6FVÖ–26WGW&R'V–ÇC²66†ööÂ&öf–ÆRVF—F–ærÂFW'FÖVçG2ÂF—&V7B55bõ„Å5‚–×÷'BÂF†R–çFVw&F–öç2vV"67&VVç2æBF†Rf—'7BV&Æ–2–çFVw&F–öâFFVæGö–çG2&VÖ–ââ†6R2†ÆV&æ–ærÖFW&–Ç2æBô5"’Â†6RB†Wf–FVæ6RÖw&÷VæFVB’G&gG2æB&Wf–Wr’Â†6RR‡VW7F–öâ&æ²æBW†Ò'V–ÆFW"’Â†6Rr†öæÆ–æRFVÆ—fW'’ÂÖ&¶–æræB&W7VÇG2’ÂæBE"rw2†6R‚öffÆ–æRFW6·F÷7FvW2(	4B&R–×ÆVÖVçFVBâ†6RbF–w&ÒvVæW&F–öâ—27F–ÆÂ7V6–f–6F–öââöffÆ–æR7–æ6‡&öæ—¦F–öâæBF†Rv–æF÷w2–ç7FÆÆW"÷&VÆV6R—VÆ–æRW†—7C²66†ööÂÄâÖöFR—2gWGW&Rv÷&²âF†R6†&VB6¶vW2öv÷&·76R—2æ÷B–WB&W6VçBâF†RFWF–ÆVBFöÖ–â÷†6R7FGW2Æ—fW2–âæ6ÆVFR÷6¶–ÆÇ2ö6'B×ÆFf÷&Òõ4´”ÄÂæÖFæB66WFVBE'3²6†V6²6öFR&Vf÷&R6Æ–Ö–ærfVGW&RW†—7G3¢&6¶VæBö–†3 Ð¢ÒFVæçBæB–çFVw&F–öâW'6—7FVæ6RÂv—F‚’Ö¶W’WF†VçF–6F–öâÂW"Ö–çFVw&F–öâ&FRÆ–Ö—BæBtUBö’÷cö–çFVw&F–öç2öÖV°Ð¢Ò–çFVw&F–öâÖævVÖVçBf÷"66†ööÂFÖ–ç2†ö’÷c÷66†ööÂö–çFVw&F–öç6ÂE"‚7FvR“¢&Vv—7FW"–çFVw&F–öç2Âw&çBW&Ö—76–öç2g&öÒf—†VB6FÆöwVRÂ—77VR¶W—2‡6†÷vâöæ6R’æB&Wfö¶RF†VÒÂF—6&ÆRÂæBâ7F—f—G’Æös°Ð¢ÒF†R–FVçF—G’F&ÆW2‡W6W'2ÂÆFf÷&ÒFÖ–ç2Â6W76–öç2Â6æF–FFW2“°Ð¢Ò6–vâÖ–âf÷"V÷ÆR†ö’÷cöWF‚ò¦¢Æöv–âÂÆöv÷WBÂÖRÂ77v÷&B6†ævR’Âv—F‚6öö¶–R6W76–öç2Â55$bÂ&öÆR6†V6·2æBf–ÆVBÖÆöv–âF‡&÷GFÆ–æs°Ð¢Ò66÷VçBÖævVÖVçBf÷"66†ööÂFÖ–ç2†ö’÷c÷66†ööÂ÷W6W'6¢Æ—7Bv—F‚6V&6‚æBf–ÇFW'2Â7&VFRÂWFFRÂ77v÷&B&W6WBÂVæ&Æö6²Â'VÆ²–×÷'B“°Ð¢Ò66†ööÂ7G'V7GW&R†ö’÷c÷66†ööÂòââæ“¢6FVÖ–26W76–öç2æBFW&×2Â6Æ72ÆWfVÇ2æB&×2ÂæB7V&¦V7G2v—F‚F÷–72æBF†RÆWfVÇ2F†BF¶RF†VÓ°Ð¢ÒV÷ÆR–â6Æ76W3¢7GVFVçBVç&öÆÖVçB‡v†–6‚7&VFW2æBÆ–æ·26æF–FFW2’ÂFV6†–ær76–væÖVçG2Fò&Ò²7V&¦V7BÂæBtUBö’÷cöÖRö6Æ76W6°Ð¢ÒF†RVW7F–öâ&æ²†ö’÷c÷VW7F–öç6Âö’÷c÷76vW6“¢6–ævÆRÒæB×VÇF—ÆRÖç7vW"×VÇF—ÆR6†ö–6RÂG'VRöfÇ6RÂ6†÷'BÖç7vW"ÂçVÖW&–2æBW76’VW7F–öç2v—F‚–Ö×WF&ÆRfW'6–öç2æBF÷–2Fw2ÂæB&VF–ær76vW2F†BVW7F–öç26âföÆÆ÷s°Ð¢ÒF†RW†Ò'V–ÆFW"†ö’÷cöW†×6“¢G&gG2f÷"öæR÷"Ö÷&R6Æ76W2Âg&÷¦VâW"öâ7V&Ö—76–öâÂ&÷fÂ'’W†Ò6ö÷&F–æF÷'2†FW6–væF–öâöâ7Ffb66÷VçG2’÷"66†ööÂFÖ–ç2ÂV&Æ—6†–ærÂv—F†G&v–æræB6÷––æs°Ð¢Ò6—GF–ærW†×2†ö’÷cöÖRöW†×6Âö’÷cöÖRöGFV×G6“¢7F'B÷"&W7VÖRv—F†–âF†Rv–æF÷rÂ6W'fW"×6–FR6Æö6²ÂVæBÖöæÇ’ç7vW'2Â7V&Ö—76–öâ÷"F–ÖR×WÂWFöÖF–2Ö&¶–ærÂæBtUBö’÷cöW†×2÷¶–GÒöGFV×G6f÷"7Ffc°Ð¢Ò&W7VÇG3¢&VÆV6R'’F†RFV6†W"gFW"6Æ÷6–ær†÷"–ÖÖVF–FVÇ’’Â7GVFVçG2r÷vâ66÷&W2æB&–v‡B÷w&öær&Wf–Wr†ö’÷cöÖR÷&W7VÇG6’ÂæBf÷"7Ffb6Æ72&W7VÇG2Â—FVÒæÇ—6—2æBÖ&¶VB67&—G3°Ð¢ÒFV6†W"Ö&¶–ær†ö’÷cöW†×2÷¶–GÒöÖ&¶–æv“¢Ö&·2æB6öÖÖVçG2f÷"w&—GFVâç7vW'2†W76—2v—Bf÷"öæS²6†÷'Bç7vW'2æBçVÖ&W'26â&R&RÖÖ&¶VB’VçF–Â&W7VÇG2&R&VÆV6VC°Ð¢ÒÆV&æ–ærÖFW&–Ç2†ö’÷cöFö7VÖVçG6Â†6R2“¢WÆöBöbDbÂv÷&BÂ÷vW%ö–çBÂW†6VÂÂ55bæBFW‡Bf–ÆW2æB†÷F÷2ÂW‡G&7F–öâ–çFò6VvÖVçG2F†B&V6÷&BF†V—"vRÂ6V7F–öâÂ6Æ–FRÂ6†VWB÷"&÷w2Âô5"v—F‚FW76W&7Bf÷"66ææVBvW2æB†÷F÷2Âv&æ–æw2Â&Wf–WræB&÷fÂöbV6‚fW'6–öâÂ&ö6W76VB'’—F†öâÖÒçv÷&¶W&†÷"–æÆ–æR–âFWfVÆ÷ÖVçB“°Ð¢Ò’VW7F–öâG&gG2†ö’÷cö–Â†6RB7FvR“¢&WVW7G2F†B–6²æB&V6÷&BWf–FVæ6Rg&öÒ&÷fVBÖFW&–Ç2ÂG&gF–ær'’&WÆ6V&ÆR&÷f–FW"„6ÆVFRF‡&÷Vv‚F†RçF‡&÷–2’Âf¶Rf÷"FWfVÆ÷ÖVçBÂ÷"öfb’Â6W'fW"×6–FR6†V6·2v—F‚6†÷'FfÆÂ&W÷'BÂæB&Wf–WröbG&gG2–çFòF†R&æ²v—F‚6—FF–öç2àÐ¢ÒöffÆ–æRW†×2öâÆ"6ö×WFW'2„E"r7FvW2FòC¢F†R’ÂF†RvV"67&VVç2ÂF†RÆ"æB—G2–ç7FÆÆW"“¢Æ"6ö×WFW"&Vv—7G&F–öâ†ö’÷c÷66†ööÂöFWf–6W6Âö’÷cöFWf–6W6’ÂöæR×F–ÖRW†Ò6öFW2Â6–væVBW†Ò6¶vW2Â6–væVBÂ–FV×÷FVçB&W7VÇG26†V6¶VBæBÖ&¶VB'’F†R6W'fW"†ö’÷cöW†×2÷¶–GÒööffÆ–æV’ÂæBÆ"&VÆV6W2v—F‚6–væVBWFFRÖæ–fW7G2†—F†öâÖÒæ6Æ’V&Æ—6‚ÖÆ"ÖÂöFWf–6W2öò¦’àÐ Ð¥F†RFV6—6–öç2&V†–æBF†W6R&R–âFö72ö&6†—FV7GW&RöFV6—6–öç2ö„E"¢–FVçF—G“²E"#¢66†ööÂ7G'V7GW&S²E"3¢W†×2æBF†RVW7F–öâ&æ³²E"C¢ÆV&æ–ærÖFW&–Ç3²E"S¢’VW7F–öâG&gG3²E"c¢Ö÷&RVW7F–öâG—W2æBFV6†W"Ö&¶–æs²E"s¢öffÆ–æRW†×2öâÆ"6ö×WFW'3²E"ƒ¢–çFVw&F–öç2’â†6R"w266†ööÂf÷VæFF–öâ—2–âÆ6S²–çFVw&F–öç2&R&V–ær'V–ÇB–â7FvW2„E"‚“¢ÂF†RÖævVÖVçB’†'V–ÇB“²"ÂF†RvV"67&VVç3²2ÂF†Rf—'7BV&Æ–2VæGö–çG2†6Æ76W2Â7GVFVçBæBVç&öÆÖVçB7–æ2Â&VÆV6VB&W7VÇG2’âF†RW6W"6†÷6RFò'V–ÆB&6–2W†Òv÷&¶fÆ÷r&Vf÷&RFö7VÖVçG2æB’Â–âf÷W"7FvW2„E"2“¢ÂF†RVW7F–öâ&æ²†'V–ÇB“²"ÂF†RW†Ò'V–ÆFW"Âv—F‚V&Æ—6†–ær&÷fVB'’âW†Ò6ö÷&F–æF÷"†FW6–væF–öâöâ7Ffb66÷VçG2’÷"Âf÷"FV6†W"w2W†ÒÂ66†ööÂFÖ–âÂæBæWfW"'’F†RW†Òw2WF†÷"†'V–ÇB“²2Â6—GF–ærW†×2†'V–ÇB“²BÂ&W7VÇG2†'V–ÇB’âF†RvV"†2÷vV&’6òf"†26–vâÖ–âÂF†R6–væVBÖ–â6†VÆÂÂF6†&ö&BÂF†R66÷VçBvRÂF†R66†ööÂ6WGW67&VVç2f÷"66†ööÂFÖ–ç2†66÷VçG2Â6W76–öç2æBFW&×2Â6Æ76W2Â7V&¦V7G2ÂVç&öÆÖVçBÂFV6†–ær’æBÂf÷"7FfbÂF†RVW7F–öâ&æ²æB76vW2†ÆÂ6—‚VW7F–öâG—W2’ÂF†RW†Ò'V–ÆFW"Â&÷fÇ2Âv†ò†27F'FVBâW†ÒÂ&VÆV6–ær&W7VÇG2Â6Æ72&W7VÇG2Â—FVÒæÇ—6—2ÂÖ&¶VB67&—G2æBÖ&¶–ærw&—GFVâç7vW'2ÂÆV&æ–ærÖFW&–Ç2‡WÆöBÂ6†V6¶–ærF†RW‡G&7FVBFW‡BÂ&÷fÂ’æB’G&gG2†6¶–ærÂ&Wf–Wv–ærG&gG2&W6–FRF†V—"Wf–FVæ6RÂ&÷f–ærF†VÒ–çFòF†R&æ²’ÂÆ"6ö×WFW'2f÷"66†ööÂFÖ–ç2†÷66†ööÂöÆ"Ö6ö×WFW'6’æBV6‚W†Òw2Æ"6ö×WFW'26&B†W†Ò6öFW2&–çFVB26Æ—2ÂF†R6¶vRf÷"U4"ÂWÆöF–ær&W7VÇG2’ÂæBf÷"7GVFVçG2F†V—"W†×2Â6—GF–ærâW†Ò†÷6—FÂ÷WG6–FRF†R6†VÆÂ’æBF†V—"&W7VÇG2âF†R&6–2W†Òv÷&¶fÆ÷r—26ö×ÆWFR–âF†R'&÷w6W"†2÷vV"õ$TDÔRæÖF’â†6R2†ÆV&æ–ærÖFW&–Ç2’—2'V–ÇB„E"B“¢F†R’Â÷vW%ö–çBÂW†6VÂæB55bÂô5"v—F‚FW76W&7BÂæBF†RvV"67&VVç2‡7FvW2FòB’â†6RB„E"R’†2—G2’‡7FvR’æBvV"67&VVç2‡7FvR"’'V–ÇBâE"b†Ö÷&RVW7F–öâG—W2æBFV6†W"Ö&¶–ær’—2'V–ÇC¢F†R’‡7FvR’ÂF†RvV"67&VVç2‡7FvR"’æB’G&gG2öbWfW'’G—R‡7FvR2’âF–w&ÕöVæv–æVæ÷r†2â–æ—F–Â7FæFÆöæR5dr&VæFW&W"Âæ÷B–WB6öææV7FVBFòF†R’÷"VW7F–öâ&æ²âFö7VÖVçBÖVæv–æVw2æB’ÖVæv–æVw27V72&R–×ÆVÖVçFVB–ç6–FRF†R’†öFö7VÖVçG2öÂö’ö’â6¶vW2ö‡6†&VBG—W2õT’÷7–æ2’ÂFW67&–&VB–âF†R$TDÔRÂFöW6âwBW†—7B–WBâF†R66†ööÂ–çFVw&F–öç267&VVâVæFW"÷66†ööÂö–çFVw&F–öç66öææV7G2FòF†RÖævVÖVçB“²F†RV&Æ–2ö–çFVw&F–öç6vR&VÖ–ç2FW6–vâ&Wf–WrâF†RFW6·F÷†2öFW6·F÷’—2F†RÆ"f÷"öffÆ–æRW†×3¢&Vv—7G&F–öâÂ6¶vW2ÂF†RÆö6¶VBW†Ò&ööÒÂ6VæF–ær&W7VÇG2„E"r7FvR2’ÂæB—G2v–æF÷w2–ç7FÆÆW"v—F‚WFFW2g&öÒF†R66†ööÂw26W'fW"‡7FvRB’àÐ Ð¤f÷"FöÖ–âFWF–ÂöâV6‚&V‡FVææ7’æB&öÆW2ÂF†RÖFW&–Ç2(i"VW7F–öç2(i"W†×2—VÆ–æRÂöffÆ–æR7–æ2Â–çFVw&F–öç2’ÂF†R'VÆW2V6‚×W7B6F—6g’Â÷Vâ&öGV7BFV6—6–öç2ÂæB6öFR&V6—W2ÂW6RF†R&ö¦V7B6¶–ÆÂ–âæ6ÆVFR÷6¶–ÆÇ2ö6'B×ÆFf÷&ÒöàÐ Ð¦Fö72ö–çFVw&F–öç2ö’Ö6öçG&7BæÖFFW67&–&W2F†R§F&vWB¢V&Æ–2’„ôWF‚Fö¶VâVæGö–çBÂW†Ò6W76–öç2ÂvV&†öö·2Â²&W'&÷"#¢²ââç×ÖVçfVÆ÷R’âÖ÷7Böb—B—2æ÷B–×ÆVÖVçFVBâ6†V6²F†R6öFR&Vf÷&R77VÖ–ærâVæGö–çB÷"&V†f–÷W"W†—7G2âW'&÷'27W'&VçFÇ’W6Rf7D’w2FVfVÇB²&FWF–Â#¢ââçÖ6†RàÐ Ð¢226öÖÖæG0Ð Ð¢222&6¶VæB’‡'Vâg&öÒ&6¶VæBö–Ð Ð¦&6€Ð§—–ç7FÆÂÖR"å¶FWeÒ"2—F†öâãÒ2ãÐ¦7æVçbæW†×ÆRæVçb2÷F–öæÃ²FVfVÇG2v÷&²v—F†÷WB—@Ð¦ÆVÖ&–2Ww&FR†V@Ð§Wf–6÷&âæÖ–ã¦Ò×&VÆöB2Fö72BöFö72ÂÆ—fVæW72Bö†VÇF€Ð§—F†öâÖÒçv÷&¶W"2&ö6W76W2WÆöFVBÖFW&–Ç2v†VâDô5TÔTåEõ$ô4U54”äs×v÷&¶W Ð Ð§'Vfb6†V6²â2Æ–çB†FBÒÖf—‚f÷"WFöf—†&ÆR—77VW2Ð§—FW7B2ÆÂFW7G0Ð§—FW7BFW7G2÷FW7Eö–çFVw&F–öåöWF‚ç“£§FW7E÷&Wfö¶VEö7&VFVçF–Åö—5÷&V¦V7FVB2öæRFW7@Ð§—FW7BÖ²W‡—&VB2FW7G2ÖF6†–æræÖPÐ¦ Ð Ð¥÷7Fw&U5ÂÆö6ÆÇ“¢Fö6¶W"6ö×÷6RÖb–æg&7G'V7GW&RöFö6¶W"ö6ö×÷6Rç–ÖÂWÖF†g&öÒF†R&Wò&ö÷BÂgFW"6÷––ær–æg&7G'V7GW&RöFö6¶W"òæVçbæW†×ÆVFòæVçf’â—B7&VFW26'Ff÷"FWfVÆ÷ÖVçBæB6'E÷FW7Ff÷"FW7G2â'VâF†R7V—FRöâ—Bv—F‚DU5EôDD$4UõU$ÃÒ'÷7Fw&W7Â·7–6÷s¢òö6'C£Ç77v÷&CäÆö6Æ†÷7C£SC3"ö6'E÷FW7B"—FW7FâF†R7V—FRG&÷2ÆÂ—G2F&ÆW2Â6ò—B&VgW6W2FF&6RæÖW2F†BFöâwBVæB–â÷FW7FâU$Ç2æVVBF†R·7–6÷vG&—fW"â'VâÖ–w&F–öâ6†V6·2†ÆVÖ&–2F÷væw&FR&6VÂv†–6‚G&÷2WfW'’F&ÆR’v–ç7B6'E÷FW7FFöòÂæWfW"F†R6'FFWfVÆ÷ÖVçBFF&6RàÐ Ð¤4’†æv—F‡V"÷v÷&¶fÆ÷w2ö&6¶VæBÖ’ç–ÖÆ’†2Gvò'G3 Ð¢Òöâ5Æ—FRv—F‚—F†öâ2ãæB2ã3¢'Vfb6†V6²æÂ—FW7FÂF†VâÆVÖ&–2Ww&FR†VBbbÆVÖ&–26†V6²bbÆVÖ&–2F÷væw&FR&6RbbÆVÖ&–2Ww&FR†VFàÐ¢Òöâ÷7Fw&U5Âr†wfV7F÷"÷wfV7F÷#£ã‚ã×svÂF†R6ÖR–ÖvR26ö×÷6R“¢—FW7FÂF†VâF†R6ÖRÖ–w&F–öâ6WVVæ6RàÐ Ð¦ÆVÖ&–26†V6¶f–Ç2–bÖöFVÂ6†ævVBv—F†÷WBÖF6†–ærÖ–w&F–öâàÐ Ð¤æWrÖ–w&F–öã¢v—F‚F†RFF&6RB†VBÂÆVÖ&–2&Wf—6–öâÒÖWFövVæW&FRÒ×&WbÖ–B%óÇF÷–3âÖÒ#ÆFW67&—F–öãâ&ÂF†Vâ&Wf–WrF†RvVæW&FVBf–ÆR'’†æBâ&Wf—6–öâ”G2&R6WVVçF–ÂæBFW67&—F—fR‡6VRÖ–w&F–öç2÷fW'6–öç2ó÷FVæçG5ö–çFVw&F–öç2ç–’âÖ–w&F–öç2×W7Bv÷&²öâ&÷F‚5Æ—FRæB÷7Fw&U5Â‡F†R&öGV7F–öâF&vWB’ÂæB4’6†V6·2&÷F‚àÐ Ð¢222vV"æBFW6·F÷ Ð Ð¦2÷vV&„æöFR##²çÒ6–g&öÒF†R6öÖÖ—GFVBÆö6¶f–ÆR“¢çÒ'VâFWbÂ'V–ÆBÂ7F'BÂÆ–çBÂG—V6†V6¶â4’†æv—F‡V"÷v÷&¶fÆ÷w2÷vV"ç–ÖÆ’'Vç2Æ–çBÂG—V6†V6²æB'V–ÆBâF†RvV"6W'fW"f÷'v&G2ö’ò¦FòF†R’B•ôõ$”t”æ†FVfVÇB‡GG¢òöÆö6Æ†÷7C£ƒ’Â6ò'VâF†R’öâ÷'BƒÆöæw6–FRçÒ'VâFWfâF†R'&÷w6W"öæÇ’FÆ·2FòF†RvV"w2÷&–v–ã¢¶VW—BF†Bv’Â6òF†R‡GGöæÇ’6W76–öâ6öö¶–R7F—2f—'7B×'G’âF†R55$bFö¶VâÆ—fW2–âÖVÖ÷'’öæÇ’†7&2öÆ–"ö’çG6Â7&2öÆ–"÷6W76–öâçG7†’â6–væVBÖ–âvW2Æ—fRVæFW"7&2öò‡66†ööÂ’ö26Æ–VçB6ö×öæVçG2F†BfWF6‚g&öÒF†R“²F†R’—27F–ÆÂF†R66W726öçG&öÂâ7FfbÖöæÇ’67&VVç2‡66†ööÂFÖ–ç2æBFV6†W'2’Æ—fRVæFW"7&2öò‡66†ööÂ’ò‡7Ffb’öâ&WW6RF†R6†&VB–V6W3¢W6T–æBW6TÆöFW&†ÆöF–ær’ÂÖ&´ç7vW&†7&2ö6ö×öæVçG2öW†×2öÂFV6†W"w2Ö&²æB6öÖÖVçB’Âç7vW$¶W•f–Wv†7&2ö6ö×öæVçG2ö&æ²õVW7F–öä&öG’çG7†Â7FfböæÇ’’ÂW6UvVDÆ—7F†æWvW7BÖf—'7BÆ—7F–æw2v—F‚%6†÷rÖ÷&R"’ÂÆ—7DÆÆ†WfW'’vRöbÆ—7F–ær’ÂWÆöF†×VÇF—'Bf÷&×2v—F‚F†R55$bFö¶Vâ’ÂW6UöÆÆ–æv‡&Vg&W6‚v†–ÆRF†R’v÷&·2–âF†R&6¶w&÷VæB’ÂW6T7F–öæ†6†ævW2Âv—F‚”W'&÷&æBW"×&÷rW'&÷'2’ÂÖöFÆö6öæf—&ÔÖöFÆÂÆöFVFöW'&÷$ÆW'Föæ÷F–6VÂæBF†R6Æ76W2–âvÆö&Ç2æ776â67&VVç2F†B6†÷rç7vW"¶W—2†7&2ö6ö×öæVçG2ö&æ²ö’&Rf÷"7FfböæÇ“¢7GVFVçB67&VVç2†7&2öò‡66†ööÂ’ò‡7GVFVçB’öÂ7&2öò†W†Ò’ö’†fRF†V—"÷vâ6ö×öæVçG2æBW6RöæÇ’F†R7GVFVçBVæGö–çG2âFWF–Ç3¢2÷vV"õ$TDÔRæÖFàÐ Ð¦2öFW6·F÷‡F†RÆ"ÂæöFR#"ÂVÆV7G&öâCS²çÒ6–g&öÒ—G2Æö6¶f–ÆR“¢çÒ'Vâ'V–ÆBÂFWbÂFW7BÂG—V6†V6¶â4’†æv—F‡V"÷v÷&¶fÆ÷w2öFW6·F÷ç–ÖÆ’'Vç2F†RG—V6†V6²æBçÒFW7F‡F†R6÷&Rw2æöFS§FW7FFW7G2’â—BFöW6âwBÆöBF†RvV"¢—G2÷vâ67&VVç2†7&2÷&VæFW&W"öÂ&V7B'VæFÆVB'’W6'V–ÆB’FÆ²öæÇ’Fò—G2Ö–â&ö6W72F‡&÷Vv‚v–æF÷ræÆ"æ6ÆÆ†7&2÷&VÆöBçG6Â7&2öÖ–âö'&–FvRçG6’ÂæBF†RÖ–â&ö6W72FöW2WfW'—F†–ærF†BÖGFW'2–â7&2ö6÷&Rö‡Æ–âæöFRÂFW7FVBv—F†÷WBVÆV7G&öã¢Æ"çG6Â7'—FòçG6ÖF6†–ærF†R6W'fW"'—FRf÷"'—FRÂÖ&¶–ærçG6v—F‚F†R6W'fW"w2'VÆW2Âf–ÆW2çG6¦÷W&æÇ2Â–âçG6’âÄ%ôDDôD•&æBÄ%ô´”õ4¶†Æö6·2–âFWfVÆ÷ÖVçB’&Rf÷"FWfVÆ÷ÖVçBæBFW7G2âçÒ'Vâ6¶vS§v–æ'V–ÆG2F†Rå4•2–ç7FÆÆW"†öâv–æF÷w3²æv—F‡V"÷v÷&¶fÆ÷w2öÆ"Ö×&VÆV6Rç–ÖÆ'V–ÆG2—B–â4’æBÂöâÆ"×e‚å’å¦FrÖF6†–ær6¶vRæ§6öæÂGF6†W2—BFòv—D‡V"&VÆV6R’â–ç7FÆÆW'2&RVç6–væVBVçF–ÂF†Rt”åô545ôÄ”ä¶öt”åô545ô´U•õ55tõ$F6V7&WG2W†—7BâWFFW2†7&2ö6÷&R÷WFFW2çG6’&R–ç7FÆÆVBöæÇ’g&öÒF†R7Ffb6–FRÂæWfW"v†–ÆRâGFV×B—6âwB†æFVB–âÂæBöæÇ’gFW"F†RÖæ–fW7Bw26–væGW&RæBF†R–ç7FÆÆW"w24„Ó#Sb6†V6²÷WBâ¶VWF†Rv–æF÷rVçG'W7FVB†6öçFW‡D—6öÆF–öæÂ6æF&÷†ÂæòæöFR’æB¶VW'W6–æW72'VÆW2öâF†R6W'fW#¢F†RÆ"w2Ö&¶–ær—2öæÇ’f÷"–ç7FçB66÷&W2Âv†–6‚F†R6W'fW"Ö&·2v–ââFWF–Ç3¢2öFW6·F÷õ$TDÔRæÖFàÐ Ð¢22&6¶VæB&6†—FV7GW&PÐ Ð¢¢¤ÖöGVÆ"ÖöæöÆ—F‚â¢¢FöÖ–â'VÆW2Æ—fR–âF†R&6¶VæBöæÇ’âvV"æBFW6·F÷6Æ–VçG2&RVçG'W7FVBæB×W7Bæ÷B&RÖ–×ÆVÖVçB'W6–æW72'VÆW2÷"7B266W726öçG&öÂâ¶VW6ÆV"6¶vR&÷VæF&–W2†–FVçF—G’÷FVææ7’Â6öçFVçBÂ&WG&–WfÂÂVW7F–öâvVæW&F–öâÂF–w&×2ÂW†×2Âw&F–ærÂ7–æ2’æB7Æ—B–çFò6W'f–6W2öæÇ’v†VâF†W&R—2ÖV7W&VBæVVBàÐ Ð¢¢¤6öæf–wW&F–öâæBFF&6Râ¢¢ö6÷&Rö6öæf–rç–&VG26WGF–æw2g&öÒVçbf'2æBæVçff––FçF–2×6WGF–æw2âvWE÷6WGF–æw2‚–—2Ç'Uö66†VBÂæBöF"÷6W76–öâç–7&VFW2F†RVæv–æRB–×÷'BF–ÖRg&öÒDD$4UõU$ÆÂ6òVçb6†ævW2×W7B†Vâ&Vf÷&R—2–×÷'FVBâ&÷WFW2vWB6W76–öâF‡&÷Vv‚F†RvWEöF&FWVæFVæ7’âV&Æ–2&÷WFW'2&RÖ÷VçFVB–âöÖ–âç–VæFW"6WGF–æw2æ•÷c÷&Vf—††ö’÷c’àÐ Ð¢¢¤ÖöFVÇ2¢¢†öÖöFVÇ2ö“¢7G&–ærUT”B&–Ö'’¶W—2†7G&–ærƒ3b–’ÂF–ÖW¦öæRÖv&RFFUF–ÖVFVfVÇF–ærFòWF5öæ÷r‚–ÂæBÆ–fV7–6ÆR7FGW62Æ–â7G&–æw2†&7F—fR&Â'&Wfö¶VB&Ââââ’&F†W"F†âVçV×2âæWrÖöFVÂ×W7B&R–×÷'FVB–âöÖöFVÇ2õõö–æ—Eõòç–¢¦æB¢¢–âÖ–w&F–öç2öVçbç–Â÷"WFövVæW&FRæBÆVÖ&–26†V6¶vöâwB6VR—BâÆ–æ·2&WGvVVâFVæçB×66÷VB&÷w2W6R6ö×÷6—FRf÷&V–vâ¶W—2öâ†–BÂFVæçEö–B–Â6òF†RFF&6R&VgW6W27&÷72×66†ööÂ&VfW&Væ6W2â5Æ—FRöæÇ’Væf÷&6W2f÷&V–vâ¶W—2&V6W6RVæ&ÆU÷7Æ—FUöf÷&V–våö¶W—6–âöF"÷6W76–öâç–GW&ç2F†VÒöâÂæBF†RFW7G2FòF†R6ÖRàÐ Ð¢¢¥FVæçB—6öÆF–öââ¢¢WfW'’66†ööÂÖ÷væVB&V6÷&B6'&–W2FVæçEö–FâF†RFVæçB—2Çv—2FW&—fVB6W'fW"×6–FRg&öÒF†RWF†VçF–6FVB&–æ6—ÂÂæWfW"g&öÒ6Æ–VçB×7WÆ–VB”BâVW&–W2f÷"FVæçBFF×W7Bf–ÇFW"'’F†R&–æ6—Âw2FVæçBàÐ Ð¢¢¤–çFVw&F–öâ’Ö¶W’WF‚¢¢†ö–çFVw&F–öç2öWF‚ç–’â—B7ç26WfW&ÂÖöGVÆW3 Ð¢Òö6÷&Rö•ö¶W—2ç–—77VW2¶W—226'EöÆ—fUóÇ&æFöÓæâöæÇ’F†R4„Ó#SbF–vW7B†”7&VFVçF–Âç6V7&WEö†6†’æBF†Rf—'7Bb6†&7F]}×Ëh‘éì¶»§q«^u\ÙNÈ×ÜÝÜ˜YÙJ
-XÚ]™\È
-Ü[ÛœËÛÜœ™XÝYË[œÝÙ\ˆÙ^JKƒB‹HH[œÝÙ\ˆÙ^H\È]Y\Ý[Û•™\œÚ[Û‹˜ÛÜœ™XÝÛÜ[Û—ÚYØ›ÜˆÚÚXÙH\\È[™]Y\Ý[Û•™\œÚ[Û‹˜[œÝÙ\—ÚÙ^X
-XØÙ\YØ[œÝÙ\œØ˜[YXØÛ\˜[˜ÙXÜˆ[ˆ\ÜØ^IÜÈÝZYX
-H›ÜˆHÝ\œËˆ™\œÚ[Û“Ý][˜ÛY\È›Ý[™\È›ÜˆÝY™ˆÛ›KˆØ[™Y]KY˜XÚ[™È™\ÜÛœÙ\È]\Ý\ÙHZ\ˆÝÛˆØÚ[X\ÈÚ]Ý][KƒB‹H\˜Ú]™H[œÝXYÙˆ[][™ÈÛ˜ÙHH]Y\Ý[Ûˆ\È\ÙYˆHÝXš™XÝÚ]]Y\Ý[ÛœËÜˆHYÙÙYÜXËØ[‰Ý™H[]YƒB‹H™XY[™È\ÜØYÙ\È
-\Ü]Y\Ý[ÛœËÜ\ÜØYÙ\ËœX
-H\™H™\œÚ[Û™YHØ[YHØ^H
-\ÜØYÙX8¡¤ˆ\ÜØYÙU™\œÚ[Û˜
-Kˆ]Y\Ý[Û‹œ\ÜØYÙWÚY\ÈÙ]]Ü™X][Ûˆ[™™]™\ˆÚ[™Ù\ÎÈ]È›Ü™ZYÛˆÙ^H\È
-\ÜØYÙWÚYÝXš™XÝÚY[˜[ÚY
-XÛÈH\ÜØYÙH\È[Ø^\È[ˆ]È]Y\Ý[ÛœÉÈØÚÛÛ[™ÝXš™XÝˆÚ\™Y[\È›Üˆ›Ý›Ý]\œÈ
-XØÙ\ÜË\Ý[™ËYÚ[™ÊH\™H[ˆ\Ü]Y\Ý[ÛœËØÛÛ[[Û‹œXƒBƒBŠŠ‘^[\ÊŠˆ
-\Û[Ù[ËÙ^[\ËœX\Ù^[\ËØØ\KÝŒKÙ^[\ØÈQˆÈXÚ\Ú[ÛœÈˆ[™L
-KƒB‹H^[X\ÈHY]X›H˜YˆÙ][™ÜË^[P\›XÛ\ÜÙ\È
-Û™H]™[H\›IÜÈÙ\ÜÚ[ÛŠH[™Ü™\™Y^[R][XÈ
-H]Y\Ý[ÛˆÜˆHÚÛH\ÜØYÙJKˆÛ›H]È]]ÜˆY]ÈÜˆÝX›Z]È]ƒB‹HÝX›Z][™Èœ™Y^™\È^[T\\’][X›ÝÜÈ[›™YÈ]Y\Ý[Û•™\œÚ[Û˜[™\ÜØYÙU™\œÚ[Û˜YÈ
-\Ù^[\ËÜ\\‹œX
-Kˆ™]\›š[™È[]\È[NÈX›\Ú[™ÈXZÙ\È[Hš[˜[ˆ^[\ÈÈ]\Ý™XYH\\‹™]™\ˆH˜Y][\ËƒB‹HXØÙ\ÜÈ[\È\™H[[ˆ\Ù^[\ËØXØÙ\ÜËœX
-šY]Ù\˜
-NˆÚÈÙY\Ë™\\™\Ë\›Ý™\È[™Ú]˜]ÜËˆ›Ø›ÙH\›Ý™\ÈZ\ˆÝÛˆ^[NÈ[ˆYZ[‰ÜÈ^[H™YYÈHÛÛÜ™[˜]Ü‹ƒB‹H^[SÝ]Ø\œšY\È[ÝÙYØXÝ[ÛœØ
-Ú]HØ[\ˆX^HÈ›ÝËH[›ÜˆÛY[ÊH[™H]]Ü‰ÜÈ[™™]šY]Ù\‰ÜÈ˜[Y\È
-Ü™X]YØžWÛ˜[YX™]šY]ÙYØžWÛ˜[YX
-K™XØ]\ÙHXXÚ\œËÛÛÜ™[˜]ÜœÈ[˜ÛYYØ[‰Ý\ÝHØÚÛÛ	ÜÈXØÛÝ[ËƒB‹HÔ“H\Ý[™\œÈ[ˆ\Û[Ù[ËÙ^[\ËœX™Y\ÙHÚ[™Ù\ÈÈH›Û‹Y˜Y^[IÜÈÙ][™ÜËÛ\ÜÙ\È[™][\ËÈ[žH\\ˆ›ÝË[™™[[Ýš[™ÈHX›\ÚY\\‹ˆ[ˆ\ÝË[Ý™H[ˆ^[IÜÈ[Y\ÈÚ]HÛÜ™H\]J^[JXÝ][Y[ÚXÚž\\ÜÙ\È[KƒBƒBŠŠ”Ú][™È^[\ÊŠˆ
-\Û[Ù[ËØ][\ËœX\Ø][\ËØÈQˆÈXÚ\Ú[ÛˆLKQˆŠKƒB‹H^[P][\š^\ÈHÝY[	ÜÈ]Y\Ý[Û—ÛÜ™\˜Ü[Û—ÛÜ™\œØ[™[™×Ø]
-Ý\\È\˜][Û‹Ø\Y]ÛÜÚ[™ÊHÚ[ˆ]Ý\Ëˆ[œÝÙ\‘]™[È\™H\[™[Û›KH]\Ý\ˆ\\ˆ][HÚ[œË[™ÝX›Z\ÜÚ[ÛˆÜš]\È][\™\ÜÛœÙXÈÚ]X\šÜËƒB‹HÚÚXÙH]Y\Ý[ÛœÈ\™H[œÝÙ\™YÚ]Ù[XÝYÛÜ[Û—ÚYØHÝ\œÈÚ]^
-ÚXÚÙYžH\H[ˆÝY[œX
-Kˆ\Ø][\ËÛX\šÚ[™ËœXX\šÜÈXXÚ\H
-X\šØ\œÙWÛ[X™\˜
-Nˆ][\KX[œÝÙ\ˆ\È[Üˆ›Ý[™ËÚÜ[œÝÙ\œÈYÛ›Ü™HØ\ÙKÜXÚ[™È[™Ý\œ›Ý[™[™È[˜ÝX][Û‹[X™\œÈ[ÝÈHÛ\˜[˜ÙK[™H›Û‹X›[šÈ\ÜØ^HÙ]È™YY×ÛX\šÚ[™ØƒB‹H\Ø][\ËÜÙ\šXÙKœXÛÈH[\Îˆ^[\×Ù›Ü˜
-X›\ÚY^[\È›ÜˆHØ[™Y]IÜÈ\›\ÊK™]×ÛÜ™\œØ]\ÝØ[œÝÙ\œØØš[˜[Ø[œÝÙ\œØ
-[ˆ[œÝÙ\˜\ˆ][JKš[š\Ú
-X\šÚ[™ÊH[™š[š\ÚÛÝ™\™YXˆ^\™Y][\È\™Hš[š\ÚY^š[H
-L\ÙXÛÛ™ÔPÑX
-HÚ\™]™\ˆ][\È\™H™XYÛÈØ[š[š\ÚÛÝ™\™YX™Y›Ü™H™\Ü[™ÈÛˆ][\ËƒB‹HÝY[[™Ú[È
-\Ø][\ËÜÝY[œX
-H]\Ý™]™\ˆ™]\›ˆ[œÝÙ\ˆÙ^\Ë^[˜][ÛœÈÜˆØÛÜ™\ÎÈZ\ˆØÚ[X\È[ˆ\Ø][\ËÜØÚ[X\ËœXÛ‰Ý]™HÜÙHšY[ËˆØÛÜ™\È™XXÚÝY[ÈÛ›H›ÝYÚH™\Ý[È[™Ú[ËƒB‹HÛÛ\ÜÚ]H›Ü™ZYÛˆÙ^\ÈÛˆ
-][\ÚY^[WÚY[˜[ÚY
-X[™
-\\—Ú][WÚY^[WÚY[˜[ÚY
-XÙY\[œÝÙ\œÈÛˆZ\ˆÝÛˆ^[IÜÈ\\‹ˆ[Ý™H][\[Y\È[ˆ\ÝÈÚ]HÛÜ™H\]J^[P][\
-XƒBƒBŠŠ”™\Ý[È[™XXÚ\ˆX\šÚ[™ÊŠˆ
-\Ü™\Ý[ËØÈQˆÈXÚ\Ú[ÛˆL‹QˆŠKƒB‹H\Ü™\Ý[ËÜÙ\šXÙKœXˆÛÝ[YØ][\Ø
-H]\Ýš[š\ÚY][\\ˆÝY[
-KØÛÜ™WÝš\ÚX›X
-™[X\ÙYÜˆ[ˆ[[YYX]H^[JK™]šY]×Ýš\ÚX›X
-[ÛÈÛÜÙY
-H[™Ø[—Ü™[X\ÙWÜ™\Ý[Ø
-X›\ÚYXXÚ\ˆ™[X\ÙK›ÝY]™[X\ÙYÛÜÙY\ÈÔPÑX
-KƒB‹HÝY[ØÚ[X\È
-^T™\Ý[^T™\Ý[]Z[
-H]™H›ÈÛÜœ™XÝÜ[ÛœÎˆÝY[ÈÙYHØÛÜ™K\˜Ù[YÙH[™Y\ˆÛÜÚ[™ËšYÚÝÜ›Û™È\ˆ]Y\Ý[Û‹ˆÝY™ˆØÚ[X\È[˜ÛYH[œÝÙ\ˆÙ^\ËƒB‹H™[X\ÙH\›Z\ÜÚ[Ûˆ\ÈšY]Ù\‹˜Ø[—Ü™[X\ÙX
-]]Ü‹XXÚ\œÈÙˆHÝXš™XÝ[ˆH^[IÜÈÛ\ÜÙ\ËØÚÛÛYZ[œÊKˆ^[HÛÛÜ™[˜]ÜœÈÙYH™\Ý[È]Û‰Ý™[X\ÙH[›\ÜÈ^H[ÛÈXXÚ]ƒB‹HXXÚ\œÉÈX\šÜÈ
-™\ÜÛœÙSX\šØ\[™[Û›K[X™\™Y\ˆ[œÝÙ\ŽÈHYÚ\Ý[X™\ˆÛÝ[ÊH\™HÚ]™[ˆ[ˆ\Ü™\Ý[ËÛX\šÚ[™ËœXžHHØ[YH[ÜH\È™[X\Ú[™Ë›ÜˆÜš][ˆ\\ÈÛ›H
-Ô’US—ÕTTØ
-K[[X\šÚ[™×ÛØÚÙY
-™[X\ÙYÜˆ[ˆ[[YYX]H^[JKˆ^[P][\œØÛÜ™XÝ^\ÈH]]ÛX]XÈÝ[ˆ
-Šœ™\ÜØÛÜ™\È›ÝYÚÙ\šXÙKÝ[Ê‹‹ŠX[™\ˆ[œÝÙ\ˆ›ÝYÚX\š×ÛÙŠ‹‹ŠX
-Š‹™]™\ˆ][\œØÛÜ™X\™XÝKˆ™[X\ÙH\È™Y\ÙYÚ[H[žHÛÝ[Y[œÝÙ\ˆØZ]È
-[™[™Ø
-K[™[ˆ^[HÚ]\ÜØ^\È]\Ý\ÙHXXÚ\ˆ™[X\ÙH
-ÚXÚÙYÛˆÝX›Z][ˆ\Ù^[\ËÜ\\‹œX
-KƒB‹H\ÝÈ›Üˆ™\Ý[È™]\ÙHHÛ\ÜÜ›ÛÛHÙ]\œ›ÛH\ÝËÝ\ÝØ][\ËœX›ÝYÚ]ÈZ[ÜØÚÛÛ
+# CLAUDE.md
 
-X[\‹ƒBƒBŠŠ“X\›š[™ÈX]\šX[ÊŠˆ
-\Û[Ù[ËÙØÝ[Y[ËœX\ÙØÝ[Y[ËØØ\KÝŒKÙØÝ[Y[ØÈQˆ
-KƒB‹HØ[YHXØÙ\ÜÈ\ÈH]Y\Ý[Ûˆ˜[šÈ
-Ø[—Ý\ÙWÜ]Y\Ý[Û—Ø˜[šØ
-NˆØÚÛÛYZ[œÈ[™HÝXš™XÝ	ÜÈXXÚ\œÈ\ØY™]šY]È[™\›Ý™K[˜ÛY[™ÈZ\ˆÝÛˆ\ØYËˆÝY[ÈÙ]ËƒB‹HØÝ[Y[
-ÝXš™XÝ]KÜXÜËXÝ]™KØ\˜Ú]™Y
-H8¡¤ˆØÝ[Y[™\œÚ[Û˜
-Û™H\ØYYš[NÈ]Èš[HšY[È™]™\ˆÚ[™ÙK[™›Ü˜ÙYžH[ˆÔ“H\Ý[™\ŠH8¡¤ˆØÝ[Y[ÙYÛY[
-^˜XÝY^Ú]Ú[™YÙKÜÙXÝ[Û‹Û[™\Ë[X™\˜X™[›YÜØÈ™]™\ˆÚ[™Ù\ÊKˆH™]Ù\Ý\›Ý™Y™\œÚ[Ûˆ\ÈHÛ™H\ÙY\È]šY[˜ÙKƒB‹H\ÙØÝ[Y[ËÙ^˜XÝœXˆY[YžX
-Ú[™œ›ÛHÛÛ[È™Y\Ù\È[œÝ\ÜYXXÜ›Ë[\]KÝ™\œÚ^™YÜˆš\X›ÛXˆš[\ÈÚ]HY\ÜØYÙJH[™^˜XÝ
-\š][Lˆ›Üˆ‹]Û‹YØÞ›ÜˆÛÜ™]Û‹\›ÜˆÛY\ÈÚ]ÜXZÙ\ˆ›Ý\ËÜ[œ^›Üˆš\ÚX›HÚY]ÈÛ›KÜÝ˜›ÜˆÔÕ‹[ÝÈ›ÜˆÝÜÎÈ\ÈÚ]›È^\™HÙ\[™›YÙÙY›×Ý^™]™\ˆ™X]Y\È™XY
-KƒB‹H\ÙØÝ[Y[ËÛØÜ‹œXˆ\ÜÙ\˜XÝ\ÈHÝXœ›ØÙ\ÜÈÛˆH‘ÈÙH›ÙXÙH
-Û™H™XYH[YH[Z]
-KÚ]ÛÛ™šY[˜ÙHœ›ÛH]ÈÕ‹ˆYÙ\ÈÚ]Ý]H^^Y\‹ÝÜÈ[™XÝ\™K[Û›HÛY\È\™HÐÔ‰ÙÈ™[ÝÈÐÔ—ÓRS—ÐÓÓ‘’QSÑXHÙYÛY[\È›YÙÙYÝ×ØÛÛ™šY[˜ÙXÚXÚ\ØZKÜ™]šY]˜[œX™]™\ˆ\Ù\È\È]šY[˜ÙKˆÐÔˆ\ÝÈ™YY\ÜÙ\˜XÝ
-\YÙ][œÝ[\ÜÙ\˜XÝ[ØÜ˜
-NÈÒHÙ]È‘TURT‘WÓÐÔLXÛÈ^HØ[‰Ý™HÚÚ\Y\™KƒB‹H\ÙØÝ[Y[ËÜ›ØÙ\ÜÚ[™ËœXˆH]Y]YH\ÈØÝ[Y[™\œÚ[Û‹œÝ]\ØÈÛZ[X\ÈÛ™HÛÛ™][Û˜[\]K›ØÙ\Ü×Ü]Y]YYØ™XÛÝ™\—ÜÝXÚØÙ\™H\ÝÛÜšÙ\‹œXˆÐÕSQS•Ô“ÐÑTÔÒS‘ÏZ[›[™X
-Y˜][
-H›ØÙ\ÜÙ\ÈY\ˆH™\ÜÛœÙH\Ú[™ÈH™]ÈÙ\ÜÚ[ÛˆÛˆH™\]Y\Ý	ÜÈ[™Ú[™KƒB‹HÜšYÚ[˜[ÈÛÈ›ÝYÚ\ØÛÜ™KÜÝÜ˜YÙKœX
-Ù]ÜÝÜ˜YÙXH˜\ÝTH\[™[˜ÞNÈØØ[ÝÜ˜YÙX[™\ˆÕÔQÑWÑT˜
-KˆÙ^\È\™HXYHœ›ÛHYË™]™\ˆœ›ÛHH\ØY	ÜÈ˜[YKƒB‹H\›Ýš[™È™YYÈXÚÛ›ÝÛYÙWÝØ\›š[™ÜØÚ[ˆ\™H\™HØ\›š[™ÜË[™ÛÛYH™XYX›H^È[][™È\È™Y\ÙYÛ˜ÙHH™\œÚ[ÛˆØ\È\›Ý™Y
-\˜Ú]™H[œÝXY
-KƒBƒBŠŠRH]Y\Ý[Ûˆ˜YÊŠˆ
-\Û[Ù[ËØZKœX\ØZKØØ\KÝŒKØZXÈQˆJKƒB‹HØ[YHXØÙ\ÜÈ\ÈH]Y\Ý[Ûˆ˜[šËˆ˜YÈØ\œžH[œÝÙ\ˆÙ^\ËÛÈÝY[ÈÙ]È]™\ž]Ú\™KƒB‹HZT™\]Y\Ý
-Ú]Ø\È\ÚÙYÝ]\È]Y]YKÚÜ˜[›Ý\Ø\ØYÙH[™\Ý[X]YÛÜÝ
-H8¡¤ˆZTÛÝ\˜ÙX
-HÙYÛY[ÈÚ]™[ˆÈH[Ù[X™[YÌK‹‹ŽÈ™]™\ˆÚ[™Ù\ÊH[™]Y\Ý[Û‘˜Y
-[™[™ËØ\›Ý™YÙ\ÛZ\ÜÙYÜˆ™Z™XÝYÚ]™X\ÛÛœØ
-H8¡¤ˆ˜YÚ]][Û˜
-][ÝKÙYÛY[›Ý[™
-Kˆ\›Ýš[™ÈÜ™X]\ÈH˜[šÈ]Y\Ý[Û˜Ú]ÛÝ\˜ÙOH˜ZH˜[™]Y\Ý[ÛÚ]][Û˜ÈÛˆ]Èš\œÝ™\œÚ[Ûˆ
-™]™\ˆÚ[™ÙJKƒB‹H\ØZKÜ™]šY]˜[œXˆÛ›HH™]Ù\Ý\›Ý™Y™\œÚ[ÛˆÙˆXXÚXÝ]™HØÝ[Y[[ˆHÝXš™XÝ[™ØÚÛÛÈ›×Ý^[™[žHÙYÛY[ÈÚÚ\YÈ“LHÛˆÜXÈ˜[Y\È[™HØš™XÝ]™K[ˆÚ^™H[Z]Ëˆ]šY[˜ÙH\ÈÚÜÙ[ˆÚ[ˆH™\]Y\Ý\ÈXYNÈ›Ý[™ÈX]Ú[™È\ÈHŒˆ™Y›Ü™H[žHÜ[™ƒB‹H\ØZKÜ›ÝšY\‹œX\ÈH[\™˜XÙH
-Üš]XÚXÚØ
-H[™Ù]Ü›ÝšY\Š
-X™XYÈRWÔ“Õ’QT˜
-Ù™˜Y˜][[›ÜXØ8¡¤ˆ\ØZKØÛ]YKœX˜ZÙX8¡¤ˆ\ØZKÙ˜ZÙKœX
-KˆHÛ]YH›ÝšY\ˆÝ™X[\ÈÛ™HÝXÝ\™Y[Ý]]™\]Y\Ý\ˆ›Øˆ[™X\È™Y\Ø[ËÝ]\ÚÜ[œÝÙ\œÈ[™TH\œ›ÜœÈÈ›ÝšY\‘\œ›Ü˜Y\ÜØYÙ\È›ÜˆÝY™‹ˆ™]™\ˆYØ[\[™È\˜[Y]\œÈ
-Ý\œ™[[Ù[È™Z™XÝ[JKƒB‹H\ØZKØÚXÚÜËœXXÚY\ÈÚ]\ÜÙ\Îˆ˜[šÈ›Ü›X]™\]Y\ÝY\\Ë8¢iLÈÜ[ÛœËH][ÝH›Ý[™ÛÜ™›ÜˆÛÜ™
-\ØZKÝ^œX][ÝWÙ›Ý[™
-K›È™\X]ÈÙˆH˜[šË[™[™È˜YÈÜˆX\›Y\ˆØ[™Y]\Ë[™H[œÝÙ\ˆÚXÚÉÜÈ™\™XÝËˆ\ˆ\H
-QˆˆXÚ\Ú[ÛˆÊNˆ][\KX[œÝÙ\ˆ™YYÈ8¢iLˆšYÚ[™8¢iLHÜ›Û™ÎÈHÚÜ[œÝÙ\ˆ]\Ý™H8¢iˆÛÜ™È[™\X\ˆ[ˆH›Ý[™][ÝH
-˜\ÙWÚ[˜
-NÈ[ˆ\ÜØ^H™YYÈHX\šÚ[™ÈÝZYKˆ˜YÈÙY\[œÝÙ\—ÚÙ^XZÙH˜[šÈ™\œÚ[ÛœËˆ[Ù[Ý]]™]™\ˆÚÚ\È\ÙKƒB‹H\ØZKÜ›ØÙ\ÜÚ[™ËœXˆHØ[YH]Y]YH]\›ˆ\ÈØÝ[Y[È
-RWÔ“ÐÑTÔÒS‘ÏZ[›[™_ÛÜšÙ\˜È\ÝÛÜšÙ\‹œXÙ\™\È›Ý
-KƒB‹H\ÝÈØÜš\˜ZÙT›ÝšY\ŠÜš]OK‹‹‹ÚXÚÏK‹‹ŠX[œÝ[YÚ]\ÙWÜ›ÝšY\˜
-š^\™HZX[ˆ\ÝËÝ\ÝØZWÙ˜YËœX
-H[™[ˆÛ]YT›ÝšY\˜›ÝYÚH™X[ÑÈÚ][ˆ‹“[ØÚÕ˜[œÜÜ
-\ÝËÝ\ÝØZWÜ›ÝšY\‹œX
-Kˆ™]™\ˆØ[H]™H[Ù[[ˆ\ÝËƒBƒBŠŠ“Ù™›[™H^[\ÊŠˆ
-\Û[Ù[ËÛÙ™›[™KœX\ÛÙ™›[™KØÈQˆÊKˆHTH
-ÝYÙHJKHÙXˆØÜ™Y[œÈ
-ÝYÙHŠKHXˆ\
-ÝYÙHË\ËÙ\ÚÝÜ
-H[™]È[œÝ[\ˆ[™\]\È
-ÝYÙH
-H\™HZ[ƒB‹H\ÛÙ™›[™KØÜž\ËœXÛÈ[HÜž\ÙÜ˜\NˆÚYÛ™Y[™[Ü\È
-È™›Ü›X]‹˜›ÙH‹œÚYÛ˜]\™HŸXˆYMLNHÝ™\ˆH›ÙH^	ÜÈž]\ËÛÈ›È”ÓÓˆØ[›ÛšXØ[\Ø][ÛŠKHÚYÛš[™ÈÙ^H
-Ñ‘“S‘WÔÒQÓ’S‘×ÒÑVXÜˆH]ˆÙ^H[™\ˆÕÔQÑWÑT˜
-K^[HÛÙ\È
-’ÑŒ‹TÒLM‹ÚXÚØX›HÙ™›[™JKQTËQÐÓH›Üˆ[œÝ[\ØÛÜ™H[œÝÙ\ˆÙ^\Ë[™MLNHÙX[[™ÈÙˆHØÚÛÛÙ^H[ˆTÐˆÙ]\š[\ËƒB‹H\ÛÙ™›[™KÜÙ\šXÙKœXˆZ[ÜXÚØYÙX
-›È[œÝÙ\ˆÙ^\È[›\ÜÈÙ™›[™WÚ[œÝ[ÜØÛÜ™\Ø[ˆ[˜Üž\Y[™\ˆØÚÛÛÙ™›[™RÙ^XÈ™XÛÜ™È[ˆÙ™›[™TXÚØYÙXÚ]H\\‰ÜÈš[™Ù\œš[[™ÝY[\Ý
-H[™™XÙZ]™X
-ÚYÛ˜]\™KXÚØYÙK\\‹ÝY[[™[œÝÙ\ˆÚXÚÜÎÈ[YH›YÜÎÈ\XØ]\ÈžHÝX›Z\ÜÚ[Û—ÚY[™›ÙH\ÚÈÛÛ™›XÝÎÈ[ˆ[ˆ^[P][\Ú]ÛÝ\˜ÙOH›Ù™›[™H˜]È[œÝÙ\‘]™[È[™H\ÝX[š[š\ÚX\šÚ[™ÊKƒB‹H\ÛÙ™›[™KÜ™[X\Ù\ËœXˆXˆ\™[X\Ù\ËÙ\[ˆP—ÐTÑT˜
-Y˜][ÕÔQÑWÑT‹ÛX‹X\
-H™\ÚYHHX[šY™\ÝÚYÛ™YÚ]HXÚØYÙK\ÚYÛš[™ÈÙ^NÈX›\ÚYžH]Ûˆ[H\˜ÛHX›\Ú[X‹X\
-™]Ù\ˆ™\œÚ[ÛœÈÛ›NÈHÛÈ™]Ù\Ý[œÝ[\œÈÙ\
-KÙ\™YÈØÚÛÛYZ[œÈ
-ÜØÚÛÛÙ]šXÙ\ËØ\
-H[™XˆÛÛ\]\œÈ
-Ù]šXÙ\ËØ\Û]\ÝÙ]šXÙ\ËØ\Ú[œÝ[\˜
-Kˆ›ÝØÚÛÛ]NˆÛ™H™[X\ÙHÙ\™\ÈHÚÛHÙ\™\‹ƒB‹HXˆÛÛ\]\œÈ]][XØ]HÚ]]]Üš^˜][ÛŽˆ]šXÙHÚÙ[˜
-Ý\œ™[Ù]šXÙX
-NÈÛ›HHÚÙ[‰ÜÈÒKLMˆ\ÈÝÜ™YˆÝY™ˆ[™Ú[È\ÙHšY]Ù\‹˜Ø[—Ü™[X\ÙXÚXÚH^[H™\ÜÈ\ÈX[˜YÙWÛÙ™›[™X[ˆ[ÝÙYØXÝ[ÛœØÈÑUÙ^[\ËÞÚYKÛÙ™›[™X\ÝÈXXÚÝY[	ÜÈÛÙH˜]Ú
-›ÜÝ\˜
-K™]™\ˆHÛÙKˆ\ÝÈÚ[][]HHXˆÛÛ\]\ˆÚ]]ÈÝÛˆÙ^HZ\ˆ
-X˜[ˆ\ÝËÝ\ÝÛÙ™›[™KœX
-KƒBƒB˜\Ú[YÜ˜][ÛœËÜØÚ[X\ËœXÛÈØ[›ÛšXØ[™\]Y\ÝÜ™\ÜÛœÙH[Ù[È
-^˜OH™›Ü˜šY˜
-H]›Ý]\ÈÛ‰Ý\ÙHY]ƒBƒBŠŠ•\ÝÊŠˆ
-\ÝËØÛÛ™\ÝœX
-Nˆ]™\žH\ÝÙ]È[\HX›\Ë[ˆHœ™\ÚÔS]Hš[H
-šXH\Ü]
-HÜ‹Ú]TÕÑUPTÑWÕT“[ˆ]ÜÝÜ™TÔS]X˜\ÙH
-[\YY™Y›Ü™H[™Y\ˆXXÚ\Ý
-KˆXXÚ\Ý[ÛÈÙ]ÈHÛY[Ú]Ù]Ù˜Ý™\œšY[‹ÛÈ\ÝÈ™]™\ˆÝXÚH]™[Ü\‰ÜÈØ™˜ˆš^\™\ÎƒB‹H˜ˆHÙ\ÜÚ[Ûˆ›Üˆ\œ˜[™Ú[™È[™[œÜXÝ[™È]KƒB‹HXZÙWÝ[˜[
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-XXZÙWØØ[™Y]J[˜[K\Ù\JXƒB‹HXZÙWÝ\Ù\Š[˜[K\Ù\›˜[YOK›ÛOKÝ]\ÏK\ÜÝÛÜ™JXˆ\ÜÈ\ÜÝÛÜ™›Üˆ[ˆXØÛÝ[]Ø[ˆÙÈ[ŽÈ\Ú\È\™HØXÚY\ˆ[‹ƒB‹HXZÙWØÜ™Y[X[
-[˜[KÜ˜[YÜØÛÜ\ÏK[šYYÜØÛÜ\ÏK^\™\×Ø]JXˆ™]\›œÈH˜]ÈTHÙ^H[Û™ÜÚYHHÔ“HØš™XÝËƒB‹H\ÜÝÛÜ™Ú\ÚÙ›ÜŠ\ÜÝÛÜ™
-XˆHØXÚY\ÚK™Ëˆ›ÜˆH]›Ü›HYZ[‹ƒB‹HÚYÛ—Ú[ŠØÚÛÛ\Ù\›˜[YK\ÜÝÛÜ™K‹‹ŠXˆÚYÛœÈÛÛY[Û™H[ˆÛˆZ\ˆÝÛˆœ›ÝÜÙ\ˆ[™™]\›œÈ˜ÛY[[™ÔÔ‘ˆšXY\œØƒB‹HYZ[˜ˆHÚYÛ™YZ[ˆØÚÛÛYZ[ˆ]Hœ™\ÚØÚÛÛÚ]œØÚÛÛ\Ù\˜˜ÛY[[™šXY\œØƒB‹HÝÜ˜YÙXˆ\È\Ý	ÜÈÝÛˆØØ[ÝÜ˜YÙX
-HÛY[\Ù\È]›Üˆ\ØYÊKˆ\ÝËÜØ[\\ËœXZ[ÈÞ[]XÈœÈ
-XZÙWÜ˜Ú]›[šÈœØØ[›™YˆYÙ\È[™›ÛÚÛX\šÜÊH[™ÛÜ™š[\È
-XZÙWÙØÞ
-KƒBƒB•HÛY[\Ù\ÈÎ‹ËÝ\ÝÙ\™\˜ÛÈÙXÝ\™HÛÛÚÚY\È›ÝÈ\È[ˆHœ›ÝÜÙ\‹ˆÈ\Ý[YKX˜\ÙY™Z]š[Ý\ˆ
-Ù\ÜÚ[Ûˆ^\žK›ÝHÚ[™ÝÜÊK[Ý™HHÝÜ™Y[Y\Ý[\È›ÝYÚ˜[œÝXYÙˆØZ][™Ëˆ]]]HH™]\›™YØš™XÝÈ›ÝYÚ˜[™‹˜ÛÛ[Z]
+## What this is
 
-XÈÙ]\Y™XÞXÛHÝ]\ËƒBƒBŠŠ“[ÛÛ™šYËŠŠˆ\›Ú™XÝÛ[[œÈ[ˆ^XÚ]Y™ˆ[HÙ]
-MÑMËÑNK‹‹KTTÖSË˜
-HÛÈ™\Ý[ÈÛ‰ÝÚ[™ÙHÚ]Y™‰ÜÈY˜][Ëˆ˜\ÝTH\[™ØØÙXÝ\š]XØ]Y\žXØXY\˜\™H[ÝÙY\È\™Ý[Y[Y˜][Ëˆ\ÙH]][YK››ÝÊUÊX™]™\ˆ˜Z]™H]][Y\ËƒBƒBˆÈÈ›ÙXÝ[\È]ÛÛœÝ˜Z[ˆÛÙCBƒB•\ÙHÛÛYHœ›ÛHØÜËØ\˜Ú]XÝ\™KÛÝ™\šY]Ë›YØÜËÚ[YÜ˜][ÛœËÛÝ™\šY]Ë›Y[™˜XÚÙ[™Ø\KÔ‘PQQK›Y[™\™H\™™\]Z\™[Y[ÎƒBƒB‹H
-Š”ÛÝ\˜ÙKYÜ›Ý[™YRHÛ›KŠŠˆ]Y\Ý[ÛœÈ[™[œÝÙ\œÈ]\Ý™HÝ\ÜYžH™]šY]™Y\ÜØYÙ\Èœ›ÛHHÙ[XÝYØÚÛÛ	ÜÈ
-˜\›Ý™Y
-ˆØÝ[Y[™\œÚ[ÛœËÚ]Ú]][ÛœËˆ[Ù[Ù[™\˜[Û›ÝÛYÙH\È™]™\ˆ[ˆXØÙ\X›HÛÝ\˜ÙKˆ™X][Ù[Ý]]\È[\ÝY[[˜[Y]Y
-ØÚ[XKÚ]][ÛˆÛÝ™\˜YÙK[œÝÙ\ˆÝ\ÜØÛÜK\XØ][ÛŠKˆYˆ]šY[˜ÙH\È[œÝY™šXÚY[™]\›ˆ™]Ù\ˆ]Y\Ý[ÛœÈ\ÈHÚÜ˜[™\Ü˜]\ˆ[ˆY[™ËˆRH˜YÈÝ^H˜YÈ[[HXXÚ\ˆ\›Ý™\È[KˆH[Ù[›ÝšY\ˆÚ]È™Z[™H™\XÙXX›HY\\‹ƒB‹H
-Š’[YÜ˜][Ûˆ[™Ú[È\™HØ]YŠŠˆ[YÜ˜][ÛˆX[˜YÙ[Y[^\ÝÈÚ]]È]Y][šY\Ë˜]H[Z]È[™ÙXÝ\š]H\ÝÈ
-Qˆ
-KˆÛ‰Ý^ÜÙHHX›XÈÝ\ÝÛY\‹Y]H[™Ú[›Üˆ[YÜ˜][ÛœÈÚ]Ý]]È\›Z\ÜÚ[ÛˆÚXÚË[˜[š[\š[™Ë]Y][žH[™ÙXÝ\š]H\ÝËƒB‹H
-Š‘^[H[YÜš]KŠŠˆX›\ÚY^[HÛ˜\ÚÝÈ\™H[[]]X›Nˆ]\ˆ]Y\Ý[Û‹X˜[šÈY]È]\Ý›ÝÚ[™ÙH[KˆÙY\Ù\\˜]H[]Y\È›ÜˆØÝ[Y[È[™[[]]X›HØÝ[Y[™\œÚ[ÛœË]Y\Ý[Ûˆ˜YÈ[™\›Ý™Y™\œÚ[ÛœË^[H[\]\È[™X›\ÚYÛ˜\ÚÝË[™[œÝÙ\ˆ]™[È[™š[˜[ÝX›Z\ÜÚ[ÛœËƒB‹H
-ŠØ[™Y]KY˜XÚ[™È]KŠŠˆ™]™\ˆ™]\›ˆ[œÝÙ\ˆÙ^\ÈÜˆ[œX›\ÚY]Y\Ý[ÛœÈ›ÝYÚØ[™Y]KY˜XÚ[™ÈØÛÜ\ËˆÛ‰Ý™]\›ˆ™\Ý[È™Y›Ü™HHØÚÛÛ	ÜÈ™[X\ÙHÛXÞH[ÝÜÈ]ƒB‹H
-ŠÛY[ÈÛ›ÈÙXÜ™]ËŠŠˆ›È]›Ü›HTHÙXÜ™]È[ˆœ›ÝÜÙ\ˆÛÙKH\ÚÝÜ[™HÜˆH[XÝ›Ûˆ™[™\™\‹ˆH\ÚÝÜ]šXÙH\È[\ÝYÛÈHÙ\™\ˆ˜[Y]\È]™\žHÞ[˜ÙYÝX›Z\ÜÚ[Ûˆ
-ÚYÛ™YXÚØYÙ\ËY[\Ý[Þ[˜ÊKƒB‹H
-Š”ÜX›H[™œ˜\ÝXÝ\™KŠŠˆ]›ÚY\™\[™[˜ÚY\ÈÛˆÛ™HÜÝÜˆRH™[™Ü‹ˆÛÛ™šYÈÛÛY\Èœ›ÛH[š\›Û›Y[˜\šXX›\Ë[™H˜XÚÙ[™]\Ý[ˆÛˆ˜Z[Ø^HÜˆHZ[ˆ”ÈÚ]Ý]ÛÙHÚ[™Ù\ËƒB‹H™]™\ˆÛÛ[Z]™X[ÝY[]HÜˆ^[Z[˜][Ûˆ[œÝÙ\ˆÙ^\Ë[˜ÛY[™È\È\Ýš^\™\ËƒB
+Intelligent CBT: a computer-based testing platform for schools, with two clients (Next.js web app, Electron Windows desktop app for offline lab exams) sharing one Python/FastAPI backend. Schools upload their own learning materials; AI drafts exam questions grounded only in those materials; teachers approve before publishing.
+
+**Current state (checked against the implementation and ADRs on 2026-11-17):** Phase 2's core school identity, accounts and academic setup are built; school profile editing, departments, direct CSV/XLSX import, the Integrations web screens and the first public integration data endpoints remain. Phase 3 (learning materials and OCR), Phase 4 (evidence-grounded AI drafts and review), Phase 5 (question bank and exam builder), Phase 7 (online delivery, marking and results), and ADR 0007's Phase 8 offline desktop stages AÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œD are implemented. Phase 6 now stores structured diagrams on immutable question versions, with teacher labelled/blank previews and blank-only student web payloads; AI drafts can carry source-checked structured diagrams, and the offline desktop app renders the blank diagram form. Offline synchronization and the Windows installer/release pipeline exist; school LAN mode is future work. The shared `packages/` workspace is not yet present. The detailed domain/phase status lives in `.claude/skills/cbt-platform/SKILL.md` and accepted ADRs; check code before claiming a feature exists: `backend/api` has:
+- tenant and integration persistence, with API-key authentication, a per-integration rate limit and `GET /api/v1/integrations/me`;
+- integration management for school admins (`/api/v1/school/integrations`, ADR 0008 stage A): register integrations, grant permissions from a fixed catalogue, issue keys (shown once) and revoke them, disable, and an activity log;
+- the identity tables (users, platform admins, sessions, candidates);
+- sign-in for people (`/api/v1/auth/*`: login, logout, me, password change), with cookie sessions, CSRF, role checks and failed-login throttling;
+- account management for school admins (`/api/v1/school/users`: list with search and filters, create, update, password reset, unblock, bulk import);
+- school structure (`/api/v1/school/...`): academic sessions and terms, class levels and arms, and subjects with topics and the levels that take them;
+- people in classes: student enrolment (which creates and links candidates), teaching assignments to arm + subject, and `GET /api/v1/me/classes`;
+- the question bank (`/api/v1/questions`, `/api/v1/passages`): single- and multiple-answer multiple choice, true/false, short-answer, numeric and essay questions with immutable versions and topic tags, and reading passages that questions can follow;
+- the exam builder (`/api/v1/exams`): drafts for one or more classes, a frozen paper on submission, approval by exam coordinators (a designation on staff accounts) or school admins, publishing, withdrawing and copying;
+- sitting exams (`/api/v1/me/exams`, `/api/v1/me/attempts`): start or resume within the window, a server-side clock, append-only answers, submission or time-up, automatic marking, and `GET /api/v1/exams/{id}/attempts` for staff;
+- results: release by the teacher after closing (or immediately), students' own scores and right/wrong review (`/api/v1/me/results`), and for staff class results, item analysis and marked scripts;
+- teacher marking (`/api/v1/exams/{id}/marking`): marks and comments for written answers (essays wait for one; short answers and numbers can be re-marked) until results are released;
+- learning materials (`/api/v1/documents`, Phase 3): upload of PDF, Word, PowerPoint, Excel, CSV and text files and photos, extraction into segments that record their page, section, slide, sheet or rows, OCR with Tesseract for scanned pages and photos, warnings, review and approval of each version, processed by `python -m app.worker` (or inline in development);
+- AI question drafts (`/api/v1/ai`, Phase 4 stage A): requests that pick and record evidence from approved materials, drafting by a replaceable provider (Claude through the Anthropic API, a fake for development, or off), server-side checks with a shortfall report, and review of drafts into the bank with citations.
+- offline exams on lab computers (ADR 0007 stages A to D: the API, the web screens, the lab app and its installer): lab computer registration (`/api/v1/school/devices`, `/api/v1/devices`), one-time exam codes, signed exam packages, signed, idempotent results checked and marked by the server (`/api/v1/exams/{id}/offline`), and lab app releases with signed update manifests (`python -m app.cli publish-lab-app`, `/devices/app/*`).
+
+The decisions behind these are in `docs/architecture/decisions/` (ADR 0001: identity; ADR 0002: school structure; ADR 0003: exams and the question bank; ADR 0004: learning materials; ADR 0005: AI question drafts; ADR 0006: more question types and teacher marking; ADR 0007: offline exams on lab computers; ADR 0008: integrations). Phase 2's school foundation is in place; integrations are being built in stages (ADR 0008): A, the management API (built); B, the web screens; C, the first public endpoints (classes, student and enrolment sync, released results). The user chose to build a basic exam workflow before documents and AI, in four stages (ADR 0003): A, the question bank (built); B, the exam builder, with publishing approved by an exam coordinator (a designation on staff accounts) or, for a teacher's exam, a school admin, and never by the exam's author (built); C, sitting exams (built); D, results (built). The web app (`apps/web`) so far has sign-in, the signed-in shell, a dashboard, the account page, the school setup screens for school admins (accounts, sessions and terms, classes, subjects, enrolment, teaching) and, for staff, the question bank and passages (all six question types), the exam builder, approvals, who has started an exam, releasing results, class results, item analysis, marked scripts and marking written answers, learning materials (upload, checking the extracted text, approval) and AI drafts (asking, reviewing drafts beside their evidence, approving them into the bank), lab computers for school admins (`/school/lab-computers`) and each exam's lab computers card (exam codes printed as slips, the package for USB, uploading results), and for students their exams, sitting an exam (`/sit`, outside the app shell) and their results. The basic exam workflow is complete in the browser (`apps/web/README.md`). Phase 3 (learning materials) is built (ADR 0004): the API, PowerPoint, Excel and CSV, OCR with Tesseract, and the web screens (stages A to D). Phase 4 (ADR 0005) has its API (stage A) and web screens (stage B) built. ADR 0006 (more question types and teacher marking) is built: the API (stage A), the web screens (stage B) and AI drafts of every type (stage C). `diagram_engine` provides bounded SVG rendering; structured specs flow through API question and draft versions, teacher previews, and student-safe web responses. AI draft labels are checked against verified citations. `document-engine`'s and `ai-engine`'s specs are implemented inside the API (`app/documents/`, `app/ai/`). `packages/` (shared types/UI/sync), described in the README, doesn't exist yet. The school Integrations screen under `/school/integrations` connects to the management API; the public `/integrations` page remains a design preview. The desktop app (`apps/desktop`) is the lab app for offline exams: registration, packages, the locked exam room, sending results (ADR 0007 stage C), and its Windows installer with updates from the school's server (stage D).
+
+For domain detail on each area (tenancy and roles, the materials ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ questions ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ exams pipeline, offline sync, integrations), the rules each must satisfy, open product decisions, and code recipes, use the project skill in `.claude/skills/cbt-platform/`.
+
+`docs/integrations/api-contract.md` describes the *target* public API (OAuth token endpoint, exam sessions, webhooks, `{"error": {...}}` envelope). Most of it is not implemented. Check the code before assuming an endpoint or behaviour exists. Errors currently use FastAPI's default `{"detail": ...}` shape.
+
+## Commands
+
+### Backend API (run from `backend/api`)
+
+```bash
+pip install -e ".[dev]"            # Python >= 3.11
+cp .env.example .env               # optional; defaults work without it
+alembic upgrade head
+uvicorn app.main:app --reload      # docs at /docs, liveness at /health
+python -m app.worker               # processes uploaded materials when DOCUMENT_PROCESSING=worker
+
+ruff check .                       # lint (add --fix for autofixable issues)
+pytest                             # all tests
+pytest tests/test_integration_auth.py::test_revoked_credential_is_rejected   # one test
+pytest -k expired                  # tests matching a name
+```
+
+PostgreSQL locally: `docker compose -f infrastructure/docker/compose.yaml up -d` (from the repo root, after copying `infrastructure/docker/.env.example` to `.env`). It creates `cbt` for development and `cbt_test` for tests. Run the suite on it with `TEST_DATABASE_URL="postgresql+psycopg://cbt:<password>@localhost:5432/cbt_test" pytest`. The suite drops all its tables, so it refuses database names that don't end in `_test`. URLs need the `+psycopg` driver. Run migration checks (`alembic downgrade base`, which drops every table) against `cbt_test` too, never the `cbt` development database.
+
+CI (`.github/workflows/backend-api.yml`) has two parts:
+- On SQLite with Python 3.11 and 3.13: `ruff check .`, `pytest`, then `alembic upgrade head && alembic check && alembic downgrade base && alembic upgrade head`.
+- On PostgreSQL 17 (`pgvector/pgvector:0.8.0-pg17`, the same image as Compose): `pytest`, then the same migration sequence.
+
+`alembic check` fails if a model changed without a matching migration.
+
+New migration: with the database at head, `alembic revision --autogenerate --rev-id 0002_<topic> -m "<description>"`, then review the generated file by hand. Revision IDs are sequential and descriptive (see `migrations/versions/0001_tenants_integrations.py`). Migrations must work on both SQLite and PostgreSQL (the production target), and CI checks both.
+
+### Web and desktop
+
+`apps/web` (Node 22; `npm ci` from the committed lockfile): `npm run dev | build | start | lint | typecheck`. CI (`.github/workflows/web.yml`) runs lint, typecheck and build. The web server forwards `/api/*` to the API at `API_ORIGIN` (default `http://localhost:8000`), so run the API on port 8000 alongside `npm run dev`. The browser only talks to the web app's origin: keep it that way, so the HttpOnly session cookie stays first-party. The CSRF token lives in memory only (`src/lib/api.ts`, `src/lib/session.tsx`). Signed-in pages live under `src/app/(school)/` as client components that fetch from the API; the API is still the access control. Staff-only screens (school admins and teachers) live under `src/app/(school)/(staff)/`. Reuse the shared pieces: `useApi` and `useLoader` (loading), `MarkAnswer` (`src/components/exams/`, a teacher's mark and comment), `AnswerKeyView` (`src/components/bank/QuestionBody.tsx`, staff only), `usePagedList` (newest-first listings with "Show more"), `listAll` (every page of a listing), `upload` (multipart forms with the CSRF token), `usePolling` (refresh while the API works in the background), `useAction` (changes, with `ApiError` and per-row errors), `Modal`/`ConfirmModal`, `Loaded`/`ErrorAlert`/`Notice`, and the classes in `globals.css`. Screens that show answer keys (`src/components/bank/`) are for staff only: student screens (`src/app/(school)/(student)/`, `src/app/(exam)/`) have their own components and use only the student endpoints. Details: `apps/web/README.md`.
+
+`apps/desktop` (the lab app, Node 22, Electron 45; `npm ci` from its lockfile): `npm run build | dev | test | typecheck`. CI (`.github/workflows/desktop.yml`) runs the typecheck and `npm test` (the core's `node:test` tests). It doesn't load the web app: its own screens (`src/renderer/`, React bundled by esbuild) talk only to its main process through `window.lab.call` (`src/preload.ts`, `src/main/bridge.ts`), and the main process does everything that matters in `src/core/` (plain Node, tested without Electron: `lab.ts`, `crypto.ts` matching the server byte for byte, `marking.ts` with the server's rules, `files.ts` journals, `pin.ts`). `LAB_DATA_DIR` and `LAB_KIOSK` (`1` locks in development) are for development and tests. `npm run package:win` builds the NSIS installer (on Windows; `.github/workflows/lab-app-release.yml` builds it in CI and, on a `lab-vX.Y.Z` tag matching `package.json`, attaches it to a GitHub release). Installers are unsigned until the `WIN_CSC_LINK`/`WIN_CSC_KEY_PASSWORD` secrets exist. Updates (`src/core/updates.ts`) are installed only from the staff side, never while an attempt isn't handed in, and only after the manifest's signature and the installer's SHA-256 check out. Keep the window untrusted (`contextIsolation`, `sandbox`, no Node) and keep business rules on the server: the lab app's marking is only for instant scores, which the server marks again. Details: `apps/desktop/README.md`.
+
+## Backend architecture
+
+**Modular monolith.** Domain rules live in the backend only. Web and desktop clients are untrusted and must not re-implement business rules or act as access control. Keep clear package boundaries (identity/tenancy, content, retrieval, question generation, diagrams, exams, grading, sync) and split into services only when there is a measured need.
+
+**Configuration and database.** `app/core/config.py` reads settings from env vars and `.env` via pydantic-settings. `get_settings()` is `lru_cache`d, and `app/db/session.py` creates the engine at import time from `DATABASE_URL`, so env changes must happen before `app` is imported. Routes get a session through the `get_db` dependency. Public routers are mounted in `app/main.py` under `settings.api_v1_prefix` (`/api/v1`).
+
+**Models** (`app/models/`): string UUID primary keys (`String(36)`), timezone-aware `DateTime` defaulting to `utc_now()`, and lifecycle `status` as plain strings (`"active"`, `"revoked"`, ...) rather than enums. A new model must be imported in `app/models/__init__.py` **and** in `migrations/env.py`, or autogenerate and `alembic check` won't see it. Links between tenant-scoped rows use composite foreign keys on `(id, tenant_id)`, so the database refuses cross-school references. SQLite only enforces foreign keys because `enable_sqlite_foreign_keys` in `app/db/session.py` turns them on, and the tests do the same.
+
+**Tenant isolation.** Every school-owned record carries `tenant_id`. The tenant is always derived server-side from the authenticated principal, never from a client-supplied ID. Queries for tenant data must filter by the principal's tenant.
+
+**Integration API-key auth** (`app/integrations/auth.py`). It spans several modules:
+- `app/core/api_keys.py` issues keys as `cbt_live_<random>`. Only the SHA-256 digest (`ApiCredential.secret_hash`) and the first 16 characters (`key_prefix`, used for lookup) are stored. The raw key exists only at creation time.
+- `get_integration_principal` looks up active credentials by prefix, compares hashes in constant time, rejects expired credentials, requires both the integration and the tenant to be active and `integration.tenant_id == credential's tenant` (also a composite foreign key), counts the request against the integration's rate limit (`app/integrations/limits.py`: 429 with `Retry-After` when over), records `last_used_at`, and returns an `IntegrationPrincipal(tenant_id, integration_id, credential_id, scopes)` containing only scopes with `granted=True`.
+- Protected endpoints take `principal: IntegrationPrincipal = Depends(get_integration_principal)` and call `principal.require_scope("results:read")` etc. A missing scope gives 403; any credential problem gives 401 with `WWW-Authenticate: Bearer`.
+- Scope names follow `resource:action`. Only those in the catalogue `app/integrations/scopes.py` can be granted (`classes:read`, `candidates:read`, `candidates:write`, `results:read`).
+- Management (`app/integrations/manage.py`, `/api/v1/school/integrations`, ADR 0008) is for school admins only, with `write_access` and an audit entry on the integration for every change (`resource_type="integration"`), which `GET .../{id}/activity` lists along with entries whose actor is the integration. Integrations are disabled, never deleted. Keys: up to 5 active per integration (replacing without downtime), never expire, revoking is final, and the raw key appears only in `IssuedKey`.
+- A public endpoint for integrations must call `require_scope`, filter by `principal.tenant_id`, write an audit entry with `actor_type="integration"` and `actor_id=principal.integration_id`, and have its own security tests. Tests lower the limit with `monkeypatch.setattr(get_settings(), "integration_rate_limit_per_minute", n)` (`tests/test_integrations_admin.py`).
+
+**Session auth for people** (`app/auth/`). It is separate from integration API keys.
+- `POST /auth/login` (school code + username + password) and `POST /auth/platform-admin/login` set an HttpOnly `cbt_session` cookie. Only the token's SHA-256 is stored in `auth_sessions`.
+- `app/auth/sessions.py` enforces the 8-hour maximum, the 1-hour idle timeout, revocation, and the account and school still being active.
+- Protect new endpoints with `app/auth/dependencies.py`:
+  - `get_session_principal` (read) or `require_csrf` (change data; checks the `X-CSRF-Token` header, which is an HMAC of the session token);
+  - role checks `require_school_role("teacher", "school_admin", write=True)` and `require_platform_admin(write=...)`.
+  - Filter school data by `principal.tenant_id`.
+- Failed logins all return one identical 401 and are throttled per identifier (`app/auth/throttle.py`).
+- Passwords: `app/core/passwords.py` (Argon2id; policy is staff ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€šÃ‚Â¥12, students ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€šÃ‚Â¥8).
+- Audit entries: `app/core/audit.py` `record_audit(...)`, staged in the same transaction as the change. `tenant_id=None` is reserved for platform-level events.
+- First accounts: `python -m app.cli create-school-admin ...` / `create-platform-admin ...`.
+
+**Account management** (`app/accounts/router.py`, `/api/v1/school/users`) is for school admins only.
+- A user at another school returns 404, never 403.
+- Admins can't change their own role, status or exam coordinator designation (`User.is_exam_coordinator`, staff only, enforced by a check constraint), so a school always keeps an active admin and nobody grants themselves approval rights.
+- Disabling an account or resetting its password ends that user's sessions immediately (`revoke_sessions_of`). A reset also lifts a sign-in block.
+- Bulk import is all-or-nothing: every row is validated before any hashing. Generated passwords are returned once and never stored readable.
+
+**School structure** (`app/models/academic.py`, `app/school/`). Calendar, classes and subjects each have a module.
+- `app/school/common.py` holds the shared rules: `read_access` (staff: school admins and teachers), `member_access` (any school member, for their own data), `write_access` (school admin + CSRF), `get_owned(...)` (404 for other schools' records), `flush_or_conflict(...)` (a unique or foreign-key violation becomes 409), and `audit(...)`.
+- Reuse these for new school-scoped endpoints.
+- At most one current session per school, enforced by a partial unique index.
+- Students see only their own classes (`app/school/me.py`), never the school-wide lists.
+- **Exam and marking endpoints must call `require_teaching(db, principal, arm_id=..., subject_id=...)`** (`app/school/access.py`). It allows school admins and teachers assigned to that arm and subject.
+- An enrolment references its arm by `(id, session_id, tenant_id)`, so the database keeps one arm per student per session.
+- A parent still in use can't be deleted, because its foreign keys have no `ondelete`.
+
+**Question bank** (`app/models/questions.py`, `app/questions/`, `/api/v1/questions`; ADR 0003, ADR 0006).
+- School admins, and teachers who teach the subject to any arm (`can_use_question_bank` in `app/school/access.py`), can use a subject's questions. Students get 403 everywhere, because the bank holds answer keys.
+- A `Question` holds subject, topics, status (`active`/`archived`) and `latest_version`. Content lives in `QuestionVersion` rows that never change: editing adds version n+1, and an ORM `before_update` listener refuses changes to a stored version. A clash on `(question_id, version)` becomes 409.
+- Types: `mcq_single`, `mcq_multiple`, `true_false`, `short_answer`, `numeric`, `essay`. `QuestionContent` (`app/questions/schemas.py`) validates each and refuses fields its type doesn't use; `to_storage()` gives (options, correct ids, answer key).
+- The answer key is `QuestionVersion.correct_option_ids` for choice types and `QuestionVersion.answer_key` (`accepted_answers`, `value`/`tolerance`, or an essay's `guide`) for the others. `VersionOut` includes both and is for staff only. Candidate-facing responses must use their own schemas without them.
+- Archive instead of deleting once a question is used. A subject with questions, or a tagged topic, can't be deleted.
+- Reading passages (`app/questions/passages.py`) are versioned the same way (`Passage` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `PassageVersion`). `Question.passage_id` is set at creation and never changes; its foreign key is `(passage_id, subject_id, tenant_id)`, so a passage is always in its questions' school and subject. Shared rules for both routers (access, listing, paging) are in `app/questions/common.py`.
+
+**Exams** (`app/models/exams.py`, `app/exams/`, `/api/v1/exams`; ADR 0003 decisions 2 and 10).
+- `Exam` is the editable draft: settings, `ExamArm` classes (one level, the term's session) and ordered `ExamItem`s (a question or a whole passage). Only its author edits or submits it.
+- Submitting freezes `ExamPaperItem` rows pinned to `QuestionVersion` and `PassageVersion` ids (`app/exams/paper.py`). Returning deletes them; publishing makes them final. Exams C must read the paper, never the draft items.
+- Access rules are all in `app/exams/access.py` (`Viewer`): who sees, prepares, approves and withdraws. Nobody approves their own exam; an admin's exam needs a coordinator.
+- `ExamOut` carries `allowed_actions` (what the caller may do now, a hint for clients) and the author's and reviewer's names (`created_by_name`, `reviewed_by_name`), because teachers, coordinators included, can't list the school's accounts.
+- ORM listeners in `app/models/exams.py` refuse changes to a non-draft exam's settings, classes and items, to any paper row, and removing a published paper. In tests, move an exam's times with a Core `update(Exam)` statement, which bypasses them.
+
+**Sitting exams** (`app/models/attempts.py`, `app/attempts/`; ADR 0003 decision 11, ADR 0006).
+- `ExamAttempt` fixes the student's `question_order`, `option_orders` and `ends_at` (start plus duration, capped at closing) when it starts. `AnswerEvent`s are append-only, the latest per paper item wins, and submission writes `AttemptResponse`s with marks.
+- Choice questions are answered with `selected_option_ids`, the others with `text` (checked by type in `student.py`). `app/attempts/marking.py` marks each type (`mark`, `parse_number`): multiple-answer is all or nothing, short answers ignore case, spacing and surrounding punctuation, numbers allow the tolerance, and a non-blank essay gets `needs_marking`.
+- `app/attempts/service.py` holds the rules: `exams_for` (published exams for the candidate's arms), `new_orders`, `latest_answers`/`final_answers` (an `Answer` per item), `finish` (marking) and `finish_overdue`. Expired attempts are finished lazily (10-second `GRACE`) wherever attempts are read, so call `finish_overdue` before reporting on attempts.
+- Student endpoints (`app/attempts/student.py`) must never return answer keys, explanations or scores; their schemas in `app/attempts/schemas.py` don't have those fields. Scores reach students only through the results endpoints.
+- Composite foreign keys on `(attempt_id, exam_id, tenant_id)` and `(paper_item_id, exam_id, tenant_id)` keep answers on their own exam's paper. Move attempt times in tests with a Core `update(ExamAttempt)`.
+
+**Results and teacher marking** (`app/results/`; ADR 0003 decision 12, ADR 0006).
+- `app/results/service.py`: `counted_attempts` (the latest finished attempt per student), `score_visible` (released, or an immediate exam), `review_visible` (also closed) and `can_release_results` (published, teacher release, not yet released, closed plus `GRACE`).
+- Student schemas (`MyResult`, `MyResultDetail`) have no correct options: students see score, percentage and, after closing, right/wrong per question. Staff schemas include answer keys.
+- Release permission is `Viewer.can_release` (author, teachers of the subject in the exam's classes, school admins). Exam coordinators see results but don't release unless they also teach it.
+- Teachers' marks (`ResponseMark`, append-only, numbered per answer; the highest number counts) are given in `app/results/marking.py` by the same people as releasing, for written types only (`WRITTEN_TYPES`), until `marking_locked` (released, or an immediate exam). `ExamAttempt.score` stays the automatic total: **report scores through `service.totals(...)` and per answer through `mark_of(...)`**, never `attempt.score` directly. Release is refused while any counted answer waits (`pending`), and an exam with essays must use teacher release (checked on submit in `app/exams/paper.py`).
+- Tests for results reuse the classroom setup from `tests/test_attempts.py` through its `build_school()` helper.
+
+**Learning materials** (`app/models/documents.py`, `app/documents/`, `/api/v1/documents`; ADR 0004).
+- Same access as the question bank (`can_use_question_bank`): school admins and the subject's teachers upload, review and approve, including their own uploads. Students get 403.
+- `Document` (subject, title, topics, active/archived) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `DocumentVersion` (one uploaded file; its file fields never change, enforced by an ORM listener) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `DocumentSegment` (extracted text with `kind` page/section/lines, `number`, `label`, `flags`; never changes). The newest approved version is the one used as evidence.
+- `app/documents/extract.py`: `identify` (kind from content; refuses unsupported, macro, template, oversized or zip-bomb files with a message) and `extract` (pypdfium2 for PDF, python-docx for Word, python-pptx for slides with speaker notes, openpyxl for visible sheets only, `csv` for CSV, Pillow for photos; parts with no text are kept and flagged `no_text`, never treated as read).
+- `app/documents/ocr.py`: Tesseract as a subprocess on a PNG we produce (one thread, a time limit), with confidence from its TSV. Pages without a text layer, photos and picture-only slides are OCR'd; below `OCR_MIN_CONFIDENCE` a segment is flagged `low_confidence`, which `app/ai/retrieval.py` never uses as evidence. OCR tests need Tesseract (`apt-get install tesseract-ocr`); CI sets `REQUIRE_OCR=1` so they can't be skipped there.
+- `app/documents/processing.py`: the queue is `DocumentVersion.status`; `claim` is one conditional update, `process_queued`/`recover_stuck` serve `app/worker.py`. `DOCUMENT_PROCESSING=inline` (default) processes after the response using a new session on the request's engine.
+- Originals go through `app/core/storage.py` (`get_storage`, a FastAPI dependency; `LocalStorage` under `STORAGE_DIR`). Keys are made from ids, never from the upload's name.
+- Approving needs `acknowledge_warnings` when there are warnings, and some readable text; deleting is refused once a version was approved (archive instead).
+
+**AI question drafts** (`app/models/ai.py`, `app/ai/`, `/api/v1/ai`; ADR 0005).
+- Same access as the question bank. Drafts carry answer keys, so students get 403 everywhere.
+- `AiRequest` (what was asked, status queue, shortfall `notes`, usage and estimated cost) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `AiSource` (the segments given to the model, labelled S1...; never changes) and `QuestionDraft` (pending/approved/dismissed, or rejected with `reasons`) ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `DraftCitation` (quote, segment, `found`). Approving creates a bank `Question` with `source="ai"` and `QuestionCitation`s on its first version (never change).
+- `app/ai/retrieval.py`: only the newest approved version of each active document in the subject and school; `no_text` and tiny segments skipped; BM25 on topic names and the objective, then size limits. Evidence is chosen when the request is made; nothing matching is a 422 before any spend.
+- `app/ai/provider.py` is the interface (`write`, `check`) and `get_provider()` reads `AI_PROVIDER` (`off` default, `anthropic` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `app/ai/claude.py`, `fake` ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ `app/ai/fake.py`). The Claude provider streams one structured-output request per job and maps refusals, cut-short answers and API errors to `ProviderError` messages for staff. Never add sampling parameters (current models reject them).
+- `app/ai/checks.py` decides what passes: bank format, requested types, ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€šÃ‚Â¥3 options, a quote found word for word (`app/ai/text.py` `quote_found`), no repeats of the bank, pending drafts or earlier candidates, and the answer check's verdicts. Per type (ADR 0006 decision 7): multiple-answer needs ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€šÃ‚Â¥2 right and ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€šÃ‚Â¥1 wrong; a short answer must be ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â°Ãƒâ€šÃ‚Â¤6 words and appear in a found quote (`phrase_in`); an essay needs a marking guide. Drafts keep `answer_key` like bank versions. Model output never skips these.
+- `app/ai/processing.py`: the same queue pattern as documents (`AI_PROCESSING=inline|worker`; `app/worker.py` serves both).
+- Tests script `FakeProvider(write=..., check=...)` installed with `use_provider` (fixture `ai` in `tests/test_ai_drafts.py`) and run `ClaudeProvider` through the real SDK with an `httpx2.MockTransport` (`tests/test_ai_provider.py`). Never call a live model in tests.
+
+**Offline exams** (`app/models/offline.py`, `app/offline/`; ADR 0007). The API (stage A), the web screens (stage B), the lab app (stage C, `apps/desktop`) and its installer and updates (stage D) are built.
+- `app/offline/crypto.py` holds all the cryptography: signed envelopes (`{"format", "body", "signature"}`: Ed25519 over the body text's bytes, so no JSON canonicalisation), the signing key (`OFFLINE_SIGNING_KEY`, or a dev key under `STORAGE_DIR`), exam codes (PBKDF2-SHA256, checkable offline), AES-GCM for instant-score answer keys, and X25519 sealing of the school key in USB setup files.
+- `app/offline/service.py`: `build_package` (no answer keys unless `offline_instant_scores`, then encrypted under `SchoolOfflineKey`; records an `OfflinePackage` with the paper's fingerprint and student list) and `receive` (signature, package, paper, student and answer checks; time flags; duplicates by `submission_id` and body hash; conflicts; then an `ExamAttempt` with `source="offline"`, its `AnswerEvent`s and the usual `finish` marking).
+- `app/offline/releases.py`: lab app releases, kept in `LAB_APP_DIR` (default `STORAGE_DIR/lab-app`) beside a manifest signed with the package-signing key; published by `python -m app.cli publish-lab-app` (newer versions only; the two newest installers kept), served to school admins (`/school/devices/app`) and lab computers (`/devices/app/latest`, `/devices/app/installer`). Not school data: one release serves the whole server.
+- Lab computers authenticate with `Authorization: Device <token>` (`current_device`); only the token's SHA-256 is stored. Staff endpoints use `Viewer.can_release`, which the exam reports as `manage_offline` in `allowed_actions`; `GET /exams/{id}/offline` lists each student's code batch (`roster`), never a code. Tests simulate a lab computer with its own key pair (`Lab` in `tests/test_offline.py`).
+
+`app/integrations/schemas.py` holds canonical request/response models (`extra="forbid"`) that routes don't use yet.
+
+**Tests** (`tests/conftest.py`): every test gets empty tables, in a fresh SQLite file (via `tmp_path`) or, with `TEST_DATABASE_URL`, in that PostgreSQL database (emptied before and after each test). Each test also gets a `client` with `get_db` overridden, so tests never touch a developer's `cbt.db`. Fixtures:
+- `db`: a session for arranging and inspecting data.
+- `make_tenant()`, `make_candidate(tenant=, user=)`.
+- `make_user(tenant=, username=, role=, status=, password=)`: pass `password` for an account that can log in; hashes are cached per run.
+- `make_credential(tenant=, granted_scopes=, denied_scopes=, expires_at=)`: returns the raw API key alongside the ORM objects.
+- `password_hash_for(password)`: a cached hash, e.g. for a platform admin.
+- `sign_in(school, username, password=...)`: signs someone in on their own browser and returns `.client` and CSRF `.headers`.
+- `admin`: a signed-in school admin at a fresh school, with `.school`, `.user`, `.client` and `.headers`.
+- `storage`: this test's own `LocalStorage` (the `client` uses it for uploads). `tests/samples.py` builds synthetic PDFs (`make_pdf`, with blank "scanned" pages and bookmarks) and Word files (`make_docx`).
+
+The `client` uses `https://testserver`, so Secure cookies flow as in a browser. To test time-based behaviour (session expiry, throttle windows), move the stored timestamps through `db` instead of waiting. Mutate the returned objects through `db` and `db.commit()` to set up lifecycle states.
+
+**Lint config.** `pyproject.toml` pins an explicit ruff rule set (`E4/E7/E9, F, B, I, UP, ASYNC, DTZ`) so results don't change with ruff's defaults. FastAPI `Depends`/`Security`/`Query`/`Header` are allowed as argument defaults. Use `datetime.now(UTC)`, never naive datetimes.
+
+## Product rules that constrain code
+
+These come from `docs/architecture/overview.md`, `docs/integrations/overview.md` and `backend/api/README.md`, and are hard requirements:
+
+- **Source-grounded AI only.** Questions and answers must be supported by retrieved passages from the selected school's *approved* document versions, with citations. Model general knowledge is never an acceptable source. Treat model output as untrusted until validated (schema, citation coverage, answer support, scope, duplication). If evidence is insufficient, return fewer questions plus a shortfall report rather than padding. AI drafts stay drafts until a teacher approves them. The model provider sits behind a replaceable adapter.
+- **Integration endpoints are gated.** Integration management exists with its audit entries, rate limits and security tests (ADR 0008). Don't expose a public customer-data endpoint for integrations without its permission check, tenant filtering, audit entry and security tests.
+- **Exam integrity.** Published exam snapshots are immutable: later question-bank edits must not change them. Keep separate entities for documents and immutable document versions, question drafts and approved versions, exam templates and published snapshots, and answer events and final submissions.
+- **Candidate-facing data.** Never return answer keys or unpublished questions through candidate-facing scopes. Don't return results before the school's release policy allows it.
+- **Clients hold no secrets.** No platform API secrets in browser code, the desktop bundle or the Electron renderer. The desktop device is untrusted, so the server validates every synced submission (signed packages, idempotent sync).
+- **Portable infrastructure.** Avoid hard dependencies on one host or AI vendor. Config comes from environment variables, and the backend must run on Railway or a plain VPS without code changes.
+- Never commit real student data or examination answer keys, including as test fixtures.

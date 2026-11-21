@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 
 from pydantic import ValidationError
 
+from app.diagrams import DiagramSpec
 from app.ai.provider import Checked, CheckItem, SourceText, Verdict
 from app.ai.text import normalize, phrase_in, quote_found, same_question
 from app.questions.schemas import QuestionContent
@@ -80,6 +81,7 @@ class Reviewed:
     raw: dict
     type: str = ""
     stem: str = ""
+    diagram_spec: dict | None = None
     options: list[dict] = field(default_factory=list)
     correct_option_ids: list[str] = field(default_factory=list)
     # Accepted answers, the number and tolerance, or the marking guide (ADR 0006).
@@ -153,6 +155,7 @@ def screen(
 
         _read_content(candidate, raw, question_types)
         _read_citations(candidate, raw, sources)
+        _read_diagram(candidate, raw)
         if candidate.passed and candidate.type == "short_answer":
             quotes = [c.quote for c in candidate.citations if c.found]
             accepted = (candidate.answer_key or {}).get("accepted_answers", [])
@@ -212,6 +215,9 @@ def _read_content(candidate: Reviewed, raw: dict, question_types: list[str]) -> 
         return
 
     candidate.options, candidate.correct_option_ids, candidate.answer_key = content.to_storage()
+    candidate.diagram_spec = (
+        content.diagram_spec.model_dump(mode="json") if content.diagram_spec else None
+    )
     if content.type in ("mcq_single", "mcq_multiple"):
         if len(candidate.options) < MIN_AI_OPTIONS:
             candidate.reject(FEW_OPTIONS)
@@ -227,6 +233,30 @@ def _read_content(candidate: Reviewed, raw: dict, question_types: list[str]) -> 
         candidate.reject(LONG_ANSWER)
     if content.type == "essay" and not content.guide:
         candidate.reject(NO_GUIDE)
+
+
+def _read_diagram(candidate: Reviewed, raw: dict) -> None:
+    """Validate optional visual content and require every text label in cited evidence."""
+    value = raw.get("diagram_spec")
+    if value is None:
+        return
+    try:
+        diagram = DiagramSpec.model_validate(value)
+    except (ValidationError, TypeError):
+        candidate.reject("Its diagram didn't fit the supported structured diagram format.")
+        return
+    quotes = [citation.quote for citation in candidate.citations if citation.found]
+    unsupported = [
+        element.label
+        for element in diagram.elements
+        if element.kind == "text"
+        and element.label
+        and not any(phrase_in(element.label, quote) for quote in quotes)
+    ]
+    if unsupported:
+        candidate.reject("A diagram label isn't supported by its quoted learning material.")
+        return
+    candidate.diagram_spec = diagram.model_dump(mode="json")
 
 
 def _read_citations(candidate: Reviewed, raw: dict, sources: dict[str, SourceRef]) -> None:

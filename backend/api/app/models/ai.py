@@ -204,6 +204,7 @@ class QuestionDraft(Base):
     # was rejected): then these hold what could be read, and `raw` what the model wrote.
     type: Mapped[str] = mapped_column(String(20), nullable=False)
     stem: Mapped[str] = mapped_column(Text, nullable=False)
+    diagram_spec: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     options: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     # The answer key. Staff only, like the bank's: the right options for choice questions, and
     # the accepted answers, the number and tolerance, or the marking guide for the others.

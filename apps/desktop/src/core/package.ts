@@ -5,6 +5,7 @@
 
 import { isEnvelope, verifyEnvelope, type EncryptedBlob, type Envelope } from "./crypto.js";
 import type { QuestionType } from "./marking.js";
+import type { DiagramSpec } from "../shared/api.js";
 
 export const PACKAGE_FORMAT = "cbt-offline-package/1";
 
@@ -15,6 +16,7 @@ export interface PackageItem {
   passage_id: string | null;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: { id: string; text: string }[];
   marks: number;
 }

@@ -174,11 +174,35 @@ export interface AnswerKey {
   guide?: string;
 }
 
+export interface DiagramElement {
+  kind: "rect" | "ellipse" | "line" | "arrow" | "region" | "text";
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  x2?: number;
+  y2?: number;
+  label?: string | null;
+  fill?: string;
+  stroke?: string;
+  stroke_width?: number;
+  font_size?: number;
+}
+
+export interface DiagramSpec {
+  width: number;
+  height: number;
+  title: string;
+  description?: string | null;
+  elements: DiagramElement[];
+}
+
 /** One version of a question, as staff see it: the answer key is included. */
 export interface QuestionVersion {
   version: number;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: QuestionOption[];
   correct_option_ids: string[];
   answer_key: AnswerKey | null;
@@ -211,6 +235,7 @@ export interface Question {
 export interface QuestionContent {
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: string[] | null;
   correct: number | number[] | boolean | null;
   accepted_answers: string[] | null;
@@ -325,6 +350,7 @@ export interface PaperQuestion {
   version: number;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: QuestionOption[];
   correct_option_ids: string[];
   answer_key: AnswerKey | null;
@@ -405,6 +431,7 @@ export interface AttemptQuestion {
   number: number;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   /** In this student's order. Empty for questions answered in writing. */
   options: QuestionOption[];
   marks: number;
@@ -461,6 +488,7 @@ export interface ReviewQuestion {
   number: number;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: QuestionOption[];
   selected_option_ids: string[];
   /** What the student wrote, for questions answered in writing. */
@@ -563,6 +591,7 @@ export interface ScriptQuestion {
   version: number;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: QuestionOption[];
   correct_option_ids: string[];
   answer_key: AnswerKey | null;
@@ -783,6 +812,7 @@ export interface QuestionDraft {
   /** A question type, or what the model wrote for a rejected one. */
   type: string;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: QuestionOption[];
   correct_option_ids: string[];
   /** Accepted answers, the number and margin, or the marking guide, for written answers. */

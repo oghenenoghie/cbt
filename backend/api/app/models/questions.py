@@ -194,6 +194,8 @@ class QuestionVersion(Base):
     # The answer key of text answers: {"accepted_answers": [...]} (short answer),
     # {"value": n, "tolerance": t} (numeric) or {"guide": "..."} (essay). Never sent to candidates.
     answer_key: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Reviewed structured drawing instructions. Student responses receive only the blank variant.
+    diagram_spec: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     explanation: Mapped[str | None] = mapped_column(Text, nullable=True)
     marks: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     difficulty: Mapped[str | None] = mapped_column(String(10), nullable=True)

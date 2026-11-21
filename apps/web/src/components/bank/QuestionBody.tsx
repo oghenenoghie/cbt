@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleCheck } from "lucide-react";
+import { DiagramPreview } from "@/components/bank/DiagramPreview";
 
 import { formatNumber, hasOptions, optionLetter } from "@/lib/bank";
 import type { AnswerKey, QuestionVersion } from "@/lib/types";
@@ -70,7 +71,7 @@ export function QuestionBody({
   version,
 }: {
   /** A bank version, or a question on an exam paper (which has no explanation). */
-  version: Pick<QuestionVersion, "type" | "stem" | "options" | "correct_option_ids"> & {
+  version: Pick<QuestionVersion, "type" | "stem" | "options" | "correct_option_ids" | "diagram_spec"> & {
     answer_key?: AnswerKey | null;
     explanation?: string | null;
   };
@@ -80,6 +81,7 @@ export function QuestionBody({
   return (
     <div>
       <p className={styles.stem}>{version.stem}</p>
+      <DiagramPreview spec={version.diagram_spec} />
       {several && <p className={styles.explain}>Students tick every right answer.</p>}
       {version.options.length > 0 && (
         <ol className={styles.options} aria-label="Options">

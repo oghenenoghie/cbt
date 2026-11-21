@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { Loaded } from "@/components/Feedback";
+import { DiagramPreview } from "@/components/bank/DiagramPreview";
 import { formatDateTime } from "@/lib/format";
 import type { MyResultDetail, ReviewQuestion } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
@@ -48,6 +49,7 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
         )}
       </div>
       <p className={styles.stem}>{question.stem}</p>
+      <DiagramPreview spec={question.diagram_spec} labelled={false} />
       {written ? (
         answered && (
           <div className={`${styles.written} ${styles.mine} ${outcome}`}>

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.diagrams import DiagramSpec
 from app.questions.schemas import Difficulty, OptionOut, QuestionContent, QuestionType
 
 # AI drafts can be any of the bank's types (ADR 0005 decision 9, ADR 0006 stage C).
@@ -90,6 +91,7 @@ class DraftOut(BaseModel):
     status: str
     type: str
     stem: str
+    diagram_spec: DiagramSpec | None = None
     options: list[OptionOut]
     correct_option_ids: list[str]
     # Accepted answers, the number and tolerance, or the marking guide, for written answers.

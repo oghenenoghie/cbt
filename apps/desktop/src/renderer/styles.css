@@ -577,6 +577,21 @@ textarea:focus-visible,
   white-space: pre-wrap;
 }
 
+.question-diagram {
+  width: min(100%, 720px);
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+}
+
+.question-diagram svg {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+}
+
 .options {
   display: grid;
   gap: 10px;

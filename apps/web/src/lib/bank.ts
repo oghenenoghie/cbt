@@ -128,7 +128,7 @@ function correctPositions(version: Pick<QuestionVersion, "options" | "correct_op
 export function contentOf(
   version: Pick<
     QuestionVersion,
-    "type" | "stem" | "options" | "correct_option_ids" | "explanation" | "marks" | "difficulty"
+    "type" | "stem" | "options" | "correct_option_ids" | "explanation" | "marks" | "difficulty" | "diagram_spec"
   > & { answer_key?: AnswerKey | null },
 ): QuestionContent {
   const { type } = version;
@@ -136,6 +136,7 @@ export function contentOf(
   return {
     type,
     stem: version.stem,
+    diagram_spec: version.diagram_spec ?? null,
     options: hasOptions(type) ? version.options.map((o) => o.text) : null,
     correct:
       type === "mcq_single"

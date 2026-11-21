@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+from app.diagrams import DiagramSpec
 from app.models.exams import MAX_ATTEMPTS, MAX_DURATION_MINUTES
 from app.questions.schemas import OptionOut
 
@@ -170,6 +171,7 @@ class PaperQuestion(BaseModel):
     version: int
     type: str
     stem: str
+    diagram_spec: DiagramSpec | None = None
     options: list[OptionOut]
     correct_option_ids: list[str]
     # Staff only, like the bank's: accepted answers, a number, or a marking guide.

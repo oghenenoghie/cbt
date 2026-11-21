@@ -3,6 +3,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
+from app.diagrams import DiagramSpec
 QuestionType = Literal[
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay"
 ]
@@ -63,6 +64,7 @@ class QuestionContent(_Input):
     tolerance: float | None = Field(default=None, ge=0)
     guide: str | None = Field(default=None, max_length=10000)
     explanation: str | None = Field(default=None, max_length=5000)
+    diagram_spec: DiagramSpec | None = None
     marks: int = Field(default=1, ge=1, le=100)
     difficulty: Difficulty | None = None
 
@@ -174,6 +176,7 @@ class VersionOut(BaseModel):
     # The answer key of text answers: accepted answers, a number and tolerance, or an essay's
     # marking guide.
     answer_key: dict | None
+    diagram_spec: DiagramSpec | None
     explanation: str | None
     marks: int
     difficulty: str | None

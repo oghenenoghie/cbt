@@ -11,6 +11,7 @@ import { formatDateTime } from "@/lib/format";
 import { useSession } from "@/lib/session";
 import { answeredInWriting, formatClock, wordCount } from "@/lib/sitting";
 import type { Attempt, AttemptQuestion, MyExam } from "@/lib/types";
+import { DiagramPreview } from "@/components/bank/DiagramPreview";
 import { useAction } from "@/lib/useAction";
 import { useApi } from "@/lib/useApi";
 import { useQueryParams } from "@/lib/useQueryParams";
@@ -213,6 +214,7 @@ function QuestionView({
       <p id={stemId} className={styles.stem}>
         {question.stem}
       </p>
+      <DiagramPreview spec={question.diagram_spec} labelled={false} />
       {answeredInWriting(question.type) ? (
         <WrittenAnswer
           question={question}

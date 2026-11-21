@@ -82,6 +82,9 @@ each taken from the sources, and how the marks are shared between them. A teache
 answer with this guide.
 - `explanation`: one or two sentences, based on the sources, that would help a student see why \
 the answer is right.
+- `diagram_spec`: use null unless a simple visual meaningfully helps ask the question. If used, \
+  create only the supported structured shapes; copy every text label exactly from a cited source. \
+  Never add scientific facts or labels from your own knowledge. A teacher will review the visual.
 - Ask about the subject matter, never about the document itself (its pages, headings, authors, \
 exercises or instructions).
 - Each question should test something different.
@@ -130,6 +133,33 @@ _CITATION = {
     "additionalProperties": False,
 }
 
+_DIAGRAM_ELEMENT = {
+    "type": "object",
+    "properties": {
+        "kind": {"type": "string", "enum": ["rect", "ellipse", "line", "arrow", "region", "text"]},
+        "x": {"type": "number"}, "y": {"type": "number"},
+        "label": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+        "width": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "height": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "x2": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "y2": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+        "fill": {"type": "string"}, "stroke": {"type": "string"},
+        "stroke_width": {"type": "number"}, "font_size": {"type": "number"},
+    },
+    "required": ["kind", "x", "y", "label", "width", "height", "x2", "y2", "fill", "stroke", "stroke_width", "font_size"],
+    "additionalProperties": False,
+}
+_DIAGRAM = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string"}, "description": {"type": "string"},
+        "width": {"type": "integer"}, "height": {"type": "integer"},
+        "elements": {"type": "array", "items": _DIAGRAM_ELEMENT},
+    },
+    "required": ["title", "description", "width", "height", "elements"],
+    "additionalProperties": False,
+}
+
 # Evidence first: the model picks its quotes before it writes the question they support.
 WRITE_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -143,6 +173,7 @@ WRITE_SCHEMA: dict[str, Any] = {
                     "citations": {"type": "array", "items": _CITATION},
                     "type": {"type": "string", "enum": list(TYPE_NAMES)},
                     "stem": {"type": "string"},
+                    "diagram_spec": {"anyOf": [_DIAGRAM, {"type": "null"}]},
                     "options": {"type": "array", "items": {"type": "string"}},
                     "correct_option": {"anyOf": [{"type": "integer"}, {"type": "null"}]},
                     "correct_options": {"type": "array", "items": {"type": "integer"}},
@@ -159,6 +190,7 @@ WRITE_SCHEMA: dict[str, Any] = {
                     "citations",
                     "type",
                     "stem",
+                    "diagram_spec",
                     "options",
                     "correct_option",
                     "correct_options",

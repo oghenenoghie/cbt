@@ -12,11 +12,13 @@ The engine receives a validated diagram specification grounded in approved learn
 
 ## Current implementation
 
-The first implementation slice is the standalone `diagram_engine` Python package in this directory.
-It renders bounded, structured SVG primitives and creates labelled and blank variants. It currently
-supports rectangles, ellipses, lines, arrows, highlighted rectangular regions and text labels. It
-is not yet connected to the API, question bank or AI draft pipeline. Keep specifications as
-structured data; never accept raw SVG markup.
+The standalone `diagram_engine` Python package renders bounded structured SVG primitives and
+creates labelled and blank variants. The API now stores these structured specifications on
+immutable question versions, shows labelled and blank previews in the teacher question editor,
+and returns a sanitized unlabelled diagram to student exam, review and offline-package payloads.
+AI drafts can include structured diagrams; text labels must be found in the cited learning material
+before a draft passes review. The student web and offline desktop apps render the blank form. Keep
+specifications as structured data; never accept raw SVG markup.
 
 Import it by adding this directory to `PYTHONPATH`:
 

@@ -11,6 +11,29 @@ export type QuestionType =
   | "numeric"
   | "essay";
 
+export interface DiagramElement {
+  kind: "rect" | "ellipse" | "line" | "arrow" | "region" | "text";
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  x2?: number;
+  y2?: number;
+  label?: string | null;
+  fill?: string;
+  stroke?: string;
+  stroke_width?: number;
+  font_size?: number;
+}
+
+export interface DiagramSpec {
+  width: number;
+  height: number;
+  title: string;
+  description?: string | null;
+  elements: DiagramElement[];
+}
+
 export interface DeviceSummary {
   name: string;
   school: { code: string; name: string };
@@ -61,6 +84,7 @@ export interface SittingQuestion {
   number: number;
   type: QuestionType;
   stem: string;
+  diagram_spec?: DiagramSpec | null;
   options: { id: string; text: string }[];
   marks: number;
   passage: { title: string; body: string } | null;
