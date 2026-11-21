@@ -5,6 +5,7 @@
 - **Implemented in:**
   - structure: `backend/api/app/models/academic.py`, `backend/api/app/school/` (migration `0004_school_structure`)
   - people in classes: `backend/api/app/models/classroom.py`, `backend/api/app/school/enrolments.py`, `assignments.py`, `me.py`, `access.py` (migration `0005_classrooms`)
+  - class lists (decisions 8 to 10, 2026-11-21): `backend/api/app/school/class_lists.py`, and the Enrolment page's upload in `apps/web` (`ClassListUpload.tsx`)
 
 ## Context
 
@@ -43,6 +44,18 @@ Phase 2 includes academic setup: "academic sessions; departments, classes, subje
    - Bulk enrolment of up to 200 students is all-or-nothing, with errors listed by row.
    - Moving a student is only allowed to another arm in the same session. Next session is a new enrolment.
 
+The user decided decisions 8 to 10 on 2026-11-21, so that schools can put everyone in their classes from the spreadsheets they already keep, including every new school year.
+
+8. **Class lists from a file.** A school admin uploads a CSV file or an Excel workbook (`.xlsx`) for one session (`POST /school/sessions/{id}/class-list`). It has a header row naming the columns (`username` and `class`, plus `name` for new students; common variants such as "Student Name" or "Arm" are accepted, and other columns are ignored with a warning), then one student per row, up to 1,000.
+   - The server reads the file, so the same checks apply however it was made. Only the first visible sheet of a workbook is read. Office files with macros, or that unpack into something huge, are refused as for learning materials. The file is read in memory and never stored.
+   - A class is matched to the session's classes by name (`JSS1 A`), ignoring case, spaces and hyphens.
+   - Every row is checked first, and **a preview** (`.../class-list/preview`) shows what each would do: a new student, enrol, move, already in the class, or the problem. Importing is **all or nothing**: one row with a problem and nothing is saved.
+   - Chosen over only adding Excel to the account import, which has no class column and can't re-enrol existing students.
+
+9. **Who a row is.** A username nobody at the school has becomes a new **student account**, without a password unless the admin asks for generated ones (up to 200 at a time, shown once). An existing student is matched by username and **keeps the account's name**; the preview notes a different name in the file. A staff account's username, a username twice in the file, a missing class or an unknown class are problems.
+
+10. **Moves.** A student already in another class of the session is **moved** to the file's class, and the preview says from where (chosen over refusing such rows). A student already in that class is left as they are, so the same file can be imported again safely. Nobody is removed from a class: students missing from the file keep their enrolment.
+
 ## Consequences
 
 - Deleting is refused (409, with an explanation) whenever something still points at the record. Mistakes are fixed by renaming or moving, not by forcing a delete.
@@ -53,4 +66,4 @@ Phase 2 includes academic setup: "academic sessions; departments, classes, subje
 ## Still open
 
 - Enrolling candidates who have no student account (for example ones provisioned by an SIS integration) waits for integration candidate provisioning.
-- Promoting students to the next level at the end of a session: a bulk "roll over" action.
+- Promoting students to the next level at the end of a session: a bulk "roll over" action. A class list for the new session (decision 8) covers it with a file for now.

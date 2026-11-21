@@ -49,3 +49,44 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.explain {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.explain code {
+  color: var(--foreground);
+}
+
+.preview {
+  max-height: 360px;
+  overflow: auto;
+}
+
+.counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.problemRow td {
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+.note {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.problem {
+  display: block;
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.nowrap {
+  white-space: nowrap;
+}

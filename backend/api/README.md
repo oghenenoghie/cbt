@@ -98,6 +98,8 @@ Duplicate names, and deleting something still in use, return 409 with a message.
 | `POST /api/v1/school/arms/{id}/enrolments` | Enrol student accounts (`user_ids`, up to 200, all or nothing). Creates and links each candidate record if missing. One arm per student per session |
 | `GET /api/v1/school/arms/{id}/enrolments` | The arm's students: school admins, and teachers who teach that arm |
 | `PATCH` / `DELETE /api/v1/school/enrolments/{id}` | Move a student to another arm in the same session, or remove them |
+| `POST /api/v1/school/sessions/{id}/class-list/preview` | School admins: a class list (multipart `file`, CSV or `.xlsx`, and `generate_passwords`) checked row by row: new student, enrol, move, already in the class, or the problem. Saves nothing |
+| `POST /api/v1/school/sessions/{id}/class-list` | The same file imported, all or nothing: new student accounts (generated passwords shown once, if asked), enrolments and moves. Up to 1,000 rows and 2 MB (ADR 0002, decisions 8 to 10) |
 | `GET` / `POST /api/v1/school/assignments`, `DELETE .../assignments/{id}` | Assign staff to arm + subject pairs (the arm's level must take the subject). Listing is for school admins |
 | `GET /api/v1/me/classes` | Anyone signed in: the arms you're enrolled in (with their subjects) and what you teach |
 

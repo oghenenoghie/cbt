@@ -1,6 +1,6 @@
 "use client";
 
-import { UserPlus } from "lucide-react";
+import { Upload, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 
@@ -15,6 +15,7 @@ import { useApi } from "@/lib/useApi";
 import { useDebounced } from "@/lib/useDebounced";
 import { useQueryParams } from "@/lib/useQueryParams";
 
+import { ClassListUpload } from "./ClassListUpload";
 import styles from "./enrolment.module.css";
 
 /** Pick student accounts to enrol, searching by name or username. */
@@ -394,6 +395,10 @@ function SessionEnrolment({
   onPick: (changes: Record<string, string | null>) => void;
 }) {
   const arms = useApi<ClassArm[]>(`/school/sessions/${session.id}/arms`);
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState<string | null>(null);
+  // Bumped after a class list is imported, so the roster shown loads again.
+  const [version, setVersion] = useState(0);
 
   return (
     <Loaded value={arms}>
@@ -401,6 +406,7 @@ function SessionEnrolment({
         const arm = list.find((a) => a.id === armId) ?? list[0] ?? null;
         return (
           <>
+            <Notice text={uploaded} onDismiss={() => setUploaded(null)} />
             <div className="toolbar">
               <SessionSelect
                 id="enrol-session"
@@ -420,9 +426,26 @@ function SessionEnrolment({
                   </select>
                 </div>
               )}
+              {list.length > 0 && (
+                <button type="button" className="btn btn-secondary" onClick={() => setUploading(true)}>
+                  <Upload size={16} aria-hidden="true" />
+                  Upload class list
+                </button>
+              )}
             </div>
+            {uploading && (
+              <ClassListUpload
+                session={session}
+                onClose={() => setUploading(false)}
+                onImported={(result) => {
+                  const changed = result.counts.create + result.counts.enrol + result.counts.move;
+                  setUploaded(`Class list imported: ${count(changed, "change")} in ${result.session_name}.`);
+                  setVersion((v) => v + 1);
+                }}
+              />
+            )}
             {arm ? (
-              <Roster key={arm.id} arm={arm} arms={list} />
+              <Roster key={`${arm.id}-${version}`} arm={arm} arms={list} />
             ) : (
               <div className="card">
                 <h2>No classes in {session.name}</h2>

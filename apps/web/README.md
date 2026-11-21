@@ -66,7 +66,7 @@ npm run build
 | **Sessions and terms** (`/school/calendar`) | Create sessions (the first becomes current), mark one current, edit and delete sessions and terms |
 | **Classes** (`/school/classes`) | Class levels in order, and each level's arms per session; copy last session's arms into a new one |
 | **Subjects** (`/school/subjects`) | Subjects with codes, the levels that take them, and their topics in order |
-| **Enrolment** (`/school/enrolment`) | A class's students: add (search and pick), move to another arm, remove |
+| **Enrolment** (`/school/enrolment`) | A class's students: add (search and pick), move to another arm, remove. **Upload class list** (`ClassListUpload.tsx`): a CSV or Excel file for the session, checked by the API, a preview of every row, then the import and a download of new students (with generated passwords, if asked) |
 | **Teaching** (`/school/teaching`) | Assign a teacher to a class and subject (only subjects the class's level takes), filter and remove |
 | **Lab computers** (`/school/lab-computers`) | Computers where students sit exams without the internet (ADR 0007): register one over the internet with a one-time code (shown once with the school code), or by USB (upload the request file the lab app wrote, get back its setup file); rename and remove them; download the newest lab app installer when the server has one |
 
