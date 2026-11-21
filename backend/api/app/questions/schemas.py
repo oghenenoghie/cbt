@@ -7,10 +7,13 @@ from app.diagrams import DiagramSpec
 
 QuestionType = Literal[
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
-    "diagram_label",
+    "diagram_label", "matching",
 ]
 # Marked automatically, from the answer key.
-AUTO_MARKED = ("mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "diagram_label")
+AUTO_MARKED = (
+    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "diagram_label",
+    "matching",
+)
 # Answered by choosing options; the others are answered with text.
 CHOICE_TYPES = ("mcq_single", "mcq_multiple", "true_false")
 Difficulty = Literal["easy", "medium", "hard"]
@@ -56,6 +59,8 @@ class QuestionContent(_Input):
       markers see. Never shown to students.
     - `diagram_label`: the student types each missing label; `label_answers` lists accepted
       answers in the same order as the labelled text elements in `diagram_spec`.
+    - `matching`: each prompt in `matching_prompts` is paired with one distinct answer from
+      `options`; `correct_matches` lists the answer position for each prompt.
     """
 
     type: QuestionType
@@ -66,6 +71,8 @@ class QuestionContent(_Input):
         default=None, max_length=MAX_ACCEPTED_ANSWERS
     )
     label_answers: list[LabelVariants] | None = Field(default=None, max_length=50)
+    matching_prompts: list[OptionText] | None = Field(default=None, min_length=2, max_length=6)
+    correct_matches: list[int] | None = Field(default=None, min_length=2, max_length=6)
     value: float | None = None
     tolerance: float | None = Field(default=None, ge=0)
     guide: str | None = Field(default=None, max_length=10000)
@@ -88,9 +95,11 @@ class QuestionContent(_Input):
             "numeric": {"value", "tolerance"},
             "essay": {"guide"},
             "diagram_label": {"label_answers"},
+            "matching": {"options", "matching_prompts", "correct_matches"},
         }[self.type]
         for name in (
-            "options", "correct", "accepted_answers", "label_answers", "value", "tolerance", "guide"
+            "options", "correct", "accepted_answers", "label_answers", "matching_prompts",
+            "correct_matches", "value", "tolerance", "guide"
         ):
             if name not in used and getattr(self, name) is not None:
                 raise ValueError(f"`{name}` isn't used by {self.type} questions.")
@@ -141,6 +150,22 @@ class QuestionContent(_Input):
                     raise ValueError("Include each diagram label itself among its accepted answers.")
                 cleaned.append(unique)
             self.label_answers = cleaned
+        elif self.type == "matching":
+            options = self.options or []
+            prompts = self.matching_prompts or []
+            matches = self.correct_matches or []
+            if not 2 <= len(options) <= len(OPTION_IDS):
+                raise ValueError(f"Matching questions need 2 to {len(OPTION_IDS)} answers.")
+            if len({answer.casefold() for answer in options}) != len(options):
+                raise ValueError("Each matching answer must be different.")
+            if len(prompts) != len(options) or len(matches) != len(prompts):
+                raise ValueError("Give one distinct answer for each matching prompt.")
+            if len({prompt.casefold() for prompt in prompts}) != len(prompts):
+                raise ValueError("Each matching prompt must be different.")
+            if any(not isinstance(index, int) or isinstance(index, bool) for index in matches):
+                raise ValueError("Choose one answer for each matching prompt.")
+            if sorted(matches) != list(range(len(options))):
+                raise ValueError("Use each matching answer exactly once.")
         elif self.type == "numeric":
             if self.value is None or self.value != self.value or abs(self.value) == float("inf"):
                 raise ValueError("Give the answer as a number in `value`.")
@@ -166,6 +191,14 @@ class QuestionContent(_Input):
             return [], [], {"accepted_answers": self.accepted_answers}
         if self.type == "diagram_label":
             return [], [], {"label_answers": self.label_answers}
+        if self.type == "matching":
+            options = [{"id": OPTION_IDS[i], "text": text} for i, text in enumerate(self.options)]
+            key = {
+                "matching_prompts": self.matching_prompts,
+                "correct_matches": [OPTION_IDS[i] for i in self.correct_matches],
+                "matching_options": self.options,
+            }
+            return options, [], key
         if self.type == "numeric":
             return [], [], {"value": self.value, "tolerance": self.tolerance}
         return [], [], {"guide": self.guide} if self.guide else None
@@ -269,4 +302,3 @@ class PassageOut(BaseModel):
 class PassageList(BaseModel):
     passages: list[PassageOut]
     next_after: str | None
-

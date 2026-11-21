@@ -153,9 +153,10 @@ export type QuestionType =
   | "short_answer"
   | "numeric"
   | "essay"
-  | "diagram_label";
+  | "diagram_label"
+  | "matching";
 /** AI drafts can be any of the bank's types (ADR 0005, ADR 0006 stage C). */
-export type AiQuestionType = Exclude<QuestionType, "diagram_label">;
+export type AiQuestionType = Exclude<QuestionType, "diagram_label" | "matching">;
 export type Difficulty = "easy" | "medium" | "hard";
 export type BankStatus = "active" | "archived";
 
@@ -174,6 +175,9 @@ export interface AnswerKey {
   tolerance?: number;
   guide?: string;
   label_answers?: string[][];
+  matching_prompts?: string[];
+  matching_options?: string[];
+  correct_matches?: string[];
 }
 
 export interface DiagramElement {
@@ -245,6 +249,8 @@ export interface QuestionContent {
   tolerance: number | null;
   guide: string | null;
   label_answers?: string[][] | null;
+  matching_prompts?: string[] | null;
+  matching_answers?: number[] | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;
@@ -272,7 +278,7 @@ export interface Passage {
 
 // --- Exams (staff) -----------------------------------------------------------------------------
 
-/** draft â†’ submitted â†’ published (or back to draft when sent back); published â†’ withdrawn. */
+/** draft → submitted → published (or back to draft when sent back); published → withdrawn. */
 export type ExamStatus = "draft" | "submitted" | "published" | "withdrawn";
 export type ResultsRelease = "teacher" | "immediate";
 /** What the signed-in person may do with an exam now: a hint; the API checks every action. */
@@ -354,6 +360,7 @@ export interface PaperQuestion {
   type: QuestionType;
   stem: string;
   diagram_spec?: DiagramSpec | null;
+  matching_prompts?: string[];
   options: QuestionOption[];
   correct_option_ids: string[];
   answer_key: AnswerKey | null;
@@ -435,6 +442,7 @@ export interface AttemptQuestion {
   type: QuestionType;
   stem: string;
   diagram_spec?: DiagramSpec | null;
+  matching_prompts?: string[];
   /** In this student's order. Empty for questions answered in writing. */
   options: QuestionOption[];
   marks: number;
@@ -492,6 +500,7 @@ export interface ReviewQuestion {
   type: QuestionType;
   stem: string;
   diagram_spec?: DiagramSpec | null;
+  matching_prompts?: string[];
   options: QuestionOption[];
   selected_option_ids: string[];
   /** What the student wrote, for questions answered in writing. */
@@ -993,4 +1002,3 @@ export interface SubmissionResult {
   flags: string[];
   attempt_id: string | null;
 }
-

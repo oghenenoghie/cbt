@@ -197,6 +197,9 @@ def build_package(
                 "type": version.type,
                 "stem": version.stem,
                 "diagram_spec": student_diagram(version.diagram_spec, version.type),
+                "matching_prompts": (version.answer_key or {}).get("matching_prompts", [])
+                if version.type == "matching"
+                else [],
                 # The options' text only: which are right is never here.
                 "options": [{"id": o["id"], "text": o["text"]} for o in version.options],
                 "marks": item.marks,
@@ -361,6 +364,16 @@ def _answers_problem(
                 version.type,
                 body.option_orders[event.item_id],
                 AnswerIn(selected_option_ids=event.selected_option_ids, text=event.text),
+                label_count=sum(
+                    element.get("kind") == "text"
+                    for element in (version.diagram_spec or {}).get("elements", [])
+                )
+                if version.type == "diagram_label"
+                else 0,
+                match_count=len((version.answer_key or {}).get("matching_prompts", [])),
+                match_option_ids=[option["id"] for option in version.options]
+                if version.type == "matching"
+                else [],
             )
         except (HTTPException, ValidationError):
             return f"An answer doesn't fit its question (question {event.item_id[:8]})."
@@ -554,4 +567,3 @@ def receive(
         at=max(as_utc(body.ended_at), started + timedelta(seconds=1)),
     )
     return store("accepted", None, attempt.id)
-

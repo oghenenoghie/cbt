@@ -188,7 +188,7 @@ export function newOrders(pkg: ExamPackage): {
   const optionOrders: Record<string, string[]> = {};
   for (const item of items) {
     const ids = item.options.map((o) => o.id);
-    if (pkg.exam.shuffle_options && (item.type === "mcq_single" || item.type === "mcq_multiple"))
+    if (pkg.exam.shuffle_options && (item.type === "mcq_single" || item.type === "mcq_multiple" || item.type === "matching"))
       shuffle(ids);
     optionOrders[item.item_id] = ids;
   }
@@ -219,6 +219,15 @@ export function checkedAnswer(item: PackageItem, given: GivenAnswer): GivenAnswe
     if (!Array.isArray(labels) || labels.length !== count || labels.some((label) => typeof label !== "string" || label.length > 200))
       throw new LabError("Enter one answer in each diagram label box.");
     return { selected: [], text: labels.some((label) => label.trim()) ? JSON.stringify(labels) : null };
+  }
+  if (item.type === "matching") {
+    const count = item.matching_prompts?.length ?? 0;
+    let supplied: unknown;
+    try { supplied = text === null ? Array(count).fill("") : JSON.parse(text); } catch { throw new LabError("Choose an answer for each prompt."); }
+    const ids = item.options.map((option) => option.id);
+    if (!Array.isArray(supplied) || supplied.length !== count || supplied.some((id) => typeof id !== "string" || (id !== "" && !ids.includes(id))) || new Set(supplied.filter(Boolean)).size !== supplied.filter(Boolean).length)
+      throw new LabError("Choose each answer at most once.");
+    return { selected: [], text: supplied.some((id) => id !== "") ? JSON.stringify(supplied) : null };
   }
   const limit = item.type === "essay" ? MAX_ANSWER_CHARS : MAX_SHORT_ANSWER_CHARS;
   if (text !== null && text.length > limit)
@@ -350,7 +359,7 @@ export class Lab {
     this.refuseIfRegistered();
     if (!validPin(input.pin)) throw new LabError(PIN_RULE);
     const name = input.name.trim();
-    if (!name) throw new LabError("Give this computer a name, such as â€œLab A, PC 4â€.");
+    if (!name) throw new LabError("Give this computer a name, such as “Lab A, PC 4”.");
     let address: string;
     try {
       address = serverAddress(input.server);
@@ -392,7 +401,7 @@ export class Lab {
     this.refuseIfRegistered();
     if (!validPin(input.pin)) throw new LabError(PIN_RULE);
     const name = input.name.trim();
-    if (!name) throw new LabError("Give this computer a name, such as â€œLab A, PC 4â€.");
+    if (!name) throw new LabError("Give this computer a name, such as “Lab A, PC 4”.");
     const keys = newSigningKeys();
     const exchange = newExchangeKeys();
     const request = seal(
@@ -1075,4 +1084,3 @@ export class Lab {
     }
   }
 }
-

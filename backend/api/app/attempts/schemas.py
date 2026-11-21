@@ -55,6 +55,7 @@ class AttemptQuestion(BaseModel):
     type: str
     stem: str
     diagram_spec: DiagramSpec | None = None
+    matching_prompts: list[str] = Field(default_factory=list)
     options: list[AttemptOption]
     marks: int
     selected_option_ids: list[str]
@@ -140,4 +141,3 @@ class AttemptSummary(BaseModel):
 
 class AttemptList(BaseModel):
     attempts: list[AttemptSummary]
-

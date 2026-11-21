@@ -7,8 +7,8 @@
   it out explicitly. Students never reach the bank at all.
 
 Question types: single- and multiple-answer multiple choice (`mcq_single`, `mcq_multiple`),
-`true_false`, `short_answer` and `numeric` (marked automatically), and `essay` (marked by a
-teacher; ADR 0006).
+`true_false`, `short_answer`, `numeric`, `diagram_label` and `matching` (marked automatically),
+and `essay` (marked by a teacher; ADR 0006).
 
 A passage is a reading text ("Read the passage and answer the questions that follow"). Questions
 can belong to a passage of the same subject. Passage text is versioned the same way as questions.
@@ -35,7 +35,8 @@ from app.db.base import Base
 from app.models.tenant import utc_now
 
 QUESTION_TYPES = (
-    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay", "diagram_label"
+    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
+    "diagram_label", "matching",
 )
 DIFFICULTIES = ("easy", "medium", "hard")
 
@@ -176,7 +177,7 @@ class QuestionVersion(Base):
         CheckConstraint("version >= 1", name="ck_question_versions_version"),
         CheckConstraint(
             "type IN ('mcq_single', 'mcq_multiple', 'true_false', 'short_answer', 'numeric', "
-            "'essay', 'diagram_label')",
+            "'essay', 'diagram_label', 'matching')",
             name="ck_question_versions_type",
         ),
     )
@@ -249,4 +250,3 @@ def _passage_versions_never_change(_mapper, _connection, version: PassageVersion
         f"Passage versions can't be changed (passage {version.passage_id}, version "
         f"{version.version}). Add a new version instead."
     )
-

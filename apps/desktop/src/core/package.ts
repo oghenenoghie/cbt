@@ -17,6 +17,7 @@ export interface PackageItem {
   type: QuestionType;
   stem: string;
   diagram_spec?: DiagramSpec | null;
+  matching_prompts?: string[];
   options: { id: string; text: string }[];
   marks: number;
 }

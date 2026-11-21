@@ -48,7 +48,7 @@ function Marked({
     <article className={`card ${styles.item}`} aria-label={`Question ${question.position}`}>
       <div className={styles.itemHead}>
         <strong>
-          Question {question.position} Â· {question.score} of {count(question.marks, "mark")}
+          Question {question.position} · {question.score} of {count(question.marks, "mark")}
         </strong>
         {!answered ? (
           <span className="badge">Not answered</span>
@@ -80,6 +80,20 @@ function Marked({
             ))}
           </ol>
           <AnswerKeyView type={question.type} answerKey={question.answer_key} />
+          <p className={examStyles.markNote}>Automatic score: {question.auto_score}.</p>
+        </>
+      ) : question.type === "matching" ? (
+        <>
+          <ol>
+            {(question.answer_key?.matching_prompts ?? []).map((prompt, index) => {
+              const selectedId = diagramAnswers(question.text)[index] ?? "";
+              const selected = question.options.find((option) => option.id === selectedId)?.text;
+              const correctId = question.answer_key?.correct_matches?.[index];
+              const answerIndex = "abcdef".indexOf(correctId ?? "");
+              const correct = question.answer_key?.matching_options?.[answerIndex];
+              return <li key={index}>{prompt}: {selected || "Not answered"} <span className="muted">(correct: {correct ?? "Not set"})</span></li>;
+            })}
+          </ol>
           <p className={examStyles.markNote}>Automatic score: {question.auto_score}.</p>
         </>
       ) : written ? (
@@ -161,7 +175,7 @@ function ScriptView({ examId, attemptId }: { examId: string; attemptId: string }
             <div>
               <h1 className="page-title">{s.candidate_name}</h1>
               <p className="page-intro" style={{ marginBottom: 0 }}>
-                Attempt {s.number} Â· handed in {formatDateTime(s.submitted_at)}
+                Attempt {s.number} · handed in {formatDateTime(s.submitted_at)}
                 {s.submitted_reason === "time_up" ? " when time ran out" : ""}
               </p>
             </div>
@@ -259,4 +273,3 @@ export default function ExamScriptPage() {
     </Suspense>
   );
 }
-

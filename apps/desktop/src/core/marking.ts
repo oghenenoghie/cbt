@@ -12,7 +12,8 @@ export type QuestionType =
   | "short_answer"
   | "numeric"
   | "essay"
-  | "diagram_label";
+  | "diagram_label"
+  | "matching";
 
 export const CHOICE_TYPES: readonly QuestionType[] = ["mcq_single", "mcq_multiple", "true_false"];
 
@@ -22,6 +23,8 @@ export interface AnswerKey {
   answer_key: {
     accepted_answers?: string[];
     label_answers?: string[][];
+    matching_prompts?: string[];
+    correct_matches?: string[];
     value?: number;
     tolerance?: number;
     guide?: string;
@@ -97,6 +100,14 @@ export function mark(key: AnswerKey, marks: number, given: Given): Marked {
     const ratio = accepted.length ? (marks * correctCount) / accepted.length : 0;
     const score = Math.floor(ratio + 0.5);
     return { isCorrect: correctCount === accepted.length && accepted.length > 0, score, needsMarking: false };
+  } else if (key.type === "matching") {
+    let supplied: unknown = [];
+    try { supplied = JSON.parse(given.text ?? "[]"); } catch { supplied = []; }
+    const expected = key.answer_key?.correct_matches ?? [];
+    const answers = Array.isArray(supplied) ? supplied : [];
+    const correctCount = expected.filter((id, index) => answers[index] === id).length;
+    const score = Math.floor((marks * correctCount) / expected.length + 0.5);
+    return { isCorrect: expected.length > 0 && correctCount === expected.length, score, needsMarking: false };
   } else {
     const chosen = [...given.selected].sort();
     const correct = [...key.correct_option_ids].sort();
@@ -105,4 +116,3 @@ export function mark(key: AnswerKey, marks: number, given: Given): Marked {
   }
   return { isCorrect: right, score: right ? marks : 0, needsMarking: false };
 }
-

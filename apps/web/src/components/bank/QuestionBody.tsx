@@ -67,13 +67,26 @@ export function AnswerKeyView({
         <ol>
           {(answerKey?.label_answers ?? []).map((answers, index) => (
             <li key={index}>
-              Target {index + 1}: {answers.join(" Â· ")}
+              Target {index + 1}: {answers.join(" · ")}
             </li>
           ))}
         </ol>
         <span className="hint">Students receive partial marks for correct targets.</span>
       </div>
     );
+  }
+  if (type === "matching") {
+    const prompts = answerKey?.matching_prompts ?? [];
+    const answers = answerKey?.matching_options ?? [];
+    const correct = answerKey?.correct_matches ?? [];
+    return <div className={styles.answerKey}>
+      <strong>Correct matches</strong>
+      <ol>{prompts.map((prompt, index) => {
+        const answerIndex = "abcdef".indexOf(correct[index] ?? "");
+        return <li key={index}>{prompt}: {answers[answerIndex] ?? "Not set"}</li>;
+      })}</ol>
+      <span className="hint">Students receive partial marks for correct pairs.</span>
+    </div>;
   }
   return null;
 }
@@ -142,4 +155,3 @@ export function QuestionBody({
     </div>
   );
 }
-

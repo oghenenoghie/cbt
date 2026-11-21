@@ -21,6 +21,8 @@ function labelsFromText(text: string, count: number): string[] {
 function given(answer: GivenAnswer | undefined, question?: SittingQuestion): boolean {
   if (question?.type === "diagram_label")
     return labelsFromText(answer?.text ?? "", 50).some((label) => label.trim());
+  if (question?.type === "matching")
+    return labelsFromText(answer?.text ?? "", question.matching_prompts?.length ?? 0).some((value) => value.trim());
   return Boolean(answer && (answer.selected.length > 0 || answer.text?.trim()));
 }
 
@@ -153,6 +155,25 @@ function QuestionInput({
     );
   }
   const text = answer?.text ?? "";
+  if (question.type === "matching") {
+    const matches = labelsFromText(text, question.matching_prompts?.length ?? 0);
+    return <fieldset className="field">
+      <legend>Match each prompt to one answer</legend>
+      {(question.matching_prompts ?? []).map((prompt, index) => (
+        <div className="field" key={index}>
+          <label htmlFor={`a-${question.item_id}-${index}`}>{prompt}</label>
+          <select id={`a-${question.item_id}-${index}`} value={matches[index] ?? ""} onChange={(event) => {
+            const next = [...matches]; next[index] = event.target.value;
+            onChange({ selected: [], text: JSON.stringify(next) }, false);
+          }}>
+            <option value="">Choose an answer</option>
+            {question.options.map((option) => <option key={option.id} value={option.id} disabled={matches.includes(option.id) && matches[index] !== option.id}>{option.text}</option>)}
+          </select>
+        </div>
+      ))}
+      <span className="hint">Each answer can be used once. Partial marks are awarded.</span>
+    </fieldset>;
+  }
   if (question.type === "diagram_label") {
     const count = question.diagram_spec?.elements.filter((element) => element.kind === "text").length ?? 0;
     const labels = labelsFromText(text, count);
@@ -275,7 +296,7 @@ export function Sitting({
       <header className="sitting-bar">
         <div>
           <strong>{initial.exam_title}</strong>
-          <span className="muted"> Â· {initial.student_name}</span>
+          <span className="muted"> · {initial.student_name}</span>
         </div>
         <div className={`countdown ${lowTime ? "low" : ""}`} role="timer" aria-label="Time left">
           {clock(secondsLeft)}
@@ -284,7 +305,7 @@ export function Sitting({
           {error ? (
             <span className="danger">Not saved: {error}</span>
           ) : unsaved ? (
-            "Savingâ€¦"
+            "Saving…"
           ) : (
             "All answers saved"
           )}
@@ -308,7 +329,7 @@ export function Sitting({
         )}
         <section className="question" aria-labelledby="question-stem">
           <p className="eyebrow">
-            Question {question.number} of {initial.questions.length} Â· {count(question.marks, "mark")}
+            Question {question.number} of {initial.questions.length} · {count(question.marks, "mark")}
           </p>
           <p id="question-stem" className="stem">
             {question.stem}
@@ -385,7 +406,7 @@ export function Sitting({
                 onClick={() => void handIn()}
                 disabled={handingIn}
               >
-                {handingIn ? "Handing inâ€¦" : "Hand in"}
+                {handingIn ? "Handing in…" : "Hand in"}
               </button>
             </div>
           </div>
@@ -399,4 +420,3 @@ export function Sitting({
     </div>
   );
 }
-

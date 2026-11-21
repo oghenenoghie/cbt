@@ -53,6 +53,7 @@ function labelsFromText(text: string, count: number): string[] {
 
 function isAnswered(given: Given | undefined, type?: Question["type"]): boolean {
   if (type === "diagram_label") return labelsFromText(given?.text ?? "", 50).some((label) => label.trim());
+  if (type === "matching") return labelsFromText(given?.text ?? "", 6).some((answer) => answer.trim());
   return Boolean(given && (given.selected.length > 0 || given.text.trim()));
 }
 
@@ -79,7 +80,7 @@ function SaveStatus({ state, unsaved }: { state: SaveState; unsaved: number }) {
     return (
       <span className={`${styles.saved} ${styles.retrying}`} role="status">
         <WifiOff size={16} aria-hidden="true" />
-        {unsaved === 1 ? "1 answer" : `${unsaved} answers`} not saved yet. Retryingâ€¦
+        {unsaved === 1 ? "1 answer" : `${unsaved} answers`} not saved yet. Retrying…
       </span>
     );
   }
@@ -87,7 +88,7 @@ function SaveStatus({ state, unsaved }: { state: SaveState; unsaved: number }) {
     return (
       <span className={`${styles.saved} ${styles.saving}`}>
         <Loader2 size={16} aria-hidden="true" />
-        Savingâ€¦
+        Saving…
       </span>
     );
   }
@@ -250,7 +251,7 @@ function QuestionView({
   return (
     <div>
       <p className={styles.number}>
-        Question {question.number} Â· {question.marks === 1 ? "1 mark" : `${question.marks} marks`}
+        Question {question.number} · {question.marks === 1 ? "1 mark" : `${question.marks} marks`}
       </p>
       <p id={stemId} className={styles.stem}>
         {question.stem}
@@ -260,7 +261,27 @@ function QuestionView({
         labelled={false}
         numberedTargets={question.type === "diagram_label"}
       />
-      {answeredInWriting(question.type) ? (
+      {question.type === "matching" ? (
+        <fieldset className="field" aria-describedby={stemId}>
+          <legend>Match each prompt to one answer</legend>
+          {(() => {
+            const matches = labelsFromText(given.text, question.matching_prompts?.length ?? 0);
+            return (question.matching_prompts ?? []).map((prompt, index) => (
+              <div className="field" key={index}>
+                <label htmlFor={`match-${question.item_id}-${index}`}>{prompt}</label>
+                <select id={`match-${question.item_id}-${index}`} value={matches[index] ?? ""} disabled={readOnly} onChange={(event) => {
+                  const next = [...matches]; next[index] = event.target.value;
+                  onChange({ ...given, text: JSON.stringify(next) }, false);
+                }}>
+                  <option value="">Choose an answer</option>
+                  {question.options.map((option) => <option key={option.id} value={option.id} disabled={matches.includes(option.id) && matches[index] !== option.id}>{option.text}</option>)}
+                </select>
+              </div>
+            ));
+          })()}
+          <span className="hint">Each answer can be used once. Partial marks are awarded.</span>
+        </fieldset>
+      ) : answeredInWriting(question.type) ? (
         <WrittenAnswer
           question={question}
           text={given.text}
@@ -423,7 +444,7 @@ function InProgress({
         <div className="stack">
           {timeUp && (
             <div className="alert alert-warning" role="alert">
-              Time&apos;s up. The answers you&apos;ve given are being handed inâ€¦
+              Time&apos;s up. The answers you&apos;ve given are being handed in…
             </div>
           )}
           {problem && (
@@ -616,7 +637,7 @@ function Sitting({ attemptId }: { attemptId: string }) {
     return (
       <div className="centered" aria-busy="true">
         <div className="spinner" />
-        <span className="visually-hidden">Loadingâ€¦</span>
+        <span className="visually-hidden">Loading…</span>
       </div>
     );
   }
@@ -643,4 +664,3 @@ export default function SitPage() {
   }
   return <Sitting attemptId={attemptId} />;
 }
-

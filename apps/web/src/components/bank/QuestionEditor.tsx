@@ -59,7 +59,7 @@ function normalise(content: QuestionContent): string {
   return JSON.stringify({
     ...content,
     stem: content.stem.trim(),
-    options: hasOptions(content.type) ? (content.options ?? []).map((o) => o.trim()) : null,
+    options: hasOptions(content.type) || content.type === "matching" ? (content.options ?? []).map((o) => o.trim()) : null,
     accepted_answers: content.type === "short_answer" ? acceptedOf(content.accepted_answers ?? []) : null,
     guide: content.guide?.trim() || null,
     explanation: content.explanation?.trim() || null,
@@ -94,7 +94,8 @@ const PLACEHOLDERS: Record<QuestionType, string> = {
   mcq_single: "For example: Which of these is a living thing?",
   mcq_multiple: "For example: Which of these are mammals? Tick all that apply.",
   diagram_label: "For example: Name the numbered parts of the cell.",
-  true_false: "For example: Water boils at 100 Â°C at sea level.",
+  matching: "For example: Match each animal to its habitat.",
+  true_false: "For example: Water boils at 100 °C at sea level.",
   short_answer: "For example: What gas do plants take in for photosynthesis?",
   numeric: "For example: A car travels 120 km in 2 hours. What is its average speed in km/h?",
   essay: "For example: Describe two ways that plants and animals depend on each other.",
@@ -140,6 +141,9 @@ export function QuestionEditor({
     initial?.label_answers?.map((answers) => answers.join(" | ")) ?? [],
   );
   const [options, setOptions] = useState<string[]>(initial?.options ?? ["", "", "", ""]);
+  const [matchingPrompts, setMatchingPrompts] = useState<string[]>(initial?.matching_prompts ?? ["", ""]);
+  const [matchingAnswers, setMatchingAnswers] = useState<number[]>(initial?.matching_answers ?? [0, 1]);
+  const [matchingConfigured, setMatchingConfigured] = useState(initial?.type === "matching");
   const [correctIndex, setCorrectIndex] = useState<number | null>(
     initial?.type === "mcq_single" ? (initial.correct as number) : null,
   );
@@ -191,7 +195,9 @@ export function QuestionEditor({
               return variants;
             })
         : null,
-    options: hasOptions(type) ? options : null,
+    options: hasOptions(type) || type === "matching" ? options : null,
+    matching_prompts: type === "matching" ? matchingPrompts : null,
+    matching_answers: type === "matching" ? matchingAnswers : null,
     correct:
       type === "mcq_single"
         ? (correctIndex ?? -1)
@@ -214,7 +220,7 @@ export function QuestionEditor({
     : Boolean(
         stem.trim() ||
         diagramText.trim() ||
-        options.some((o) => o.trim()) ||
+        options.some((o) => o.trim()) || matchingPrompts.some((p) => p.trim()) ||
         accepted.some((a) => a.trim()) ||
         value.trim() ||
         guide.trim() ||
@@ -247,6 +253,16 @@ export function QuestionEditor({
     });
   }
 
+  function changeType(next: QuestionType) {
+    setType(next);
+    if (next === "matching" && !matchingConfigured) {
+      setOptions(["", ""]);
+      setMatchingPrompts(["", ""]);
+      setMatchingAnswers([0, 1]);
+      setMatchingConfigured(true);
+    }
+  }
+
   /** Problems the API would refuse, said in the editor's own words. */
   function check(): string | null {
     if (diagramError) return `Fix the diagram: ${diagramError}`;
@@ -263,7 +279,13 @@ export function QuestionEditor({
         return "Keep each accepted spelling to 200 characters or fewer.";
       }
     }
-    if (hasOptions(type)) {
+    if (type === "matching") {
+      if (options.length < 2 || options.length > 6 || options.some((answer) => !answer.trim())) return "Give 2 to 6 answers in the shared answer bank.";
+      if (new Set(options.map((answer) => answer.trim().toLocaleLowerCase())).size !== options.length) return "Each answer must be different.";
+      if (matchingPrompts.length !== options.length || matchingPrompts.some((prompt) => !prompt.trim())) return "Give one prompt for each answer.";
+      if (new Set(matchingPrompts.map((prompt) => prompt.trim().toLocaleLowerCase())).size !== matchingPrompts.length) return "Each prompt must be different.";
+      if (matchingAnswers.length !== matchingPrompts.length || new Set(matchingAnswers).size !== options.length || matchingAnswers.some((answer) => answer < 0 || answer >= options.length)) return "Choose each answer exactly once.";
+    } else if (hasOptions(type)) {
       const texts = options.map((o) => o.trim().toLocaleLowerCase());
       if (new Set(texts).size !== texts.length) return "Each option must be different.";
       if (type === "mcq_single" && correctIndex === null) return "Choose the right answer.";
@@ -389,7 +411,7 @@ export function QuestionEditor({
                   type="radio"
                   name="question-type"
                   checked={type === t}
-                  onChange={() => setType(t)}
+                  onChange={() => changeType(t)}
                 />
                 <span>
                   {TYPE_LABELS[t]}
@@ -464,7 +486,34 @@ export function QuestionEditor({
           )}
         </fieldset>
 
-        {hasOptions(type) ? (
+        {type === "matching" ? (
+          <fieldset>
+            <legend>Prompts and shared answer bank</legend>
+            <p className={styles.explain}>Each answer is used once. Students receive partial marks for correct pairs.</p>
+            {matchingPrompts.map((prompt, index) => (
+              <div className="field-row" key={index} style={{ alignItems: "end" }}>
+                <div className="field">
+                  <label htmlFor={`matching-prompt-${index}`}>Prompt {index + 1}</label>
+                  <input id={`matching-prompt-${index}`} maxLength={500} value={prompt} onChange={(event) => setMatchingPrompts((rows) => rows.map((row, i) => i === index ? event.target.value : row))} />
+                </div>
+                <div className="field">
+                  <label htmlFor={`matching-answer-${index}`}>Correct answer</label>
+                  <select id={`matching-answer-${index}`} value={matchingAnswers[index] ?? 0} onChange={(event) => setMatchingAnswers((rows) => rows.map((row, i) => i === index ? Number(event.target.value) : row))}>
+                    {options.map((answer, answerIndex) => <option key={answerIndex} value={answerIndex}>{answer.trim() || `Answer ${answerIndex + 1}`}</option>)}
+                  </select>
+                </div>
+              </div>
+            ))}
+            <strong>Answer bank</strong>
+            {options.map((answer, index) => (
+              <div className="field-row" key={index} style={{ alignItems: "end" }}>
+                <div className="field"><label htmlFor={`matching-bank-${index}`}>Answer {index + 1}</label><input id={`matching-bank-${index}`} maxLength={500} value={answer} onChange={(event) => setOption(index, event.target.value)} /></div>
+                <button type="button" className="btn btn-ghost btn-icon" aria-label={`Remove answer ${index + 1}`} disabled={options.length <= 2} onClick={() => { removeOption(index); setMatchingPrompts((rows) => rows.filter((_, i) => i !== index)); setMatchingAnswers((rows) => rows.filter((_, i) => i !== index).map((choice) => choice > index ? choice - 1 : choice)); }}> <X size={16} aria-hidden="true" /></button>
+              </div>
+            ))}
+            {options.length < 6 && <button type="button" className="btn btn-secondary btn-small" onClick={() => { setOptions((rows) => [...rows, ""]); setMatchingPrompts((rows) => [...rows, ""]); setMatchingAnswers((rows) => [...rows, rows.length]); }}><Plus size={16} aria-hidden="true" /> Add pair</button>}
+          </fieldset>
+        ) : hasOptions(type) ? (
           <fieldset>
             <legend>Options</legend>
             <p className={styles.explain} style={{ marginBottom: 10 }}>
@@ -748,11 +797,10 @@ export function QuestionEditor({
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={busy || (editing && !dirty)}>
-            {busy ? "Savingâ€¦" : editing ? "Save changes" : "Add question"}
+            {busy ? "Saving…" : editing ? "Save changes" : "Add question"}
           </button>
         </div>
       </form>
     </Modal>
   );
 }
-
