@@ -13,11 +13,11 @@ Positioning (web landing page): *examinations built from your school's learning 
 
 ## When to reach for the reference files
 
-- **Users, roles, school setup, login, permissions, or any tenant-scoped data** → `references/tenancy-and-identity.md`
-- **Document upload/OCR, retrieval, AI question generation, the question bank, exams, diagrams, grading or results** → `references/assessment-pipeline.md`
-- **The desktop app, offline exams, exam packages or synchronization** → `references/offline-desktop.md`
-- **The external API, API keys, OAuth, scopes, webhooks, exam launch, SSO or LTI** → `references/integrations.md`
-- **Writing code here** (new model, migration, protected endpoint, audit entry, tests) → `references/engineering-recipes.md`
+- **Users, roles, school setup, login, permissions, or any tenant-scoped data** â†’ `references/tenancy-and-identity.md`
+- **Document upload/OCR, retrieval, AI question generation, the question bank, exams, diagrams, grading or results** â†’ `references/assessment-pipeline.md`
+- **The desktop app, offline exams, exam packages or synchronization** â†’ `references/offline-desktop.md`
+- **The external API, API keys, OAuth, scopes, webhooks, exam launch, SSO or LTI** â†’ `references/integrations.md`
+- **Writing code here** (new model, migration, protected endpoint, audit entry, tests) â†’ `references/engineering-recipes.md`
 
 ## Where the build is
 
@@ -26,11 +26,11 @@ Positioning (web landing page): *examinations built from your school's learning 
 | 1. Repository foundation, contracts, local dev | **Mostly done.** Tenant/integration tables, API-key authentication, integration identity endpoint, CI on SQLite and PostgreSQL, and Docker Compose PostgreSQL + pgvector exist. The shared `packages/` workspace is still absent. |
 | 2. Authentication, school tenancy, academic setup | **Core built; remaining work is bounded.** Identity, cookie sessions, CSRF, role checks, throttling, account management, school structure, enrolment and teaching assignments are implemented. School profile editing and departments remain. Student/class import currently reaches the API as JSON; direct CSV/XLSX upload remains. Integration management API (ADR 0008 stage A) is built; its web screens (B) and public data endpoints (C) remain. |
 | 3. Document upload, extraction, OCR, approval | **Done** (ADR 0004): PDF, Word, PowerPoint, Excel, CSV, text and photo extraction; OCR, review/approval and worker processing; web screens included. Malware scanning, S3/object-storage production setup and manual text correction remain open hardening/work. |
-| 4. Retrieval and evidence-grounded AI drafts | **Done for the agreed lexical-retrieval scope** (ADR 0005 stages A–B; ADR 0006 stage C): approved-material evidence selection, provider adapter, server-side validation, shortfall reporting, usage/cost tracking and web review/approval. Embeddings remain a possible later improvement, not an existing requirement. |
-| 5. Question bank, teacher review, exam builder | **Done** (ADR 0003 and ADR 0006): six implemented types (single-choice, multiple-select, true/false, short answer, numeric and essay), immutable versions, passages, exam snapshots, approvals, marking and web screens. |
-| 6. Diagram generation and visual question types | **Started.** `backend/diagram-engine/diagram_engine/` renders bounded structured SVG primitives. The API stores specs on immutable question versions; teachers can preview labelled and blank variants in the web question and AI draft review flows. AI drafts use structured specs and require text labels to appear in verified citations. Student web, review and offline exam flows receive and render labels-stripped specs. Matching, calculation, diagram labelling and structured practical remain unimplemented bank types. |
+| 4. Retrieval and evidence-grounded AI drafts | **Done for the agreed lexical-retrieval scope** (ADR 0005 stages Aâ€“B; ADR 0006 stage C): approved-material evidence selection, provider adapter, server-side validation, shortfall reporting, usage/cost tracking and web review/approval. Embeddings remain a possible later improvement, not an existing requirement. |
+| 5. Question bank, teacher review, exam builder | **Done** (ADR 0003 and ADR 0006): seven implemented types (single-choice, multiple-select, true/false, short answer, numeric, essay and diagram labelling), immutable versions, passages, exam snapshots, approvals, marking and web screens. |
+| 6. Diagram generation and visual question types | **Started.** `backend/diagram-engine/diagram_engine/` renders bounded structured SVG primitives. The API stores specs on immutable question versions; teachers can preview labelled and blank variants in the web question and AI draft review flows. AI drafts use structured specs and require text labels to appear in verified citations. Student web, review and offline exam flows receive numbered target labels with answers stripped. Matching, calculation and structured practical remain unimplemented bank types. |
 | 7. Online exam delivery, grading, reporting | **Done** through the API and web app: timed attempts, autosave/resume, automatic marking, teacher marking, result release, class reports, item analysis and marked scripts. |
-| 8. Electron desktop shell and offline exam package | **Done for ADR 0007 stages A–D.** The API, web workflows, Electron lab app, signed packages/submissions, USB flow, NSIS Windows installer and signed update-manifest workflow are implemented. |
+| 8. Electron desktop shell and offline exam package | **Done for ADR 0007 stages Aâ€“D.** The API, web workflows, Electron lab app, signed packages/submissions, USB flow, NSIS Windows installer and signed update-manifest workflow are implemented. |
 | 9. Synchronization, school LAN mode, packaging, hardening | **Core offline synchronization and installer/release pipeline built.** LAN deployment remains future work. Code signing is conditional on configuring the Windows certificate secrets; without them CI produces an unsigned installer. |
 
 Before saying something exists, check the code: much of `docs/integrations/api-contract.md` describes the planned design. Update this table in the same PR that completes or starts a phase.
@@ -55,3 +55,4 @@ The README's product principles come down to **accuracy before automation**. The
 - **Use only synthetic test data.** Never use real student data or real examination answer keys in fixtures, seeds or examples.
 - **Don't open gated endpoints early.** Integration management is open (ADR 0008), but each public customer-data endpoint for integrations needs its permission check, tenant filtering, audit entry, rate limit and its own security tests before it ships (`backend/api/README.md`).
 - **Build one small, verifiable step at a time.** The README commits to this, so prefer one domain slice per PR, with its migration and tests.
+
