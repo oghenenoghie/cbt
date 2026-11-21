@@ -98,7 +98,21 @@ def mark(
         ]
         score = int(marks * sum(matches) / len(accepted) + 0.5) if accepted else 0
         return Marked(is_correct=bool(matches) and all(matches), score=score, needs_marking=False)
+    elif question_type == "matching":
+        key = answer_key or {}
+        correct = key.get("correct_matches", [])
+        try:
+            supplied = json.loads(answer.text or "[]")
+        except (json.JSONDecodeError, TypeError):
+            supplied = []
+        if not isinstance(supplied, list):
+            supplied = []
+        matches = [
+            index < len(supplied) and supplied[index] == option_id
+            for index, option_id in enumerate(correct)
+        ]
+        score = int(marks * sum(matches) / len(correct) + 0.5) if correct else 0
+        return Marked(is_correct=bool(matches) and all(matches), score=score, needs_marking=False)
     else:
         right = bool(answer.selected) and sorted(answer.selected) == sorted(correct_option_ids)
     return Marked(is_correct=right, score=marks if right else 0, needs_marking=False)
-

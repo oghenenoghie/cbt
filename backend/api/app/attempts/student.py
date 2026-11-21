@@ -111,6 +111,9 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
                 type=version.type,
                 stem=version.stem,
                 diagram_spec=student_diagram(version.diagram_spec, version.type),
+                matching_prompts=(version.answer_key or {}).get("matching_prompts", [])
+                if version.type == "matching"
+                else [],
                 options=[
                     AttemptOption(id=option_id, text=texts[option_id])
                     for option_id in attempt.option_orders[item_id]
@@ -309,17 +312,31 @@ def save_answer(
     if item_id not in attempt.option_orders:
         raise _not_found("Question")
     question = db.execute(
-        select(QuestionVersion.type, QuestionVersion.diagram_spec)
+        select(
+            QuestionVersion.type,
+            QuestionVersion.diagram_spec,
+            QuestionVersion.options,
+            QuestionVersion.answer_key,
+        )
         .join(ExamPaperItem, ExamPaperItem.question_version_id == QuestionVersion.id)
         .where(ExamPaperItem.id == item_id, ExamPaperItem.exam_id == attempt.exam_id)
     ).one_or_none()
-    question_type, diagram_spec = question if question else (None, None)
+    question_type, diagram_spec, options, answer_key = question or (None, None, [], None)
     label_count = (
         sum(element.get("kind") == "text" for element in diagram_spec.get("elements", []))
         if question_type == "diagram_label" and diagram_spec
         else 0
     )
-    chosen, text = checked_answer(question_type, attempt.option_orders[item_id], body, label_count)
+    match_count = len((answer_key or {}).get("matching_prompts", []))
+    match_option_ids = [option["id"] for option in options] if question_type == "matching" else []
+    chosen, text = checked_answer(
+        question_type,
+        attempt.option_orders[item_id],
+        body,
+        label_count,
+        match_count,
+        match_option_ids,
+    )
 
     latest = db.scalar(
         select(AnswerEvent)
@@ -358,7 +375,12 @@ def save_answer(
 
 
 def checked_answer(
-    question_type: str | None, option_ids: list[str], body: AnswerIn, label_count: int = 0
+    question_type: str | None,
+    option_ids: list[str],
+    body: AnswerIn,
+    label_count: int = 0,
+    match_count: int = 0,
+    match_option_ids: list[str] | None = None,
 ) -> tuple[list[str], str | None]:
     """The answer to store for this question type: (chosen options, text)."""
     if question_type in CHOICE_TYPES:
@@ -391,6 +413,25 @@ def checked_answer(
             [],
             encoded if any(label.strip() for label in labels) else None,
         )
+    if question_type == "matching":
+        if text is None:
+            matches = [""] * match_count
+        else:
+            try:
+                matches = json.loads(text)
+            except json.JSONDecodeError as error:
+                raise invalid("Choose one answer for each matching prompt.") from error
+        allowed = set(match_option_ids or [])
+        if (
+            not isinstance(matches, list)
+            or len(matches) != match_count
+            or any(not isinstance(answer, str) or (answer and answer not in allowed) for answer in matches)
+            or len([answer for answer in matches if answer])
+            != len(set(answer for answer in matches if answer))
+        ):
+            raise invalid("Choose each matching answer once.")
+        encoded = json.dumps(matches)
+        return [], encoded if any(matches) else None
     if text is not None and question_type != "essay" and len(text) > MAX_SHORT_ANSWER_CHARS:
         raise invalid(f"Keep this answer to {MAX_SHORT_ANSWER_CHARS} characters or fewer.")
     return [], text
@@ -413,4 +454,3 @@ def submit_attempt(
         service.finish(db, attempt, reason="student", at=at, by=principal, request=request)
         db.commit()
     return _attempt_out(db, attempt)
-

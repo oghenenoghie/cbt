@@ -10,7 +10,8 @@ export type QuestionType =
   | "short_answer"
   | "numeric"
   | "essay"
-  | "diagram_label";
+  | "diagram_label"
+  | "matching";
 
 export interface DiagramElement {
   kind: "rect" | "ellipse" | "line" | "arrow" | "region" | "text";
@@ -86,6 +87,7 @@ export interface SittingQuestion {
   type: QuestionType;
   stem: string;
   diagram_spec?: DiagramSpec | null;
+  matching_prompts?: string[];
   options: { id: string; text: string }[];
   marks: number;
   passage: { title: string; body: string } | null;
@@ -211,4 +213,3 @@ export interface LabBridge {
   trustStatus(): Promise<{ enabled: boolean }>;
   importTrustSet(): Promise<LabReply<{ generation: number; changed: boolean } | null>>;
 }
-

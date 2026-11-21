@@ -1,6 +1,6 @@
 # ADR 0006: More question types and teacher marking
 
-- **Status:** Accepted. Stages A, B and C are built.
+- **Status:** Accepted. Stages A, B and C are built; matching is implemented as a visual question type.
 - **Date:** 2026-11-13
 - **Implemented in:** `backend/api/app/questions/schemas.py`, `backend/api/app/attempts/marking.py`, `backend/api/app/results/marking.py`, `backend/api/app/results/service.py` (migration `0014_question_types_marking`); AI drafts in `backend/api/app/ai/` (migration `0015_ai_question_types`)
 
@@ -14,7 +14,7 @@ Three choices were the user's, asked on 2026-11-13:
 - **Multiple-answer questions:** all or nothing, full marks only for exactly the right options (chosen over part marks per option).
 - **Who marks:** the subject's teachers and school admins, the same people who release results (chosen over admins only, or anyone who can see the exam).
 
-Matching questions were left for later.
+Matching was added later as a visual question type. A question has 2 to 6 prompts and a shared answer bank of the same size. Every answer is assigned once, and automatic marking awards a proportional share of the marks for each correct pair.
 
 The work is built in stages:
 
@@ -24,15 +24,17 @@ The work is built in stages:
 
 ## Decisions
 
-1. **Six question types.** A version's `type` is one of:
+1. **Eight bank question types.** A version's `type` is one of:
    - `mcq_single`: 2 to 6 options, one right (as before);
    - `mcq_multiple`: 2 to 6 options, one or more right;
    - `true_false` (as before);
    - `short_answer`: a word, name or phrase, with up to 10 accepted answers;
    - `numeric`: a number, with the answer and a tolerance;
-   - `essay`: a written answer a teacher marks, with an optional marking guide (up to 10,000 characters).
+   - `essay`: a written answer a teacher marks, with an optional marking guide (up to 10,000 characters);
+   - `diagram_label`: a diagram with numbered targets and accepted labels, receiving partial marks per correct target;
+   - `matching`: 2 to 6 prompts paired one-to-one with a shared answer bank, receiving partial marks per correct pair.
 
-   Choice types keep their key in `correct_option_ids`. The others keep theirs in the version's `answer_key` (`accepted_answers`, `value` and `tolerance`, or `guide`), which never changes, like the rest of a version. A field the type doesn't use is refused, so a question never carries a stray key. Staff responses include `answer_key`; student responses never do.
+   Choice types keep their key in `correct_option_ids`. The other types keep theirs in the version's `answer_key` (`accepted_answers`, `value` and `tolerance`, `guide`, accepted labels, or matching prompts and answer IDs), which never changes, like the rest of a version. A field the type doesn't use is refused, so a question never carries a stray key. Staff responses include `answer_key`; student responses never do.
 
 2. **Automatic marking** (`app/attempts/marking.py`), when an attempt is submitted:
    - **Choice questions:** full marks only for exactly the right options. A multiple-answer question gets nothing for some of the right options, or for the right ones plus a wrong one (the user's choice).
@@ -59,7 +61,7 @@ The work is built in stages:
 
 6. **What students see.** Once the review is available (ADR 0003, decision 12), each answer shows their own text, their score, right or wrong, and the teacher's comment. Never the accepted answers, the expected number or the marking guide.
 
-7. **AI drafts of every type** (stage C; ADR 0005's rules all still apply). A request can ask for any of the six types, and a draft can be corrected into any of them; drafts keep the answer key as bank versions do (`question_drafts.answer_key`). On top of ADR 0005's checks, each type has its own:
+7. **AI drafts of the six supported types** (stage C; ADR 0005's rules all still apply). A request can ask for any of the six AI-supported types, and a draft can be corrected into any of them; drafts keep the answer key as bank versions do (`question_drafts.answer_key`). Diagram labelling and matching are not AI-supported. On top of ADR 0005's checks, each type has its own:
    - **Multiple answers:** at least three options, at least two right and at least one wrong, so it isn't a single-answer question in disguise.
    - **Short answer:** each accepted answer is a word or short phrase (up to six words), and at least one of them must appear, as whole words, in a quote that was found in the material. An answer the material doesn't contain can't be traced to it, so it is rejected before the answer check.
    - **Number:** the answer is a number with a margin of 0 or more; the answer check confirms it follows from figures in the quotes.
@@ -78,7 +80,6 @@ The work is built in stages:
 
 ## Still open
 
-- Matching questions.
 - Part marks for multiple-answer questions, if a school wants them per question.
 - Rubrics with criteria, marking without seeing names, and second marking or moderation.
 - Changing a mark after release (with ADR 0003's open question on re-marking after a wrong answer key).

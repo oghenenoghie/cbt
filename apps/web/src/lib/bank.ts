@@ -23,6 +23,7 @@ export const TYPE_LABELS: Record<QuestionType, string> = {
   numeric: "Number",
   essay: "Essay",
   diagram_label: "Diagram labelling",
+  matching: "Matching",
 };
 
 /** What each type is, in the editor's words (ADR 0006). */
@@ -34,6 +35,7 @@ export const TYPE_HINTS: Record<QuestionType, string> = {
   numeric: "A number, marked within the margin you allow",
   essay: "A written answer that a teacher marks",
   diagram_label: "Type a label for each numbered target",
+  matching: "Match each prompt to a different answer; partial marks are awarded",
 };
 
 /** The bank question types supported by AI drafting (ADR 0005, ADR 0006 stage C). */
@@ -69,15 +71,22 @@ export function formatNumber(value: number): string {
 
 /** A written question's answer key in a line: accepted answers, the number, or the guide. */
 export function describeAnswerKey(type: QuestionType, key: AnswerKey | null): string | null {
-  if (type === "short_answer") return (key?.accepted_answers ?? []).join(" Â· ") || null;
+  if (type === "short_answer") return (key?.accepted_answers ?? []).join(" · ") || null;
   if (type === "numeric" && key?.value !== undefined) {
     return key.tolerance
-      ? `${formatNumber(key.value)} (Â± ${formatNumber(key.tolerance)})`
+      ? `${formatNumber(key.value)} (± ${formatNumber(key.tolerance)})`
       : formatNumber(key.value);
   }
   if (type === "essay") return key?.guide ?? null;
   if (type === "diagram_label") {
-    return key?.label_answers?.map((answers, index) => `${index + 1}: ${answers[0] ?? ""}`).join(" Â· ") ?? null;
+    return key?.label_answers?.map((answers, index) => `${index + 1}: ${answers[0] ?? ""}`).join(" · ") ?? null;
+  }
+  if (type === "matching") {
+    const prompts = key?.matching_prompts ?? [];
+    const correct = key?.correct_matches ?? [];
+    const answers = key?.matching_options ?? [];
+    const byId = new Map(answers.map((answer, index) => [OPTION_IDS[index], answer]));
+    return prompts.map((prompt, index) => `${prompt}: ${byId.get(correct[index]) ?? ""}`).join(" · ") || null;
   }
   return null;
 }
@@ -142,7 +151,7 @@ export function contentOf(
     type,
     stem: version.stem,
     diagram_spec: version.diagram_spec ?? null,
-    options: hasOptions(type) ? version.options.map((o) => o.text) : null,
+    options: hasOptions(type) || type === "matching" ? version.options.map((o) => o.text) : null,
     correct:
       type === "mcq_single"
         ? (correctPositions(version)[0] ?? -1)
@@ -156,6 +165,11 @@ export function contentOf(
     tolerance: type === "numeric" ? (key?.tolerance ?? 0) : null,
     guide: type === "essay" ? (key?.guide ?? null) : null,
     label_answers: type === "diagram_label" ? (key?.label_answers ?? []) : null,
+    matching_prompts: type === "matching" ? (key?.matching_prompts ?? []) : null,
+    matching_answers:
+      type === "matching"
+        ? (key?.correct_matches ?? []).map((id) => version.options.findIndex((option) => option.id === id))
+        : null,
     explanation: version.explanation,
     marks: version.marks,
     difficulty: version.difficulty,
@@ -168,4 +182,3 @@ export function describeType(version: QuestionVersion): string {
     ? `${TYPE_LABELS[version.type]}, ${version.options.length} options`
     : TYPE_LABELS[version.type];
 }
-

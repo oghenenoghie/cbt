@@ -52,6 +52,7 @@ class ReviewQuestion(BaseModel):
     type: str
     stem: str
     diagram_spec: DiagramSpec | None = None
+    matching_prompts: list[str] = Field(default_factory=list)
     options: list[OptionText]
     selected_option_ids: list[str]
     # What the student wrote, for questions answered with text.
@@ -282,4 +283,3 @@ class MarkIn(BaseModel):
     @classmethod
     def _strip(cls, value: str | None) -> str | None:
         return (value.strip() or None) if value is not None else None
-

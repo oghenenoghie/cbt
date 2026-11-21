@@ -96,7 +96,7 @@ def new_orders(db: Session, exam: Exam) -> tuple[list[str], dict[str, list[str]]
     option_orders: dict[str, list[str]] = {}
     for item, question_type, options in rows:
         ids = [option["id"] for option in options]
-        if exam.shuffle_options and question_type in ("mcq_single", "mcq_multiple"):
+        if exam.shuffle_options and question_type in ("mcq_single", "mcq_multiple", "matching"):
             shuffler.shuffle(ids)
         option_orders[item.id] = ids
     order = [item_id for block in blocks for item_id in block]

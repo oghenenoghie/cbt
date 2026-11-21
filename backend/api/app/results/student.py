@@ -179,6 +179,9 @@ def my_result(
                     type=version.type,
                     stem=version.stem,
                     diagram_spec=student_diagram(version.diagram_spec, version.type),
+                    matching_prompts=(version.answer_key or {}).get("matching_prompts", [])
+                    if version.type == "matching"
+                    else [],
                     options=[
                         OptionText(id=o, text=texts[o]) for o in attempt.option_orders[item_id]
                     ],
@@ -191,4 +194,3 @@ def my_result(
                 )
             )
     return MyResultDetail(**detail, blocks=blocks)
-

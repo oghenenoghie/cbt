@@ -38,7 +38,7 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
     <div className={`card ${styles.question}`}>
       <div className={styles.head}>
         <strong>
-          Question {question.number} Â· {question.score} of {question.marks}{" "}
+          Question {question.number} · {question.score} of {question.marks}{" "}
           {question.marks === 1 ? "mark" : "marks"}
         </strong>
         {!answered ? (
@@ -79,6 +79,14 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
             <p>{question.text}</p>
           </div>
         )
+      ) : question.type === "matching" ? (
+        <ol className={styles.options}>
+          {(question.matching_prompts ?? []).map((prompt, index) => {
+            const optionId = labelsFromText(question.text ?? "")[index] ?? "";
+            const answer = question.options.find((option) => option.id === optionId)?.text;
+            return <li key={index}><span>{prompt}</span><span>{answer || <em className="muted">Not answered</em>}</span></li>;
+          })}
+        </ol>
       ) : (
         <ul className={styles.options}>
           {question.options.map((option, i) => {
@@ -205,4 +213,3 @@ export default function MyResultPage() {
     </Suspense>
   );
 }
-
