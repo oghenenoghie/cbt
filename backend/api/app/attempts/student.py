@@ -6,6 +6,7 @@ scores: results wait for the school's release policy (Exams D). Another student'
 exam that isn't set for the student, is a 404.
 """
 
+import json
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -108,7 +109,7 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
                 number=number,
                 type=version.type,
                 stem=version.stem,
-                diagram_spec=student_diagram(version.diagram_spec),
+                diagram_spec=student_diagram(version.diagram_spec, version.type),
                 options=[
                     AttemptOption(id=option_id, text=texts[option_id])
                     for option_id in attempt.option_orders[item_id]
@@ -306,12 +307,18 @@ def save_answer(
         raise _conflict("This attempt has ended, and your saved answers were submitted.")
     if item_id not in attempt.option_orders:
         raise _not_found("Question")
-    question_type = db.scalar(
-        select(QuestionVersion.type)
+    question = db.execute(
+        select(QuestionVersion.type, QuestionVersion.diagram_spec)
         .join(ExamPaperItem, ExamPaperItem.question_version_id == QuestionVersion.id)
         .where(ExamPaperItem.id == item_id, ExamPaperItem.exam_id == attempt.exam_id)
+    ).one_or_none()
+    question_type, diagram_spec = question if question else (None, None)
+    label_count = (
+        sum(element.get("kind") == "text" for element in diagram_spec.get("elements", []))
+        if question_type == "diagram_label" and diagram_spec
+        else 0
     )
-    chosen, text = checked_answer(question_type, attempt.option_orders[item_id], body)
+    chosen, text = checked_answer(question_type, attempt.option_orders[item_id], body, label_count)
 
     latest = db.scalar(
         select(AnswerEvent)
@@ -350,7 +357,7 @@ def save_answer(
 
 
 def checked_answer(
-    question_type: str | None, option_ids: list[str], body: AnswerIn
+    question_type: str | None, option_ids: list[str], body: AnswerIn, label_count: int = 0
 ) -> tuple[list[str], str | None]:
     """The answer to store for this question type: (chosen options, text)."""
     if question_type in CHOICE_TYPES:
@@ -365,6 +372,24 @@ def checked_answer(
     if body.selected_option_ids:
         raise invalid("Type your answer for this question; it has no options to choose.")
     text = body.text if body.text is not None and body.text.strip() else None
+    if question_type == "diagram_label":
+        try:
+            labels = json.loads(text or "[]")
+        except json.JSONDecodeError as error:
+            raise invalid("Enter one answer in each diagram label box.") from error
+        if not isinstance(labels, list) or len(labels) != label_count or any(
+            not isinstance(label, str) for label in labels
+        ):
+            raise invalid("Enter one answer in each diagram label box.")
+        if any(len(label) > MAX_SHORT_ANSWER_CHARS for label in labels):
+            raise invalid(f"Keep each label to {MAX_SHORT_ANSWER_CHARS} characters or fewer.")
+        encoded = json.dumps(labels, ensure_ascii=False)
+        if len(encoded) > MAX_ANSWER_CHARS:
+            raise invalid("Shorten the diagram labels and try again.")
+        return (
+            [],
+            encoded if any(label.strip() for label in labels) else None,
+        )
     if text is not None and question_type != "essay" and len(text) > MAX_SHORT_ANSWER_CHARS:
         raise invalid(f"Keep this answer to {MAX_SHORT_ANSWER_CHARS} characters or fewer.")
     return [], text
@@ -387,3 +412,4 @@ def submit_attempt(
         service.finish(db, attempt, reason="student", at=at, by=principal, request=request)
         db.commit()
     return _attempt_out(db, attempt)
+
