@@ -11,9 +11,9 @@ from sqlalchemy.orm import Session
 
 from app.attempts import service as attempts
 from app.auth.dependencies import require_school_role
-from app.diagrams import student_diagram
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
+from app.diagrams import student_diagram
 from app.models import (
     AttemptResponse,
     Exam,
