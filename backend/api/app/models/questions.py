@@ -34,7 +34,9 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.models.tenant import utc_now
 
-QUESTION_TYPES = ("mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay")
+QUESTION_TYPES = (
+    "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay", "diagram_label"
+)
 DIFFICULTIES = ("easy", "medium", "hard")
 
 
@@ -174,7 +176,7 @@ class QuestionVersion(Base):
         CheckConstraint("version >= 1", name="ck_question_versions_version"),
         CheckConstraint(
             "type IN ('mcq_single', 'mcq_multiple', 'true_false', 'short_answer', 'numeric', "
-            "'essay')",
+            "'essay', 'diagram_label')",
             name="ck_question_versions_type",
         ),
     )
@@ -247,3 +249,4 @@ def _passage_versions_never_change(_mapper, _connection, version: PassageVersion
         f"Passage versions can't be changed (passage {version.passage_id}, version "
         f"{version.version}). Add a new version instead."
     )
+
