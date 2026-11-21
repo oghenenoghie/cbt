@@ -14,8 +14,8 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.attempts import service
-from app.diagrams import student_diagram
 from app.attempts.schemas import (
+    MAX_ANSWER_CHARS,
     MAX_SHORT_ANSWER_CHARS,
     AnswerIn,
     AnswerOut,
@@ -31,6 +31,7 @@ from app.auth.dependencies import require_school_role
 from app.auth.sessions import SessionPrincipal
 from app.core.audit import record_audit
 from app.db.session import get_db
+from app.diagrams import student_diagram
 from app.models import (
     AnswerEvent,
     Candidate,
