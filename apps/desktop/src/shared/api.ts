@@ -12,7 +12,22 @@ export type QuestionType =
   | "essay"
   | "diagram_label"
   | "matching"
-  | "calculation";
+  | "calculation"
+  | "practical";
+
+/** A part of a structured practical question, as students see it: never its answer. */
+export interface PracticalPart {
+  prompt: string;
+  kind: "short" | "number" | "written";
+  marks: number;
+  unit?: string | null;
+}
+
+/** Given data for a practical, such as a table of readings. */
+export interface PracticalTable {
+  columns: string[];
+  rows: string[][];
+}
 
 export interface DiagramElement {
   kind: "rect" | "ellipse" | "line" | "arrow" | "region" | "text";
@@ -90,6 +105,8 @@ export interface SittingQuestion {
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
   calculation_prompts?: string[];
+  practical_parts?: PracticalPart[];
+  practical_table?: PracticalTable | null;
   options: { id: string; text: string }[];
   marks: number;
   passage: { title: string; body: string } | null;

@@ -6,6 +6,17 @@ import { useState } from "react";
 import { ErrorAlert } from "@/components/Feedback";
 import { Modal } from "@/components/Modal";
 import { DiagramPreview } from "@/components/bank/DiagramPreview";
+import {
+  canonicalParts,
+  partContent,
+  PracticalEditor,
+  practicalDraftOf,
+  practicalProblem,
+  practicalTotal,
+  practicalTouched,
+  tableContent,
+  type PracticalDraft,
+} from "@/components/bank/PracticalEditor";
 import { api } from "@/lib/api";
 import {
   contentOf,
@@ -54,16 +65,28 @@ function acceptedOf(list: string[]): string[] {
   return list.map((a) => a.trim()).filter(Boolean);
 }
 
+/** A value with its objects' keys in one order, so equal content gives equal JSON. */
+function sortedKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortedKeys);
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.fromEntries(Object.keys(record).sort().map((key) => [key, sortedKeys(record[key])]));
+  }
+  return value;
+}
+
 /** The content as the API will store it: trimmed, and without what the type doesn't use. */
 function normalise(content: QuestionContent): string {
-  return JSON.stringify({
+  return JSON.stringify(sortedKeys({
     ...content,
     stem: content.stem.trim(),
     options: hasOptions(content.type) || content.type === "matching" ? (content.options ?? []).map((o) => o.trim()) : null,
     accepted_answers: content.type === "short_answer" ? acceptedOf(content.accepted_answers ?? []) : null,
     guide: content.guide?.trim() || null,
+    practical_parts: content.type === "practical" ? canonicalParts(content.practical_parts ?? []) : null,
+    practical_table: content.type === "practical" ? tableContent(content.practical_table ?? null) : null,
     explanation: content.explanation?.trim() || null,
-  });
+  }));
 }
 
 /** A number typed into a field, or null when it's blank or not a number. */
@@ -100,6 +123,8 @@ const PLACEHOLDERS: Record<QuestionType, string> = {
   short_answer: "For example: What gas do plants take in for photosynthesis?",
   numeric: "For example: A car travels 120 km in 2 hours. What is its average speed in km/h?",
   essay: "For example: Describe two ways that plants and animals depend on each other.",
+  practical:
+    "For example: You titrate a solution of a made-up acid against a base. Use the readings in the table to answer each part.",
 };
 
 export function QuestionEditor({
@@ -143,13 +168,14 @@ export function QuestionEditor({
   );
   const [options, setOptions] = useState<string[]>(initial?.options ?? ["", "", "", ""]);
   const [matchingPrompts, setMatchingPrompts] = useState<string[]>(initial?.matching_prompts ?? ["", ""]);
-  const [matchingAnswers, setMatchingAnswers] = useState<number[]>(initial?.matching_answers ?? [0, 1]);
+  const [matchingAnswers, setMatchingAnswers] = useState<number[]>(initial?.correct_matches ?? [0, 1]);
   const [matchingConfigured, setMatchingConfigured] = useState(initial?.type === "matching");
   const [calculationSteps, setCalculationSteps] = useState<{ prompt: string; value: string; tolerance: string }[]>(
     initial?.calculation_steps?.map((step) => ({ prompt: step.prompt, value: String(step.value ?? ""), tolerance: step.tolerance ? String(step.tolerance) : "" })) ??
     [{ prompt: "", value: "", tolerance: "" }, { prompt: "", value: "", tolerance: "" }],
   );
   const [calculationConfigured, setCalculationConfigured] = useState(initial?.type === "calculation");
+  const [practical, setPractical] = useState<PracticalDraft>(() => practicalDraftOf(initial));
   const [correctIndex, setCorrectIndex] = useState<number | null>(
     initial?.type === "mcq_single" ? (initial.correct as number) : null,
   );
@@ -203,10 +229,12 @@ export function QuestionEditor({
         : null,
     options: hasOptions(type) || type === "matching" ? options : null,
     matching_prompts: type === "matching" ? matchingPrompts : null,
-    matching_answers: type === "matching" ? matchingAnswers : null,
+    correct_matches: type === "matching" ? matchingAnswers : null,
     calculation_steps: type === "calculation"
       ? calculationSteps.map((step) => ({ prompt: step.prompt, value: numberOf(step.value), tolerance: numberOf(step.tolerance) ?? 0 }))
       : null,
+    practical_parts: type === "practical" ? practical.parts.map(partContent) : null,
+    practical_table: type === "practical" ? tableContent(practical.table) : null,
     correct:
       type === "mcq_single"
         ? (correctIndex ?? -1)
@@ -220,7 +248,8 @@ export function QuestionEditor({
     tolerance: type === "numeric" ? (numberOf(tolerance) ?? 0) : null,
     guide: type === "essay" ? guide.trim() || null : null,
     explanation: explanation.trim() || null,
-    marks: Number(marks),
+    // A practical is worth its parts' total; the API sets that whatever is sent.
+    marks: type === "practical" ? practicalTotal(practical) : Number(marks),
     difficulty: difficulty || null,
   };
   const diagramDirty = diagramText !== (initial?.diagram_spec ? JSON.stringify(initial.diagram_spec, null, 2) : "");
@@ -231,6 +260,7 @@ export function QuestionEditor({
         diagramText.trim() ||
         options.some((o) => o.trim()) || matchingPrompts.some((p) => p.trim()) ||
         calculationSteps.some((step) => step.prompt.trim() || step.value.trim() || step.tolerance.trim()) ||
+        practicalTouched(practical) ||
         accepted.some((a) => a.trim()) ||
         value.trim() ||
         guide.trim() ||
@@ -292,6 +322,9 @@ export function QuestionEditor({
       if (labelAnswerText.some((value) => value.split("|").some((answer) => answer.trim().length > 200))) {
         return "Keep each accepted spelling to 200 characters or fewer.";
       }
+    }
+    if (type === "practical") {
+      return practicalProblem(practical);
     }
     if (type === "matching") {
       if (options.length < 2 || options.length > 6 || options.some((answer) => !answer.trim())) return "Give 2 to 6 answers in the shared answer bank.";
@@ -505,7 +538,9 @@ export function QuestionEditor({
           )}
         </fieldset>
 
-        {type === "calculation" ? (
+        {type === "practical" ? (
+          <PracticalEditor value={practical} onChange={setPractical} />
+        ) : type === "calculation" ? (
           <fieldset>
             <legend>Calculation steps</legend>
             <p className={styles.explain}>Students enter one number per step and receive partial marks for correct steps.</p>
@@ -737,9 +772,16 @@ export function QuestionEditor({
               min={1}
               max={100}
               step={1}
-              value={marks}
+              value={type === "practical" ? practicalTotal(practical) : marks}
+              readOnly={type === "practical"}
+              aria-describedby={type === "practical" ? "question-marks-hint" : undefined}
               onChange={(e) => setMarks(e.target.value)}
             />
+            {type === "practical" && (
+              <span id="question-marks-hint" className="hint">
+                The parts&apos; total. Change a part&apos;s marks to change it.
+              </span>
+            )}
           </div>
           <div className="field">
             <label htmlFor="question-difficulty">Difficulty (optional)</label>

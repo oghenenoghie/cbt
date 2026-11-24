@@ -132,8 +132,12 @@ School admins, and teachers who teach the subject, can use a subject's questions
 | `short_answer` | `accepted_answers`: 1 to 10 (case, spacing and surrounding punctuation are ignored) | Automatically; teachers can re-mark |
 | `numeric` | `value` and optional `tolerance` (default 0) | Automatically; teachers can re-mark |
 | `essay` | optional `guide`: the model answer or marking guide | By a teacher |
+| `diagram_label` | `diagram_spec` with text elements (the numbered targets) and `label_answers`: accepted labels for each | Automatically, part marks per target |
+| `matching` | `options`: an answer bank of 2 to 6, `matching_prompts` (as many), `correct_matches`: each prompt's answer position, each answer once | Automatically, part marks per pair |
+| `calculation` | `calculation_steps`: 2 to 6 of `{"prompt", "value", "tolerance"}` | Automatically, part marks per step |
+| `practical` | optional `practical_table` (`columns`, `rows`) and `practical_parts`: 2 to 8 of `{"prompt", "kind", "marks"}` plus, by kind, `accepted_answers` (`short`), `value`/`tolerance`/`unit` (`number`) or `guide` (`written`); `marks` becomes the parts' total (at most 100) | Short and number parts automatically, scaled to the marks; written parts by a teacher, who marks the whole question |
 
-All take `stem` and optional `explanation`, `marks` (1 to 100, default 1) and `difficulty` (`easy`, `medium`, `hard`); a field the type doesn't use is refused. Responses give option ids (`a` to `f`, or `true`/`false`), the answer as `correct_option_ids` for choice questions, and `answer_key` (`accepted_answers`, `value` and `tolerance`, or `guide`) for the others. Students never see either.
+All take `stem` and optional `explanation`, `marks` (1 to 100, default 1) and `difficulty` (`easy`, `medium`, `hard`); a field the type doesn't use is refused. Responses give option ids (`a` to `f`, or `true`/`false`), the answer as `correct_option_ids` for choice questions, and `answer_key` (`accepted_answers`, `value` and `tolerance`, `guide`, or the structured types' fields above) for the others. Students never see either; for a practical they get each part's prompt, kind, marks and unit, and the table.
 
 Reading passages ("read the passage and answer the questions that follow") follow the same rules:
 
@@ -172,7 +176,7 @@ Students sit published exams set for their classes. These endpoints never return
 | `GET /api/v1/me/exams` | Your exams: `state` (`upcoming`, `open`, `closed`), attempts used and allowed, `can_start`, and any `attempt_in_progress_id` |
 | `POST /api/v1/me/exams/{id}/attempts` | Start an attempt (201), or resume the one in progress (200) |
 | `GET /api/v1/me/attempts/{id}` | The paper in your order with your saved answers, `ends_at`, `server_now` and `seconds_left`; only the status once submitted |
-| `PUT /api/v1/me/attempts/{id}/answers/{item_id}` | Save an answer: `{"selected_option_ids": ["b"]}` for choice questions (several for `mcq_multiple`), `{"text": "..."}` for the others (up to 500 characters, or 20,000 for an essay); `[]` or blank text clears it |
+| `PUT /api/v1/me/attempts/{id}/answers/{item_id}` | Save an answer: `{"selected_option_ids": ["b"]}` for choice questions (several for `mcq_multiple`), `{"text": "..."}` for the others (up to 500 characters, or 20,000 for an essay; for diagram labels, matching, calculation and practicals a JSON list with one string per target, prompt, step or part, a practical's written parts up to 3,000 characters); `[]` or blank text clears it |
 | `POST /api/v1/me/attempts/{id}/submit` | Hand in the attempt (safe to repeat) |
 
 An attempt ends at its start plus the duration, or at closing time if sooner. Saves are accepted for 10 seconds after that; then the attempt is submitted with what was saved. Submitting marks everything but essays, which wait for a teacher.
@@ -189,11 +193,11 @@ A student's result is their latest finished attempt. Students see their score on
 | `GET /api/v1/exams/{id}/results` | Staff: every student the exam is set for, including those who didn't sit, a summary, and answers still to mark (`pending_marking`) |
 | `GET /api/v1/exams/{id}/item-analysis` | Staff: per question, how many answered and got full marks, the share of its marks scored (facility), and how many chose each option |
 | `GET /api/v1/exams/{id}/attempts/{attempt_id}` | Staff: one student's marked script, with the answer key, written answers and teachers' marks |
-| `GET /api/v1/exams/{id}/marking` | Staff: the exam's written questions (short answer, number, essay), with how many answers are marked and how many wait, `can_mark` and any `locked_reason` |
+| `GET /api/v1/exams/{id}/marking` | Staff: the exam's written questions (short answer, number, essay, practical), with how many answers are marked and how many wait, `can_mark` and any `locked_reason` |
 | `GET /api/v1/exams/{id}/marking/{item_id}` | Staff: every counted attempt's answer to one written question, by student name |
 | `PUT /api/v1/exams/{id}/marking/answers/{response_id}` | The same people as releasing: `{"score": 0..marks, "comment": "..."}` (comment optional, up to 2,000 characters, seen by the student). Replaces the automatic mark; every mark is kept. Refused once students can see the scores |
 
-An exam with essays must release results by the teacher, and results can't be released while any answer waits for marking.
+An exam with essays, or with a practical that has a written part, must release results by the teacher, and results can't be released while any answer waits for marking.
 
 ### Learning materials
 

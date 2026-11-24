@@ -96,7 +96,7 @@ it again). The subject, topic, passage and active/archived filters are kept in t
 
 | Screen | What staff do there |
 |---|---|
-| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write questions of nine types (ADR 0006): multiple choice with one right answer or several, true/false, short answer (the answers to accept), number (the answer and a margin), essay (an optional marking guide), diagram labelling, matching (a shared answer bank, each answer used once and partial marks per correct pair) and calculation (2 to 6 numeric steps with partial marks), with marks, difficulty, topics and an explanation; open one to see its answer key, edit it, see earlier versions, archive, restore or delete it |
+| **Questions** (`/questions`) | List a subject's questions, newest first, by topic, passage or status; write questions of ten types (ADR 0006): multiple choice with one right answer or several, true/false, short answer (the answers to accept), number (the answer and a margin), essay (an optional marking guide), diagram labelling, matching (a shared answer bank, each answer used once and partial marks per correct pair) calculation (2 to 6 numeric steps with partial marks) and practical (a table of readings, then 2 to 8 parts answered as a short answer, a number with its unit, or in writing for a teacher, each with its own marks; the question is worth their total), with marks, difficulty, topics and an explanation; open one to see its answer key, edit it, see earlier versions, archive, restore or delete it |
 | **Passages** (`/passages`) | List a subject's reading passages; add and edit them; see the questions about one and write more; archive, restore or delete |
 
 Choices worth knowing:
@@ -151,7 +151,7 @@ the API works out for the signed-in person and checks again on every action.
 | **An exam** (`/exams/view?id=…`) | Its settings and classes (the author edits them while it's a draft); its **paper** with the answers, where the author adds questions and passages from the bank, reorders and removes them, and sees what stops it being submitted; submit, publish, send back with a note, withdraw with a reason, copy or delete; and, once published, **who has started** and, if it can be sat on lab computers, its **Lab computers** card |
 | **Approvals** (`/approvals`) | For exam coordinators, school admins and heads of department: the exams waiting for them. The dashboard shows how many |
 | **Results** (`/exams/results?id=…`) | Whether students can see them yet, how many written answers wait for a mark, and **Release results** once the exam has closed and nothing waits. A summary (students, handed in, didn't sit, average, highest, lowest), then two tabs: **Students** (each student's counted attempt, by class or by score, with what's left to mark and a CSV download) and **Questions** (item analysis: the share who got each question right, or of the marks for written answers, and how many chose each option, in paper order or hardest first) |
-| **Marking** (`/exams/marking?id=…&item=…`) | For exams with written answers (ADR 0006): the short-answer, number and essay questions with how many answers wait; open one to read every student's answer beside the accepted answers or marking guide, and give a mark out of the question's marks with a comment the student sees. Essays wait for a mark; short answers and numbers were marked automatically and can be re-marked, for example to accept a spelling. Linked from the exam, its results and a waiting count |
+| **Marking** (`/exams/marking?id=…&item=…`) | For exams with written answers (ADR 0006): the short-answer, number, essay and practical questions with how many answers wait; open one to read every student's answer beside the accepted answers or marking guide (a practical's answers part by part, beside what each part accepts), and give a mark out of the question's marks with a comment the student sees. Essays, and practicals with written parts, wait for a mark (a practical's mark is for the whole question); short answers and numbers were marked automatically and can be re-marked, for example to accept a spelling. Linked from the exam, its results and a waiting count |
 | **A marked script** (`/exams/script?exam=…&attempt=…`) | One student's attempt in paper order, each question marked, with the right answer and their answer, written answers with the key or guide, and who marked them; the exam's teachers can mark written answers here too. Opened from a name in the results, in who has started or in marking |
 
 Choices worth knowing:
@@ -175,8 +175,8 @@ Choices worth knowing:
 - **Marking** is open to the same people as releasing (the API's `can_mark` says so; exam coordinators who
   don't teach the exam can read but not mark), from the moment an attempt is handed in until results are
   released. Every mark is kept; marking again replaces the mark that counts. Results can't be released
-  while an answer waits (the API refuses and says how many), and the API refuses an exam with essays set
-  to show results at once, which the paper lists before it's submitted.
+  while an answer waits (the API refuses and says how many), and the API refuses an exam with essays (or
+  practicals with written parts) set to show results at once, which the paper lists before it's submitted.
 - **Lab computers** (ADR 0007). The exam's settings say whether it can be sat on lab computers (on by
   default) and whether they show scores straight away (only with results shown at once; the publish
   dialog warns that the answer key goes on lab computers, encrypted). On a published exam, the people who
@@ -201,7 +201,7 @@ Choices worth knowing:
 | Screen | What students do there |
 |---|---|
 | **My exams** (`/my-exams`) | Their published exams, open now, coming up and done; start one after a short briefing (time, questions, instructions, how the clock works), carry on with one already started, or open its result. Checks again every minute, so an exam that opens appears |
-| **Sitting** (`/sit?attempt=…`) | One question at a time, with its passage beside it, a numbered navigator showing what's answered, a countdown, and Hand in. Options to choose (tick boxes when several are right), a box for a word or a number, or a larger box with a word count for an essay |
+| **Sitting** (`/sit?attempt=…`) | One question at a time, with its passage beside it, a numbered navigator showing what's answered, a countdown, and Hand in. Options to choose (tick boxes when several are right), a box for a word or a number, or a larger box with a word count for an essay. A practical shows its table of readings and a box for each part: a word, a number with its unit beside it, or a written answer. Structured answers (diagram labels, matches, steps, parts) are saved as text, one entry each |
 | **My results** (`/my-results`) | Released scores, newest first; open one for the question-by-question review once the exam has closed |
 
 How sitting an exam behaves:

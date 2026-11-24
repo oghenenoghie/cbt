@@ -1,8 +1,8 @@
 # ADR 0006: More question types and teacher marking
 
-- **Status:** Accepted. Stages A, B and C are built; diagram labelling, matching and calculation are implemented as visual question types.
+- **Status:** Accepted. Stages A, B and C are built; diagram labelling, matching and calculation are implemented as visual question types, and structured practicals (decision 8) across the bank, exams, marking and the lab app.
 - **Date:** 2026-11-13
-- **Implemented in:** `backend/api/app/questions/schemas.py`, `backend/api/app/attempts/marking.py`, `backend/api/app/results/marking.py`, `backend/api/app/results/service.py` (migration `0014_question_types_marking`); AI drafts in `backend/api/app/ai/` (migration `0015_ai_question_types`)
+- **Implemented in:** `backend/api/app/questions/schemas.py`, `backend/api/app/attempts/marking.py`, `backend/api/app/results/marking.py`, `backend/api/app/results/service.py` (migration `0014_question_types_marking`); AI drafts in `backend/api/app/ai/` (migration `0015_ai_question_types`); practicals in the same modules (migration `0024_practical_question_type`)
 
 ## Context
 
@@ -14,6 +14,11 @@ Three choices were the user's, asked on 2026-11-13:
 - **Multiple-answer questions:** all or nothing, full marks only for exactly the right options (chosen over part marks per option).
 - **Who marks:** the subject's teachers and school admins, the same people who release results (chosen over admins only, or anyone who can see the exam).
 
+Structured practicals were the last question type in the requirements. Two more choices were the user's, asked on 2026-11-21:
+
+- **What a practical's parts can be:** a short answer, a number or a written answer (chosen over numbers only, or free-form parts).
+- **Where practicals work at first:** the bank, exams and the lab app (chosen over the bank and web exams only). AI drafts of practicals come later.
+
 Diagram labelling, matching and calculation were added later as visual question types. Matching has 2 to 6 prompts and a shared answer bank of the same size. Every answer is assigned once, and automatic marking awards a proportional share of the marks for each correct pair. Calculation has 2 to 6 named numeric steps, each with an expected value and optional tolerance, and awards a proportional share for each correct step.
 
 The work is built in stages:
@@ -24,7 +29,7 @@ The work is built in stages:
 
 ## Decisions
 
-1. **Nine bank question types.** A version's `type` is one of:
+1. **Ten bank question types.** A version's `type` is one of:
    - `mcq_single`: 2 to 6 options, one right (as before);
    - `mcq_multiple`: 2 to 6 options, one or more right;
    - `true_false` (as before);
@@ -33,9 +38,10 @@ The work is built in stages:
    - `essay`: a written answer a teacher marks, with an optional marking guide (up to 10,000 characters);
    - `diagram_label`: a diagram with numbered targets and accepted labels, receiving partial marks per correct target;
    - `matching`: 2 to 6 prompts paired one-to-one with a shared answer bank, receiving partial marks per correct pair;
-   - `calculation`: 2 to 6 named numeric steps with optional per-step tolerances, receiving partial marks per correct step.
+   - `calculation`: 2 to 6 named numeric steps with optional per-step tolerances, receiving partial marks per correct step;
+   - `practical`: a structured practical, 2 to 8 parts about an optional table of readings (decision 8).
 
-   Choice types keep their key in `correct_option_ids`. The other types keep theirs in the version's `answer_key` (`accepted_answers`, `value` and `tolerance`, `guide`, accepted labels, matching prompts and answer IDs, or calculation steps), which never changes, like the rest of a version. A field the type doesn't use is refused, so a question never carries a stray key. Staff responses include `answer_key`; student responses never do.
+   Choice types keep their key in `correct_option_ids`. The other types keep theirs in the version's `answer_key` (`accepted_answers`, `value` and `tolerance`, `guide`, accepted labels, matching prompts and answer IDs, calculation steps, or a practical's parts and table), which never changes, like the rest of a version. A field the type doesn't use is refused, so a question never carries a stray key. Staff responses include `answer_key`; student responses never do.
 
 2. **Automatic marking** (`app/attempts/marking.py`), when an attempt is submitted:
    - **Choice questions:** full marks only for exactly the right options. A multiple-answer question gets nothing for some of the right options, or for the right ones plus a wrong one (the user's choice).
@@ -71,12 +77,19 @@ The work is built in stages:
 
    These rules weren't put to the user as separate questions: when the user said to carry on with stage C, they were chosen to follow the product rule that every AI question and answer must be grounded in the school's approved material. Any of them can change.
 
+8. **Structured practicals** (`practical`; the user's choices on 2026-11-21).
+   - **What a teacher writes:** a stem setting the scene, an optional diagram of the apparatus, an optional table of readings or results (1 to 8 columns with headings of up to 60 characters, 1 to 20 rows of cells of up to 100), and 2 to 8 parts, (a), (b) and so on, each with a different prompt and 1 to 20 marks. A part is a **short** answer (up to 10 accepted answers, marked like a short answer question), a **number** (the answer, a margin, and an optional unit shown beside the box) or **written** (an optional marking guide). The question's marks are always the parts' total, at most 100, whatever is sent. Parts and table live in `answer_key` (`practical_parts`, `practical_table`), and a field a part's kind doesn't use is refused.
+   - **What students see:** the table, and each part's prompt, kind, marks and unit (`practical_parts`, `practical_table` on attempt and review questions). Never the accepted answers, the number, the margin or the guide. The answer is `text` holding a JSON list of strings, one per part: up to 3,000 characters for a written part and 500 for the others.
+   - **Automatic marking:** each short and number part is marked on its own, by the same rules as those types; the parts' marks are added up and scaled to the marks the paper gives the question. Written parts score 0 automatically, and any non-blank written part makes the answer wait for a teacher (`needs_marking`). The answer is right only when every part is, so a practical with written parts is never right automatically.
+   - **Teacher marking:** practicals are among the types a teacher can mark (`WRITTEN_TYPES`). The mark is for the whole question, from 0 to its marks, replacing the automatic one, as for other written answers (decision 4). Marking screens show each part's answer beside what it accepts or its guide. Like essays, an exam with a practical that has a written part must use teacher release.
+   - **Lab computers:** packages carry the parts and table without answers, unless instant scores are on (ADR 0007), when the parts' answers travel encrypted with the rest of the key. The lab app marks short and number parts for the instant score, and the server marks every submission again.
+
 ## Consequences
 
 - A school can set a whole paper: objective questions marked at once, and written answers marked by its teachers before results go out.
 - Results with written answers always wait for a teacher to finish marking and release them.
 - The record shows every mark a written answer was given, by whom and when, and the automatic mark it replaced.
-- Downgrading migration 0014 fails while any question of a new type exists.
+- Downgrading migration 0014 fails while any question of a new type exists, and downgrading 0024 while any practical exists.
 - AI can draft every type; essays and short answers it drafts still wait for a teacher's approval, and essays for a teacher's marks.
 
 ## Still open
@@ -86,3 +99,4 @@ The work is built in stages:
 - Changing a mark after release (with ADR 0003's open question on re-marking after a wrong answer key).
 - Units and significant figures for numbers, and forgiving small spelling slips in short answers automatically.
 - Marking on the desktop app while offline.
+- AI drafts of practicals, and marks per part from a teacher (today a teacher marks the whole practical).

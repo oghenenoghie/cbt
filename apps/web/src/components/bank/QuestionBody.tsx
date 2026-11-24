@@ -2,8 +2,10 @@
 
 import { CircleCheck } from "lucide-react";
 import { DiagramPreview } from "@/components/bank/DiagramPreview";
+import { PracticalTableView } from "@/components/practical/PracticalTable";
 
-import { formatNumber, hasOptions, optionLetter } from "@/lib/bank";
+import { describePart, formatNumber, hasOptions, optionLetter } from "@/lib/bank";
+import { PART_KIND_LABELS, partLetter } from "@/lib/practical";
 import type { AnswerKey, QuestionVersion } from "@/lib/types";
 
 import styles from "./bank.module.css";
@@ -96,6 +98,41 @@ export function AnswerKeyView({
       <span className="hint">Students receive partial marks for correct steps.</span>
     </div>;
   }
+  if (type === "practical") {
+    const parts = answerKey?.practical_parts ?? [];
+    return (
+      <div className={styles.answerKey}>
+        <strong>Parts and answers</strong>
+        <ol className={styles.practicalParts} aria-label="Parts">
+          {parts.map((part, index) => (
+            <li key={index}>
+              <span>
+                <strong>
+                  {partLetter(index)} {part.prompt}
+                </strong>{" "}
+                <span className="muted">
+                  ({part.marks === 1 ? "1 mark" : `${part.marks} marks`},{" "}
+                  {part.kind === "written" ? "written" : PART_KIND_LABELS[part.kind].toLowerCase()})
+                </span>
+              </span>
+              {part.kind === "written" ? (
+                part.guide ? (
+                  <span className={styles.guide}>Guide: {part.guide}</span>
+                ) : (
+                  <span className="muted">No guide. A teacher marks this part.</span>
+                )
+              ) : (
+                <span>{describePart(part)}</span>
+              )}
+            </li>
+          ))}
+        </ol>
+        <span className="hint">
+          Each part is marked on its own. Answers to written parts wait for a teacher, who marks the whole question.
+        </span>
+      </div>
+    );
+  }
   return null;
 }
 
@@ -118,6 +155,7 @@ export function QuestionBody({
     <div>
       <p className={styles.stem}>{version.stem}</p>
       <DiagramPreview spec={version.diagram_spec} />
+      {version.type === "practical" && <PracticalTableView table={version.answer_key?.practical_table} />}
       {several && <p className={styles.explain}>Students tick every right answer.</p>}
       {version.options.length > 0 && (
         <ol className={styles.options} aria-label="Options">

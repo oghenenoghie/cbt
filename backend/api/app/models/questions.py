@@ -8,7 +8,8 @@
 
 Question types: single- and multiple-answer multiple choice (`mcq_single`, `mcq_multiple`),
 `true_false`, `short_answer`, `numeric`, `diagram_label`, `matching`, and `calculation` (marked automatically),
-and `essay` (marked by a teacher; ADR 0006).
+`essay` (marked by a teacher), and `practical` (structured practical: parts marked automatically
+and parts a teacher marks; ADR 0006).
 
 A passage is a reading text ("Read the passage and answer the questions that follow"). Questions
 can belong to a passage of the same subject. Passage text is versioned the same way as questions.
@@ -36,7 +37,7 @@ from app.models.tenant import utc_now
 
 QUESTION_TYPES = (
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
-    "diagram_label", "matching", "calculation",
+    "diagram_label", "matching", "calculation", "practical",
 )
 DIFFICULTIES = ("easy", "medium", "hard")
 
@@ -177,7 +178,7 @@ class QuestionVersion(Base):
         CheckConstraint("version >= 1", name="ck_question_versions_version"),
         CheckConstraint(
             "type IN ('mcq_single', 'mcq_multiple', 'true_false', 'short_answer', 'numeric', "
-            "'essay', 'diagram_label', 'matching', 'calculation')",
+            "'essay', 'diagram_label', 'matching', 'calculation', 'practical')",
             name="ck_question_versions_type",
         ),
     )

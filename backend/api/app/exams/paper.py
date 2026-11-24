@@ -19,6 +19,7 @@ from app.models import (
     Question,
     QuestionVersion,
 )
+from app.questions.schemas import practical_has_written
 
 
 @dataclass
@@ -115,7 +116,10 @@ def draft_paper(db: Session, exam: Exam) -> tuple[list[Block], list[str]]:
     if exam.offline_instant_scores and not exam.offline_allowed:
         problems.append("Instant scores on lab computers need the exam to be sat offline.")
     if exam.results_release == "immediate" and any(
-        entry.version.type == "essay" for block in blocks for entry in block.questions
+        entry.version.type == "essay"
+        or practical_has_written(entry.version.type, entry.version.answer_key)
+        for block in blocks
+        for entry in block.questions
     ):
         problems.append(
             "Written answers are marked by a teacher, so set “Results” to “When a teacher "

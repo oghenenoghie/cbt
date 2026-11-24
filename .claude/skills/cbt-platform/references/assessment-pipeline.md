@@ -41,7 +41,7 @@ Retrieval is constrained to the **requesting school's approved document versions
 
 **Generation request** (scoped): school, subject, topic, approved document IDs, question types, count, difficulty, marks, learning objective.
 
-**Implemented question types (ADR 0006):** single-answer MCQ, multiple-select, true/false, short answer, numeric and essay. **Planned product-scope types, not yet implemented in the bank:** matching, calculation, diagram labelling and structured practical (Phase 6 / visual assessment work). Check the model and schemas before adding or promising a type.
+**Implemented question types (ADR 0006):** single-answer MCQ, multiple-select, true/false, short answer, numeric, essay, diagram labelling, matching, calculation and structured practical (decision 8: a table of readings and 2 to 8 short, number or written parts). **AI drafting** covers the first six; AI drafts of the visual types and practicals are not built. Check the model and schemas before adding or promising a type.
 
 **Each candidate question carries:** structured question, answer key, explanation, marks, and citations to source passages and pages.
 

@@ -384,3 +384,53 @@ test("the lab PIN: digits only, and wrong PINs lock it", async () => {
   await assert.rejects(lab.pin.check("246810"), /Wrong PIN/);
   await lab.pin.check("13579135");
 });
+
+test("structured practical parts reach the sitting screen and answers are checked per part", async () => {
+  const { lab, clock } = aLab();
+  const pkg = aPackage(clock.now);
+  const practical = {
+    item_id: "q5",
+    position: 5,
+    block: 4,
+    passage_id: null,
+    type: "practical" as const,
+    stem: "A synthetic titration. Use the readings.",
+    practical_parts: [
+      { prompt: "Volume used", kind: "number" as const, marks: 2, unit: "cm³" },
+      { prompt: "Colour change", kind: "short" as const, marks: 1 },
+      { prompt: "One precaution", kind: "written" as const, marks: 2 },
+    ],
+    practical_table: { columns: ["Reading", "Burette (cm³)"], rows: [["Final", "25.00"]] },
+    options: [],
+    marks: 5,
+  };
+  const matching = {
+    item_id: "q6",
+    position: 6,
+    block: 5,
+    passage_id: null,
+    type: "matching" as const,
+    stem: "Match each made-up animal to its home.",
+    matching_prompts: ["Zorb", "Quib"],
+    options: [
+      { id: "a", text: "Pond" },
+      { id: "b", text: "Hill" },
+    ],
+    marks: 2,
+  };
+  pkg.paper.push(practical, matching);
+  lab.loadPackageFile(signed(pkg));
+  await lab.signIn({ exam_id: "exam-1", username: "amy", code: "K7QM-3XRP" });
+  const sitting = lab.begin();
+  const shown = sitting.questions.find((q) => q.item_id === "q5");
+  assert.deepEqual(shown?.practical_parts?.map((p) => p.prompt), ["Volume used", "Colour change", "One precaution"]);
+  assert.deepEqual(shown?.practical_table?.columns, ["Reading", "Burette (cm³)"]);
+  assert.deepEqual(sitting.questions.find((q) => q.item_id === "q6")?.matching_prompts, ["Zorb", "Quib"]);
+
+  assert.deepEqual(checkedAnswer(practical, { selected: [], text: JSON.stringify(["", " ", ""]) }), { selected: [], text: null });
+  assert.throws(() => checkedAnswer(practical, { selected: [], text: JSON.stringify(["1", "2"]) }), /each part/);
+  assert.throws(() => checkedAnswer(practical, { selected: [], text: JSON.stringify(["x".repeat(501), "", ""]) }), /500 characters/);
+  const long = JSON.stringify(["24.5", "pink", "w".repeat(2900)]);
+  assert.equal(checkedAnswer(practical, { selected: [], text: long }).text, long);
+  lab.answer({ item_id: "q5", selected: [], text: JSON.stringify(["24.5", "pink", "Eye level"]) });
+});

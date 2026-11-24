@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.attempts import service
 from app.attempts.schemas import (
     MAX_ANSWER_CHARS,
+    MAX_PART_ANSWER_CHARS,
     MAX_SHORT_ANSWER_CHARS,
     AnswerIn,
     AnswerOut,
@@ -43,7 +44,7 @@ from app.models import (
     Subject,
 )
 from app.models.tenant import as_utc
-from app.questions.schemas import CHOICE_TYPES
+from app.questions.schemas import CHOICE_TYPES, practical_for_students, practical_kinds
 from app.results.service import score_visible
 from app.school.common import flush_or_conflict, invalid
 
@@ -117,6 +118,8 @@ def _attempt_out(db: Session, attempt: ExamAttempt) -> AttemptOut:
                 calculation_prompts=[step["prompt"] for step in (version.answer_key or {}).get("calculation_steps", [])]
                 if version.type == "calculation"
                 else [],
+                practical_parts=practical_for_students(version.type, version.answer_key)[0],
+                practical_table=practical_for_students(version.type, version.answer_key)[1],
                 options=[
                     AttemptOption(id=option_id, text=texts[option_id])
                     for option_id in attempt.option_orders[item_id]
@@ -341,6 +344,7 @@ def save_answer(
         match_count,
         match_option_ids,
         calculation_count,
+        practical_kinds(question_type, answer_key),
     )
 
     latest = db.scalar(
@@ -387,6 +391,7 @@ def checked_answer(
     match_count: int = 0,
     match_option_ids: list[str] | None = None,
     calculation_count: int = 0,
+    part_kinds: list[str] | None = None,
 ) -> tuple[list[str], str | None]:
     """The answer to store for this question type: (chosen options, text)."""
     if question_type in CHOICE_TYPES:
@@ -438,6 +443,25 @@ def checked_answer(
             raise invalid("Choose each matching answer once.")
         encoded = json.dumps(matches)
         return [], encoded if any(matches) else None
+    if question_type == "practical":
+        kinds = part_kinds or []
+        if text is None:
+            answers = [""] * len(kinds)
+        else:
+            try:
+                answers = json.loads(text)
+            except json.JSONDecodeError as error:
+                raise invalid("Answer each part of the question.") from error
+        if not isinstance(answers, list) or len(answers) != len(kinds):
+            raise invalid("Answer each part of the question.")
+        for value, kind in zip(answers, kinds, strict=True):
+            limit = MAX_PART_ANSWER_CHARS if kind == "written" else MAX_SHORT_ANSWER_CHARS
+            if not isinstance(value, str) or len(value) > limit:
+                raise invalid(f"Keep each part's answer to {limit} characters or fewer.")
+        encoded = json.dumps(answers)
+        if len(encoded) > MAX_ANSWER_CHARS:
+            raise invalid("Shorten your answers and try again.")
+        return [], encoded if any(value.strip() for value in answers) else None
     if question_type == "calculation":
         if text is None:
             answers = [""] * calculation_count

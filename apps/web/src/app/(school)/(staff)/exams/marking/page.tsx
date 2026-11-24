@@ -4,10 +4,12 @@ import { ArrowLeft, ArrowRight, CircleCheck, CircleX, Clock } from "lucide-react
 import Link from "next/link";
 import { Suspense, useState } from "react";
 
+import { PracticalAnswers } from "@/components/bank/PracticalAnswers";
 import { AnswerKeyView } from "@/components/bank/QuestionBody";
 import { MarkAnswer, markedBy } from "@/components/exams/MarkAnswer";
 import examStyles from "@/components/exams/exams.module.css";
 import { Loaded } from "@/components/Feedback";
+import { PracticalTableView } from "@/components/practical/PracticalTable";
 import { TYPE_LABELS } from "@/lib/bank";
 import { count } from "@/lib/format";
 import type { Exam, MarkingAnswer, MarkingAnswers, MarkingOverview, MarkingQuestion } from "@/lib/types";
@@ -38,7 +40,7 @@ function Progress({ question }: { question: MarkingQuestion }) {
     <span className={question.pending ? "badge badge-warning" : "badge badge-success"}>
       {question.pending
         ? `${question.pending} waiting for a mark`
-        : question.type === "essay"
+        : question.type === "essay" || (question.type === "practical" && question.marked > 0)
           ? "All marked"
           : "Marked automatically"}
     </span>
@@ -58,9 +60,9 @@ function QuestionList({ overview, onOpen }: { overview: MarkingOverview; onOpen:
   return (
     <div className="stack">
       <p className="muted" style={{ margin: 0 }}>
-        Essays wait for your mark. Short answers and numbers were marked automatically; you can change a mark,
-        for example to accept a spelling you didn&apos;t list. Each student&apos;s latest finished attempt
-        counts.
+        Essays, and practicals with written parts, wait for your mark. Short answers and numbers were marked
+        automatically; you can change a mark, for example to accept a spelling you didn&apos;t list. A
+        practical&apos;s mark is for the whole question. Each student&apos;s latest finished attempt counts.
       </p>
       {overview.questions.map((q) => (
         <article key={q.item_id} className={`card ${styles.item}`} aria-label={`Question ${q.position}`}>
@@ -98,6 +100,9 @@ function AnswerStatus({ answer, type }: { answer: MarkingAnswer; type: MarkingQu
   }
   if (answer.mark) return <span className="badge badge-primary">Marked by a teacher</span>;
   if (type === "essay") return <span className="badge">Not answered</span>;
+  if (!answer.auto_correct && answer.auto_score > 0) {
+    return <span className="badge badge-warning">Part marks automatically</span>;
+  }
   return answer.auto_correct ? (
     <span className="badge badge-success">
       <CircleCheck size={14} aria-hidden="true" /> Right automatically
@@ -165,6 +170,7 @@ function QuestionAnswers({
                 </p>
               )}
               <p className={styles.stem}>{q.stem}</p>
+              {q.type === "practical" && <PracticalTableView table={q.answer_key?.practical_table} />}
               <AnswerKeyView type={q.type} answerKey={q.answer_key} />
             </article>
 
@@ -211,7 +217,9 @@ function QuestionAnswers({
                     </strong>
                   </span>
                 </div>
-                {answer.text?.trim() ? (
+                {answer.text?.trim() && q.type === "practical" ? (
+                  <PracticalAnswers answerKey={q.answer_key} text={answer.text} />
+                ) : answer.text?.trim() ? (
                   <p className={examStyles.writtenAnswer}>{answer.text}</p>
                 ) : (
                   <p className="muted" style={{ margin: 0 }}>

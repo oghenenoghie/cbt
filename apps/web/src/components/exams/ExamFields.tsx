@@ -226,7 +226,7 @@ export function ExamFields({
               Show each student their score on the lab computer straight away
               <span className="hint">
                 {instantAllowed
-                  ? "This puts the answer key on lab computers, encrypted so only registered ones can read it. Someone with a registered computer and the know-how could get it. Essays still wait for a teacher."
+                  ? "This puts the answer key on lab computers, encrypted so only registered ones can read it. Someone with a registered computer and the know-how could get it. Essays and practicals' written parts still wait for a teacher."
                   : "Only for exams sat on lab computers whose results are shown as soon as each student submits."}
               </span>
             </span>

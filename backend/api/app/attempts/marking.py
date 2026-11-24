@@ -10,6 +10,9 @@
   "1 000" read as 1000 (and "3,025" as 3025, not 3.025).
 - Written answer (essay): not marked here. A non-empty answer waits for a teacher's mark; a blank
   one scores 0 straight away.
+- Structured practical: each short-answer or number part earns its marks as above; a written
+  part earns nothing here, and a non-empty one makes the answer wait for a teacher, whose mark
+  then counts for the whole question. Scaled to the paper's marks for the question.
 """
 
 import json
@@ -54,6 +57,45 @@ def parse_number(text: str | None) -> float | None:
     if not _NUMBER.match(value):
         return None
     return float(value)
+
+
+def _within(value: float | None, expected: float, tolerance: float) -> bool:
+    return value is not None and abs(value - expected) <= tolerance + 1e-9 * max(1.0, abs(expected))
+
+
+def _practical(answer_key: dict | None, marks: int, answer: Answer) -> Marked:
+    parts = (answer_key or {}).get("practical_parts", [])
+    try:
+        supplied = json.loads(answer.text or "[]")
+    except (json.JSONDecodeError, TypeError):
+        supplied = []
+    if not isinstance(supplied, list):
+        supplied = []
+    earned = 0
+    all_right = bool(parts)
+    waiting = False
+    for index, part in enumerate(parts):
+        given = supplied[index] if index < len(supplied) and isinstance(supplied[index], str) else ""
+        kind = part.get("kind")
+        if kind == "written":
+            all_right = False
+            waiting = waiting or bool(given.strip())
+            continue
+        if kind == "short":
+            accepted = {normalize_answer(a) for a in part.get("accepted_answers", [])}
+            normalized = normalize_answer(given)
+            right = bool(normalized) and normalized in accepted
+        else:
+            right = _within(
+                parse_number(given), float(part["value"]), float(part.get("tolerance") or 0)
+            )
+        if right:
+            earned += int(part.get("marks", 1))
+        else:
+            all_right = False
+    total = sum(int(part.get("marks", 1)) for part in parts)
+    score = int(marks * earned / total + 0.5) if total else 0
+    return Marked(is_correct=all_right, score=score, needs_marking=waiting)
 
 
 def mark(
@@ -113,6 +155,8 @@ def mark(
         ]
         score = int(marks * sum(matches) / len(correct) + 0.5) if correct else 0
         return Marked(is_correct=bool(matches) and all(matches), score=score, needs_marking=False)
+    elif question_type == "practical":
+        return _practical(answer_key, marks, answer)
     elif question_type == "calculation":
         steps = (answer_key or {}).get("calculation_steps", [])
         try:

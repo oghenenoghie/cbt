@@ -8,7 +8,7 @@ from app.diagrams import DiagramSpec
 
 QuestionType = Literal[
     "mcq_single", "mcq_multiple", "true_false", "short_answer", "numeric", "essay",
-    "diagram_label", "matching", "calculation",
+    "diagram_label", "matching", "calculation", "practical",
 ]
 # Marked automatically, from the answer key.
 AUTO_MARKED = (
@@ -21,6 +21,10 @@ Difficulty = Literal["easy", "medium", "hard"]
 OPTION_IDS = "abcdef"
 TRUE_FALSE_OPTIONS = [{"id": "true", "text": "True"}, {"id": "false", "text": "False"}]
 MAX_ACCEPTED_ANSWERS = 10
+# Structured practical questions (ADR 0006 decision 8).
+MAX_PRACTICAL_PARTS = 8
+MAX_PART_MARKS = 20
+PartKind = Literal["short", "number", "written"]
 
 Stem = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=5000)]
 OptionText = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=1000)]
@@ -46,6 +50,117 @@ class CalculationStep(_Input):
     tolerance: float = Field(default=0, ge=0)
 
 
+TableHeading = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+TableCell = Annotated[str, StringConstraints(strip_whitespace=True, max_length=100)]
+Unit = Annotated[str, StringConstraints(strip_whitespace=True, max_length=20)]
+
+
+class PracticalTable(_Input):
+    """Given data for a practical, such as a table of readings: headings and rows of cells."""
+
+    columns: list[TableHeading] = Field(min_length=1, max_length=8)
+    rows: list[list[TableCell]] = Field(min_length=1, max_length=20)
+
+    @model_validator(mode="after")
+    def _rectangular(self) -> "PracticalTable":
+        if any(len(row) != len(self.columns) for row in self.rows):
+            raise ValueError("Each table row needs one cell for each column.")
+        return self
+
+
+class PracticalPart(_Input):
+    """One part, (a), (b)..., of a structured practical question.
+
+    - `short`: a word or phrase, right if it matches one of `accepted_answers` (like a short
+      answer question).
+    - `number`: right within `tolerance` of `value`; `unit` (such as "cm³") is shown beside the
+      box.
+    - `written`: an explanation or description a teacher marks, with an optional `guide`.
+    """
+
+    prompt: OptionText
+    kind: PartKind
+    marks: int = Field(default=1, ge=1, le=MAX_PART_MARKS)
+    accepted_answers: list[AcceptedAnswer] | None = Field(default=None, max_length=MAX_ACCEPTED_ANSWERS)
+    value: float | None = None
+    tolerance: float | None = Field(default=None, ge=0)
+    unit: Unit | None = None
+    guide: str | None = Field(default=None, max_length=2000)
+
+    @model_validator(mode="after")
+    def _valid_for_kind(self) -> "PracticalPart":
+        if self.guide is not None:
+            self.guide = self.guide.strip() or None
+        if self.unit is not None:
+            self.unit = self.unit or None
+        used = {
+            "short": {"accepted_answers"},
+            "number": {"value", "tolerance", "unit"},
+            "written": {"guide"},
+        }[self.kind]
+        for name in ("accepted_answers", "value", "tolerance", "unit", "guide"):
+            if name not in used and getattr(self, name) is not None:
+                raise ValueError(f"`{name}` isn't used by {self.kind} parts.")
+        if self.kind == "short":
+            answers = self.accepted_answers or []
+            if not answers or any(not normalize_answer(a) for a in answers):
+                raise ValueError("Give each short-answer part at least one accepted answer.")
+            self.accepted_answers = list(dict.fromkeys(answers))
+        elif self.kind == "number":
+            if self.value is None or not math.isfinite(self.value):
+                raise ValueError("Give each number part its answer as a number.")
+            if self.tolerance is None:
+                self.tolerance = 0.0
+            elif not math.isfinite(self.tolerance):
+                raise ValueError("A part's tolerance must be a number.")
+        return self
+
+
+class PracticalPartView(BaseModel):
+    """A part as students see it: never its answer or guide."""
+
+    prompt: str
+    kind: str
+    marks: int
+    unit: str | None = None
+
+
+class PracticalTableView(BaseModel):
+    columns: list[str]
+    rows: list[list[str]]
+
+
+def practical_for_students(
+    question_type: str, answer_key: dict | None
+) -> tuple[list[PracticalPartView], PracticalTableView | None]:
+    """The parts and given table of a practical question, without answers or guides."""
+    if question_type != "practical":
+        return [], None
+    key = answer_key or {}
+    parts = [
+        PracticalPartView(
+            prompt=part["prompt"], kind=part["kind"], marks=part["marks"], unit=part.get("unit")
+        )
+        for part in key.get("practical_parts", [])
+    ]
+    table = key.get("practical_table")
+    return parts, PracticalTableView(**table) if table else None
+
+
+def practical_kinds(question_type: str, answer_key: dict | None) -> list[str]:
+    """Each part's kind, in order, for checking a student's answers."""
+    if question_type != "practical":
+        return []
+    return [part.get("kind", "short") for part in (answer_key or {}).get("practical_parts", [])]
+
+
+def practical_has_written(question_type: str, answer_key: dict | None) -> bool:
+    """Whether a practical question has a part a teacher marks."""
+    return question_type == "practical" and any(
+        part.get("kind") == "written" for part in (answer_key or {}).get("practical_parts", [])
+    )
+
+
 def normalize_answer(text: str) -> str:
     """A short answer as compared: case, spacing and surrounding punctuation don't matter."""
     text = " ".join(text.split()).casefold()
@@ -69,6 +184,10 @@ class QuestionContent(_Input):
     - `matching`: each prompt in `matching_prompts` is paired with one distinct answer from
       `options`; `correct_matches` lists the answer position for each prompt.
     - `calculation`: 2-6 named numeric steps, each with its expected value and optional tolerance.
+    - `practical`: a structured practical. The stem sets the scene (an optional `diagram_spec`
+      shows apparatus, an optional `practical_table` gives data such as readings), then 2-8
+      `practical_parts` follow, each a short answer, a number or a written answer with its own
+      marks. `marks` is set to the total of the parts' marks.
     """
 
     type: QuestionType
@@ -82,6 +201,10 @@ class QuestionContent(_Input):
     matching_prompts: list[OptionText] | None = Field(default=None, min_length=2, max_length=6)
     correct_matches: list[int] | None = Field(default=None, min_length=2, max_length=6)
     calculation_steps: list[CalculationStep] | None = Field(default=None, min_length=2, max_length=6)
+    practical_parts: list[PracticalPart] | None = Field(
+        default=None, min_length=2, max_length=MAX_PRACTICAL_PARTS
+    )
+    practical_table: PracticalTable | None = None
     value: float | None = None
     tolerance: float | None = Field(default=None, ge=0)
     guide: str | None = Field(default=None, max_length=10000)
@@ -106,10 +229,12 @@ class QuestionContent(_Input):
             "diagram_label": {"label_answers"},
             "matching": {"options", "matching_prompts", "correct_matches"},
             "calculation": {"calculation_steps"},
+            "practical": {"practical_parts", "practical_table"},
         }[self.type]
         for name in (
             "options", "correct", "accepted_answers", "label_answers", "matching_prompts",
             "correct_matches", "calculation_steps", "value", "tolerance", "guide",
+            "practical_parts", "practical_table",
         ):
             if name not in used and getattr(self, name) is not None:
                 raise ValueError(f"`{name}` isn't used by {self.type} questions.")
@@ -191,6 +316,16 @@ class QuestionContent(_Input):
                 raise ValueError("Each calculation step prompt must be different.")
             if any(not math.isfinite(step.value) or not math.isfinite(step.tolerance) for step in steps):
                 raise ValueError("Each calculation step needs a finite answer and tolerance.")
+        elif self.type == "practical":
+            parts = self.practical_parts or []
+            if not 2 <= len(parts) <= MAX_PRACTICAL_PARTS:
+                raise ValueError(f"Practical questions need 2 to {MAX_PRACTICAL_PARTS} parts.")
+            if len({part.prompt.casefold() for part in parts}) != len(parts):
+                raise ValueError("Each part's question must be different.")
+            total = sum(part.marks for part in parts)
+            if total > 100:
+                raise ValueError("A practical question's parts can carry at most 100 marks in all.")
+            self.marks = total
         return self
 
     def to_storage(self) -> tuple[list[dict], list[str], dict | None]:
@@ -219,6 +354,13 @@ class QuestionContent(_Input):
             return options, [], key
         if self.type == "calculation":
             return [], [], {"calculation_steps": [step.model_dump() for step in self.calculation_steps or []]}
+        if self.type == "practical":
+            return [], [], {
+                "practical_parts": [
+                    part.model_dump(exclude_none=True) for part in self.practical_parts or []
+                ],
+                "practical_table": self.practical_table.model_dump() if self.practical_table else None,
+            }
         if self.type == "numeric":
             return [], [], {"value": self.value, "tolerance": self.tolerance}
         return [], [], {"guide": self.guide} if self.guide else None

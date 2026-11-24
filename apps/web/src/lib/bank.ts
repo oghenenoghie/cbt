@@ -1,6 +1,7 @@
 "use client";
 
 import { api, listAll } from "@/lib/api";
+import { partLetter } from "@/lib/practical";
 import { useSignedIn } from "@/lib/session";
 import type {
   AiQuestionType,
@@ -8,6 +9,7 @@ import type {
   Difficulty,
   MyClasses,
   Passage,
+  PracticalPart,
   QuestionContent,
   QuestionType,
   QuestionVersion,
@@ -25,6 +27,7 @@ export const TYPE_LABELS: Record<QuestionType, string> = {
   diagram_label: "Diagram labelling",
   matching: "Matching",
   calculation: "Calculation",
+  practical: "Practical",
 };
 
 /** What each type is, in the editor's words (ADR 0006). */
@@ -38,6 +41,7 @@ export const TYPE_HINTS: Record<QuestionType, string> = {
   diagram_label: "Type a label for each numbered target",
   matching: "Match each prompt to a different answer; partial marks are awarded",
   calculation: "2 to 6 numeric steps with partial marks for correct steps",
+  practical: "2 to 8 parts (word, number or written) about a table of readings; each part has its own marks",
 };
 
 /** The bank question types supported by AI drafting (ADR 0005, ADR 0006 stage C). */
@@ -61,9 +65,12 @@ export function hasOptions(type: QuestionType): boolean {
   return type === "mcq_single" || type === "mcq_multiple";
 }
 
-/** Types answered in writing (a word, a number or an essay) rather than by choosing. */
+/**
+ * Types a teacher can mark: answered in writing (a word, a number or an essay), and practicals,
+ * whose parts are written. The API's list is `WRITTEN_TYPES` (ADR 0006).
+ */
 export function isWritten(type: QuestionType): boolean {
-  return type === "short_answer" || type === "numeric" || type === "essay";
+  return type === "short_answer" || type === "numeric" || type === "essay" || type === "practical";
 }
 
 /** A number as people write it: "3", "0.05", "1500". */
@@ -95,7 +102,20 @@ export function describeAnswerKey(type: QuestionType, key: AnswerKey | null): st
       `${step.prompt}: ${formatNumber(step.value)}${step.tolerance ? ` (± ${formatNumber(step.tolerance)})` : ""}`,
     ).join(" · ") ?? null;
   }
+  if (type === "practical") {
+    return key?.practical_parts?.map((part, index) => `${partLetter(index)} ${describePart(part)}`).join(" · ") ?? null;
+  }
   return null;
+}
+
+/** A practical part's answer in a few words: "24.5 cm³ (± 0.1)", "pink · clear", "Marked by a teacher". */
+export function describePart(part: PracticalPart): string {
+  if (part.kind === "number" && part.value !== null && part.value !== undefined) {
+    const unit = part.unit ? ` ${part.unit}` : "";
+    return `${formatNumber(part.value)}${unit}${part.tolerance ? ` (± ${formatNumber(part.tolerance)})` : ""}`;
+  }
+  if (part.kind === "short") return (part.accepted_answers ?? []).join(" · ");
+  return "Marked by a teacher";
 }
 
 export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
@@ -173,11 +193,13 @@ export function contentOf(
     guide: type === "essay" ? (key?.guide ?? null) : null,
     label_answers: type === "diagram_label" ? (key?.label_answers ?? []) : null,
     matching_prompts: type === "matching" ? (key?.matching_prompts ?? []) : null,
-    matching_answers:
+    correct_matches:
       type === "matching"
         ? (key?.correct_matches ?? []).map((id) => version.options.findIndex((option) => option.id === id))
         : null,
     calculation_steps: type === "calculation" ? (key?.calculation_steps ?? []) : null,
+    practical_parts: type === "practical" ? (key?.practical_parts ?? []) : null,
+    practical_table: type === "practical" ? (key?.practical_table ?? null) : null,
     explanation: version.explanation,
     marks: version.marks,
     difficulty: version.difficulty,

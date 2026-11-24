@@ -4,11 +4,13 @@ import { ArrowLeft, CircleCheck, CircleDot, CircleX, Clock } from "lucide-react"
 import Link from "next/link";
 import { Suspense, useState } from "react";
 
+import { PracticalAnswers } from "@/components/bank/PracticalAnswers";
 import { AnswerKeyView } from "@/components/bank/QuestionBody";
 import { DiagramPreview } from "@/components/bank/DiagramPreview";
 import { MarkAnswer, markedBy } from "@/components/exams/MarkAnswer";
 import examStyles from "@/components/exams/exams.module.css";
 import { Loaded } from "@/components/Feedback";
+import { PracticalTableView } from "@/components/practical/PracticalTable";
 import { count, formatDateTime } from "@/lib/format";
 import type { MarkingOverview, Script, ScriptQuestion } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
@@ -18,7 +20,8 @@ import styles from "../results/results.module.css";
 
 const LETTERS = "ABCDEF";
 
-const WRITTEN = new Set(["short_answer", "numeric", "essay"]);
+/** Types a teacher can mark (the API's `WRITTEN_TYPES`). */
+const WRITTEN = new Set(["short_answer", "numeric", "essay", "practical"]);
 
 function diagramAnswers(text: string | null): string[] {
   try {
@@ -109,14 +112,24 @@ function Marked({
         </>
       ) : written ? (
         <>
-          {answered ? (
+          {question.type === "practical" ? (
+            <>
+              <PracticalTableView table={question.answer_key?.practical_table} />
+              <PracticalAnswers answerKey={question.answer_key} text={question.text} />
+              {!question.mark && answered && (
+                <p className={examStyles.markNote}>
+                  Automatic mark for the short and number parts: {question.auto_score}.
+                </p>
+              )}
+            </>
+          ) : answered ? (
             <p className={examStyles.writtenAnswer}>{question.text}</p>
           ) : (
             <p className="muted" style={{ margin: 0 }}>
               No answer.
             </p>
           )}
-          <AnswerKeyView type={question.type} answerKey={question.answer_key} />
+          {question.type !== "practical" && <AnswerKeyView type={question.type} answerKey={question.answer_key} />}
           {question.mark && (
             <p className={examStyles.markNote}>
               {markedBy(question.mark)}

@@ -185,7 +185,7 @@ export function ExamActions({
   const action = useAction();
   const can = (name: ExamAction) => exam.allowed_actions.includes(name);
   const problems = paper.status === "ready" ? paper.data.problems : [];
-  // Written answers (short answer, number, essay) can be marked by teachers (ADR 0006).
+  // Written answers (short answer, number, essay, practical) can be marked by teachers (ADR 0006).
   const hasWritten =
     paper.status === "ready" && paper.data.blocks.some((b) => b.questions.some((q) => isWritten(q.type)));
   const classes = lookup.armNames(exam.arm_ids);

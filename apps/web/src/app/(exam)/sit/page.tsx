@@ -12,6 +12,8 @@ import { useSession } from "@/lib/session";
 import { answeredInWriting, formatClock, wordCount } from "@/lib/sitting";
 import type { Attempt, AttemptQuestion, MyExam } from "@/lib/types";
 import { DiagramPreview } from "@/components/bank/DiagramPreview";
+import { PracticalTableView } from "@/components/practical/PracticalTable";
+import { partAnswers, partLetter, SHORT_PART_CHARS, WRITTEN_PART_CHARS } from "@/lib/practical";
 import { useAction } from "@/lib/useAction";
 import { useApi } from "@/lib/useApi";
 import { useQueryParams } from "@/lib/useQueryParams";
@@ -55,6 +57,7 @@ function isAnswered(given: Given | undefined, type?: Question["type"]): boolean 
   if (type === "diagram_label") return labelsFromText(given?.text ?? "", 50).some((label) => label.trim());
   if (type === "matching") return labelsFromText(given?.text ?? "", 6).some((answer) => answer.trim());
   if (type === "calculation") return labelsFromText(given?.text ?? "", 6).some((answer) => answer.trim());
+  if (type === "practical") return partAnswers(given?.text, 8).some((answer) => answer.trim());
   return Boolean(given && (given.selected.length > 0 || given.text.trim()));
 }
 
@@ -221,6 +224,98 @@ function WrittenAnswer({
   );
 }
 
+/** A practical's parts (ADR 0006 decision 8): a box for each, kept together as a JSON list. */
+function PracticalAnswer({
+  question,
+  text,
+  stemId,
+  readOnly,
+  onType,
+  onLeave,
+}: {
+  question: Question;
+  text: string;
+  stemId: string;
+  readOnly: boolean;
+  onType: (text: string) => void;
+  onLeave: () => void;
+}) {
+  const parts = question.practical_parts ?? [];
+  const answers = partAnswers(text, parts.length);
+  const hasWritten = parts.some((part) => part.kind === "written");
+  const hasUnits = parts.some((part) => part.unit);
+
+  function type(index: number, value: string) {
+    const next = [...answers];
+    next[index] = value;
+    onType(JSON.stringify(next));
+  }
+
+  return (
+    <fieldset className="field" aria-describedby={`${stemId} hint-${question.item_id}`}>
+      <legend>Answer each part</legend>
+      {parts.map((part, index) => {
+        const id = `part-${question.item_id}-${index}`;
+        const label = (
+          <label htmlFor={id}>
+            {partLetter(index)} {part.prompt}{" "}
+            <span className="muted">({part.marks === 1 ? "1 mark" : `${part.marks} marks`})</span>
+          </label>
+        );
+        if (part.kind === "written") {
+          return (
+            <div className="field" key={index}>
+              {label}
+              <textarea
+                id={id}
+                className={`${styles.essay} ${styles.partWritten}`}
+                rows={5}
+                maxLength={WRITTEN_PART_CHARS}
+                value={answers[index]}
+                readOnly={readOnly}
+                onChange={(event) => type(index, event.target.value)}
+                onBlur={onLeave}
+              />
+            </div>
+          );
+        }
+        const number = part.kind === "number";
+        return (
+          <div className="field" key={index}>
+            {label}
+            <div className={styles.withUnit}>
+              <input
+                id={id}
+                className={styles.written}
+                type="text"
+                inputMode={number ? "decimal" : undefined}
+                autoComplete="off"
+                spellCheck={number ? false : undefined}
+                maxLength={SHORT_PART_CHARS}
+                value={answers[index]}
+                readOnly={readOnly}
+                aria-describedby={part.unit ? `${id}-unit` : undefined}
+                onChange={(event) => type(index, event.target.value)}
+                onBlur={onLeave}
+              />
+              {part.unit && (
+                <span id={`${id}-unit`} className={styles.unit}>
+                  {part.unit}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      <span id={`hint-${question.item_id}`} className="hint">
+        Each part is marked on its own.
+        {hasUnits ? " Write numbers without their units; the unit is shown beside the box." : ""}
+        {hasWritten ? " A teacher marks the written parts." : ""}
+      </span>
+    </fieldset>
+  );
+}
+
 function QuestionView({
   question,
   given,
@@ -262,7 +357,17 @@ function QuestionView({
         labelled={false}
         numberedTargets={question.type === "diagram_label"}
       />
-      {question.type === "calculation" ? (
+      <PracticalTableView table={question.practical_table} />
+      {question.type === "practical" ? (
+        <PracticalAnswer
+          question={question}
+          text={given.text}
+          stemId={stemId}
+          readOnly={readOnly}
+          onType={(text) => onChange({ ...given, text }, true)}
+          onLeave={onLeave}
+        />
+      ) : question.type === "calculation" ? (
         <fieldset className="field" aria-describedby={stemId}>
           <legend>Calculation steps</legend>
           {(() => {
