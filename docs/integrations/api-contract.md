@@ -2,7 +2,7 @@
 
 This document defines the first public contract shape. It is a design baseline, not a claim that all endpoints are implemented.
 
-**Live today** ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations C): API-key authentication (`Authorization: Bearer cbt_live_...`), the error envelope below, and `/academic-sessions`, `/classes`, `/subjects`, `/candidates` (read, and `PUT /candidates/{external_id}` to sync a student), `/released-results` and `/candidates/{external_id}/results`. The [API README](../../backend/api/README.md#what-integrations-can-do-integrations-c) lists them. OAuth, `/assessments`, `/exam-sessions`, `/attempts`, webhooks and exam launch below are still the plan.
+**Live today** ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations C and D): API-key authentication (`Authorization: Bearer cbt_live_...`), the error envelope below, and `/academic-sessions`, `/classes`, `/subjects`, `/candidates` (read, filter by `candidate_id`, and `PUT /candidates/{external_id}` to sync a student), `/published-exams`, `/released-results` and `/candidates/{external_id}/results`. Webhooks are live too: school admins register endpoints in the web app (not through this API), and the events and envelope below are what's sent. The [API README](../../backend/api/README.md#what-integrations-can-do-integrations-c) lists them. OAuth, `/assessments`, `/exam-sessions`, `/attempts` and exam launch below are still the plan.
 
 ## Base URL and versioning
 
@@ -38,7 +38,7 @@ The token endpoint and credential lifecycle will be implemented with the authent
 | `/exam-sessions` | Create or launch an authorised exam session |
 | `/attempts/{id}` | Read attempt status and submit responses |
 | `/results/{id}` | Retrieve released results |
-| `/webhook-endpoints` | Register event destinations |
+| `/webhook-endpoints` | Register event destinations (today school admins do this in the web app) |
 | `/integrations` | Manage registered integration installations |
 
 ## Example exam launch
@@ -63,30 +63,33 @@ A successful launch should return a short-lived launch URL/token and an internal
 
 ## Webhook event envelope
 
+Live since Integrations D (ADR 0008 decisions 12 to 16). Each message carries IDs only; fetch details with the integration's API key.
+
 ```json
 {
-  "id": "evt_01J...",
-  "type": "attempt.submitted",
-  "created_at": "2026-11-04T12:00:00Z",
-  "tenant_id": "tenant_123",
+  "id": "evt_6f1c0e9a4b2d4c8e9f0a1b2c3d4e5f60",
+  "type": "enrolment.changed",
+  "created_at": "2026-11-21T12:00:00.123456Z",
+  "triggered_by_you": false,
   "data": {
-    "attempt_id": "attempt_123",
-    "assessment_id": "assess_123",
-    "candidate_external_id": "student-00981"
+    "candidate_id": "8d0c6a5e-...",
+    "external_id": "student-00981",
+    "session_id": "c2f1...",
+    "class_id": "a91e...",
+    "previous_class_id": null
   }
 }
 ```
 
-Headers should include a timestamp and HMAC signature. Consumers must deduplicate by `id`.
+Headers: `CBT-Event-Id`, `CBT-Event-Type` and `CBT-Signature: t=<unix seconds>,v1=<hex>`, where the hex is HMAC-SHA256 with the endpoint's signing secret over `<t>.<raw body>`. Check it with a constant-time comparison and reject old timestamps (for example over five minutes). Delivery is at least once and unordered: deduplicate by `id`. Answer 2xx within 10 seconds; anything else is retried for about two days.
 
-Initial event names:
-- `candidate.created`
-- `assessment.published`
-- `exam_session.launched`
-- `attempt.started`
-- `attempt.submitted`
-- `grading.completed`
-- `result.released`
+Live events, each sent only if the integration holds its permission:
+- `candidate.created`, `candidate.updated` (`data.changed`), `enrolment.changed` (`candidates:read`), with the integration's own `external_id` for the student, or null;
+- `exam.published`, `exam.withdrawn` (`exams:read`), with `exam_id`;
+- `result.released` (`results:read`), with `exam_id`;
+- `webhook.test`, sent when a school admin tests an endpoint.
+
+Planned: `assessment.published`, `exam_session.launched`, `attempt.started`, `attempt.submitted`, `grading.completed`.
 
 ## Error envelope
 

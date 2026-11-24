@@ -29,6 +29,14 @@ class Settings(BaseSettings):
     integration_rate_limit_per_minute: int = 120
     # The largest request body an integration may send, in KB (larger is 413).
     integration_max_body_kb: int = 64
+    # Webhooks (ADR 0008 decision 15). "inline": the API process sends due deliveries in a
+    # background thread. "worker": only `python -m app.worker` sends them. "off": nothing is sent
+    # (events still queue).
+    webhook_delivery: str = "inline"
+    # Seconds to wait for a receiver's answer.
+    webhook_timeout_seconds: float = 10.0
+    # Development only: allow http:// and private or local addresses (never in production).
+    webhook_allow_private_urls: bool = False
 
     # Learning materials (ADR 0004).
     # Where uploaded originals are kept: a directory on local disk for now.

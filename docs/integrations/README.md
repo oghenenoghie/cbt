@@ -29,7 +29,7 @@ Browser and mobile clients must never contain a platform client secret. They sho
 
 ## Current implementation status
 
-School admins can manage their school's integrations through the API ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations A): register an integration, grant it permissions from a fixed list (`classes:read`, `candidates:read`, `candidates:write`, `results:read`), issue API keys (shown once, stored only as hashes, valid until revoked, up to five at a time so a key can be replaced without downtime), revoke keys, disable the integration and see its activity. Each integration is rate-limited per minute across its keys. The endpoints are listed in the [API README](../../backend/api/README.md#integrations).
+School admins can manage their school's integrations through the API ([ADR 0008](../architecture/decisions/0008-integrations.md), Integrations A): register an integration, grant it permissions from a fixed list (`classes:read`, `candidates:read`, `candidates:write`, `results:read`, `exams:read`), issue API keys (shown once, stored only as hashes, valid until revoked, up to five at a time so a key can be replaced without downtime), revoke keys, disable the integration and see its activity. Each integration is rate-limited per minute across its keys. The endpoints are listed in the [API README](../../backend/api/README.md#integrations).
 
 School admins do all of this from the web app's Integrations screen (`/school/integrations`, Integrations B).
 
@@ -41,7 +41,15 @@ What a connected system can do (Integrations C, listed in the [API README](../..
   - Sending the same student again changes nothing, so retries are safe.
   - Disabling accounts and removing students from classes stay with school admins.
 - **Read released results** (`results:read`): score, total marks and percentage per student and exam, only once the school's release policy shows them.
+- **Read published exams** (`exams:read`): title, subject, classes and times, never questions.
+
+**Webhooks** (Integrations D, ADR 0008 decisions 12 to 16): a school admin adds up to five HTTPS addresses per integration in the web app, picks the events and copies the signing secret (shown once). The school's software is then told when:
+- students change (`candidate.created`, `candidate.updated`, `enrolment.changed`),
+- exams are published or withdrawn (`exam.published`, `exam.withdrawn`),
+- results are released (`result.released`).
+
+Each message carries IDs only; fetch the details with your API key. Check the `CBT-Signature` header (HMAC-SHA256 over `<timestamp>.<body>`), reject old timestamps, deduplicate by event `id` (delivery is at least once), and answer 2xx within 10 seconds. The envelope is in the [API contract](api-contract.md#webhook-event-envelope).
 
 Errors use the contract's envelope, `{"error": {"code", "message", "request_id"}}`. Every request is audited and shows in the integration's activity.
 
-Webhook delivery, exam launch, OAuth client credentials, SDKs, SSO and LTI remain future work. Don't treat the example exam-launch and webhook endpoints as live.
+Exam launch, OAuth client credentials, SDKs, SSO and LTI remain future work. Don't treat the example exam-launch endpoints as live.

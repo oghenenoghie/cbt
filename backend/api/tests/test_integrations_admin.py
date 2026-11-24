@@ -93,6 +93,7 @@ def test_the_permission_catalogue(admin) -> None:
         "candidates:read",
         "candidates:write",
         "results:read",
+        "exams:read",
     ]
     assert all(s["description"] for s in scopes)
 

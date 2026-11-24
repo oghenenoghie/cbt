@@ -1,0 +1,39 @@
+.endpoint {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.endpoint:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.url {
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.form {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-muted);
+}
+
+.log {
+  display: grid;
+  gap: 8px;
+}
+
+.logHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

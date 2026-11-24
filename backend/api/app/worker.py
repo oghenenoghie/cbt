@@ -1,8 +1,9 @@
 """Background work: `python -m app.worker`.
 
 It processes uploaded learning materials (ADR 0004) and requests for AI question drafts
-(ADR 0005). Run one or more beside the API when `DOCUMENT_PROCESSING=worker` or
-`AI_PROCESSING=worker`. It takes queued work from the database, so it needs `DATABASE_URL`, the
+(ADR 0005), and sends webhook deliveries (ADR 0008) unless `WEBHOOK_DELIVERY=off`. Run one or
+more beside the API when `DOCUMENT_PROCESSING=worker`, `AI_PROCESSING=worker` or
+`WEBHOOK_DELIVERY=worker`. It takes queued work from the database, so it needs `DATABASE_URL`, the
 same storage settings as the API and, for drafting, the AI settings. `--once` processes what's
 queued and stops (for a scheduled job instead of a service).
 """
@@ -12,26 +13,32 @@ import logging
 import time
 
 from app.ai import processing as ai_processing
+from app.core.config import get_settings
 from app.core.storage import get_storage
 from app.db.session import SessionLocal
 from app.documents.processing import process_queued, recover_stuck
+from app.integrations import webhooks
 
 logger = logging.getLogger("app.worker")
 
 
 def run(once: bool = False, poll_seconds: float = 3.0) -> None:
     storage = get_storage()
+    send_webhooks = get_settings().webhook_delivery != "off"
     while True:
         with SessionLocal() as db:
             recover_stuck(db)
             ai_processing.recover_stuck(db)
             uploads = process_queued(db, storage, limit=5)
             drafts = ai_processing.process_queued(db, limit=2)
+            sent = webhooks.run_once(db) if send_webhooks else 0
         if uploads:
             logger.info("Processed %d upload(s)", uploads)
         if drafts:
             logger.info("Drafted %d request(s)", drafts)
-        if uploads or drafts:
+        if sent:
+            logger.info("Sent %d webhook delivery(ies)", sent)
+        if uploads or drafts or sent:
             continue
         if once:
             return

@@ -120,6 +120,29 @@ class ReleasedExamList(BaseModel):
     next_after: str | None
 
 
+class PublishedExamOut(BaseModel):
+    """An exam once it's published (exams:read). Never its questions."""
+
+    id: str
+    title: str
+    subject: SubjectRef
+    term_id: str
+    classes: list[CandidateClass]
+    # published, or withdrawn (taken back before it opened).
+    status: str
+    opens_at: datetime
+    closes_at: datetime
+    duration_minutes: int
+    # teacher (released by a teacher after it closes) or immediate.
+    results_release: str
+    results_released_at: datetime | None
+
+
+class PublishedExamList(BaseModel):
+    exams: list[PublishedExamOut]
+    next_after: str | None
+
+
 class ScoreOut(BaseModel):
     # With teachers' marks, as students see it.
     score: int

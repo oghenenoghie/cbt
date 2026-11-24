@@ -21,6 +21,7 @@ from app.auth.dependencies import require_school_role
 from app.auth.sessions import SessionPrincipal
 from app.db.session import get_db
 from app.exams.access import viewer_for, visible_exam
+from app.integrations import events
 from app.models import (
     AttemptResponse,
     Candidate,
@@ -130,6 +131,7 @@ def release_results(
     exam.results_released_at = at
     exam.results_released_by_id = principal.user_id
     audit(db, principal, request, "exam.results_released", "exam", exam.id)
+    events.results_released(db, principal.tenant_id, exam.id)
     db.commit()
     return ReleaseOut(exam_id=exam.id, results_released_at=at)
 

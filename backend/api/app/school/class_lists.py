@@ -28,6 +28,7 @@ from app.auth.sessions import SessionPrincipal
 from app.core.passwords import generate_password, hash_password
 from app.db.session import get_db
 from app.documents.extract import UnreadableFile, decode_text, identify, row_cells
+from app.integrations import events
 from app.models import AcademicSession, Candidate, ClassArm, ClassLevel, Enrolment, Tenant, User
 from app.models.identity import USERNAME_RULE, normalize_username, valid_username
 from app.school.common import audit, flush_or_conflict, get_owned, write_access
@@ -408,6 +409,8 @@ async def import_class_list(
     school_code = db.get(Tenant, tid).slug
     created: list[NewStudent] = []
     changes = []
+    new_candidates: list[str] = []
+    moved_from: dict[str, str] = {}
     for item in planned:
         row = item.row
         if row.action == "create":
@@ -440,6 +443,7 @@ async def import_class_list(
                 )
                 db.add(item.candidate)
                 db.flush()
+                new_candidates.append(item.candidate.id)
             item.enrolment = Enrolment(
                 tenant_id=tid,
                 session_id=result.session_id,
@@ -449,9 +453,21 @@ async def import_class_list(
             db.add(item.enrolment)
             changes.append(item)
         elif row.action == "move":
+            moved_from[item.enrolment.id] = item.enrolment.arm_id
             item.enrolment.arm_id = item.arm.id
             changes.append(item)
     flush_or_conflict(db, "Some of these students were changed at the same time. Try again.")
+    for candidate_id in new_candidates:
+        events.student_added(db, tid, candidate_id)
+    for item in changes:
+        events.enrolment_changed(
+            db,
+            tid,
+            item.enrolment.candidate_id,
+            result.session_id,
+            item.arm.id,
+            moved_from.get(item.enrolment.id),
+        )
 
     for item in planned:
         row = item.row

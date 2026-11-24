@@ -1,8 +1,8 @@
 # ADR 0008: Integrations managed by schools
 
-- **Status:** Accepted. Stages A to C are built.
+- **Status:** Accepted. Stages A to D are built.
 - **Date:** 2026-11-15
-- **Implemented in:** `backend/api/app/integrations/` (`manage.py`, `scopes.py`, `limits.py`, `auth.py`; stage C: `public.py`, `public_schemas.py`, `envelope.py`), `backend/api/app/models/integration.py` (migration `0017_integration_management`); the web screen `apps/web/src/app/(school)/school/integrations/`
+- **Implemented in:** `backend/api/app/integrations/` (`manage.py`, `scopes.py`, `limits.py`, `auth.py`; stage C: `public.py`, `public_schemas.py`, `envelope.py`), `backend/api/app/models/integration.py` (migration `0017_integration_management`); stage D: `events.py`, `webhooks.py`, `webhook_admin.py`, `backend/api/app/models/webhooks.py` (migration `0023_webhooks`); the web screen `apps/web/src/app/(school)/school/integrations/` (`Webhooks.tsx` for stage D)
 
 ## Context
 
@@ -22,6 +22,7 @@ The work is built in stages:
 - **A. Management API:** registering integrations, permissions from a fixed list, issuing and revoking keys, disabling, an activity log, rate limits and security tests. (Built.)
 - **B. Web screens:** the Integrations page for school admins (`/school/integrations`). (Built.)
 - **C. The first public endpoints:** classes, candidate and enrolment sync, and released results, with the `{"error": ...}` envelope and request size limits. (Built; decisions 7 to 11.)
+- **D. Webhooks:** signed event notifications to the integration's own software. (Built; decisions 12 to 16.)
 
 For stage C the user decided on 2026-11-21:
 
@@ -30,6 +31,11 @@ For stage C the user decided on 2026-11-21:
 - **Results are scores only.** For each released exam: the student's score, the total marks, the percentage and when results were released. Not right or wrong per question.
 
 Webhooks, exam launch, OAuth client credentials, SSO and LTI come after C, in that order unless decided otherwise.
+
+For stage D (webhooks) the user decided on 2026-11-21:
+
+- **Three kinds of events:** students changing (added, renamed or disabled, enrolled in or moved between classes, including class-list uploads), results released, and exams published. Chosen over also sending an event each time a student hands in.
+- **Messages carry IDs only.** The receiver fetches details with its API key, so permissions, tenancy and release rules are checked every time, and nothing sensitive sits in message bodies, retries or logs. Chosen over putting names, classes and scores in the message.
 
 ## Decisions
 
@@ -49,9 +55,10 @@ Webhooks, exam launch, OAuth client credentials, SSO and LTI come after C, in th
    - `classes:read`: the school's sessions, terms, classes and subjects;
    - `candidates:read`: look up students and their class enrolment;
    - `candidates:write`: add and update students and their class enrolment;
-   - `results:read`: results, once released to students.
+   - `results:read`: results, once released to students;
+   - `exams:read`: published exams, their classes and times, never their questions (stage D, so the software can read what an exam event points to).
 
-   Their endpoints are in decisions 8 to 10. A change applies from the next request. Each permission is stored once per integration. Nothing in the catalogue exposes answer keys, unpublished questions or AI drafts, and none will without a new decision.
+   Their endpoints are in decisions 8 to 10 and 14. A change applies from the next request. Each permission is stored once per integration. Nothing in the catalogue exposes answer keys, unpublished questions or AI drafts, and none will without a new decision.
 
 5. **Activity.** `GET /school/integrations/{id}/activity` lists, newest first, the audit entries on the integration (registered, updated with the permissions added and removed, keys issued and revoked by name and prefix, disabled and enabled) and the entries the integration itself writes (actor type `integration`). From stage C, every public request that reads or changes school data writes such an entry.
 
@@ -88,17 +95,46 @@ Webhooks, exam launch, OAuth client credentials, SSO and LTI come after C, in th
 
 11. **Every public request writes an audit entry**, reads included: actor type `integration`, the integration as actor, the key's id and a count or the change in `details`, and the request id. A refused request (no key, missing permission, rate-limited, invalid) writes none. The entries show in the integration's activity for school admins.
 
+12. **Webhook endpoints** (`/school/integrations/{id}/webhooks`, school admins only, each change audited on the integration). An integration has at most five. Each has an HTTPS address, the event types it wants, and a **signing secret** (`whsec_...`) shown once, when it's created or replaced. Unlike API keys, the secret is stored as issued, because the server signs with it. An endpoint can be edited, disabled (deliveries that come due meanwhile are cancelled), enabled, given a new secret (which applies from the next attempt, retries included) or deleted with its delivery log. An endpoint can only subscribe to events whose permission the integration holds.
+
+13. **Events** (`app/integrations/events.py`), each needing a permission:
+
+    | Event | Permission | When |
+    |---|---|---|
+    | `candidate.created` | `candidates:read` | A student record is created: enrolment, a class list, or the integration's own sync |
+    | `candidate.updated` | `candidates:read` | A student's name, username, account or status changes (`data.changed` lists which) |
+    | `enrolment.changed` | `candidates:read` | A student joins, moves between or leaves a class (`class_id` and `previous_class_id`, either null) |
+    | `exam.published` | `exams:read` | An exam is approved and published |
+    | `exam.withdrawn` | `exams:read` | A published exam is withdrawn before it opens |
+    | `result.released` | `results:read` | A teacher releases results, or an exam that shows results at once closes; once per exam |
+
+    An event is recorded **in the same transaction as the change** (an outbox), with a delivery for each active endpoint of an active integration that wants it and holds its permission, so a committed change is never lost and a rolled-back one is never sent. A school without such an endpoint records nothing. Student events also carry the receiving integration's own ID for the student (`external_id`, null if it has none), and every message says whether that integration's own API call caused it (`triggered_by_you`), so a sync doesn't loop.
+
+14. **Messages carry IDs only:** `{"id": "evt_...", "type", "created_at", "triggered_by_you", "data"}`, with `data` holding exam, class, session and student IDs. The software fetches details through the API: `GET /published-exams` and `/published-exams/{id}` (`exams:read`; published and withdrawn exams, never questions), `GET /candidates?candidate_id=...` (`candidates:read`), and `/released-results/{exam_id}` (`results:read`).
+
+15. **Delivery** (`app/integrations/webhooks.py`):
+    - An HTTPS POST of the fixed body with `CBT-Event-Id`, `CBT-Event-Type` and `CBT-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256 of "<t>.<body>">`. Receivers check the signature, reject old timestamps, and deduplicate by event ID: delivery is **at least once**, and order isn't guaranteed.
+    - A 2xx answer within `WEBHOOK_TIMEOUT_SECONDS` (10) counts. Anything else, including redirects (never followed), is retried after 1 and 5 minutes, then 30 minutes, 2, 6, 12 and 24 hours, then given up. A school admin can send any delivery again.
+    - **Only public internet addresses.** An address must be HTTPS without a username or password, and not a local or private host. Before each attempt the host is resolved, every address must be public, and the connection goes to the checked address (with the host's name for TLS), so a name can't be switched to an internal address in between. `WEBHOOK_ALLOW_PRIVATE_URLS` lifts this for development only.
+    - A delivery is cancelled, not sent, if its endpoint or integration has been disabled or the integration has lost the event's permission since.
+    - Senders take deliveries with one conditional update, so two never send the same one; a delivery left mid-send for five minutes is taken back. History (deliveries, and events no delivery refers to) is kept 30 days.
+    - `WEBHOOK_DELIVERY=inline` (default): a thread in the API process sends due deliveries every few seconds. `worker`: `python -m app.worker` does. `off`: events queue but nothing is sent.
+
+16. **School admins can test and watch.** A test event (`webhook.test`) goes to one endpoint, the delivery log shows each delivery's status, attempts and last result (status code or reason, never the receiver's reply), and the integration's activity log shows every change to its webhooks. The secret never appears in either.
+
 ## Consequences
 
 - The backend README's gate is lifted for integration management (stage A) and for the stage C endpoints, each with its permission check, tenant filtering, audit entry and security tests (`tests/test_integration_api.py`).
 - Keys that never expire put the weight on revoking. The web screen shows each key's last use and makes revoking prominent.
+- Webhooks add outbound traffic from the API process (or the worker) to addresses school admins choose; the public-address rule and pinned connections keep that traffic off internal networks. A database leak would expose signing secrets, letting someone forge messages to a school's software, so receivers should still fetch details through the API rather than trust a message alone.
 - Auditing every read grows the audit log with an integration's traffic (at most `INTEGRATION_RATE_LIMIT_PER_MINUTE` entries a minute). Retention is later work.
 - Sync is one student per request. At the default limit an SIS adds about 120 students a minute; a school can raise `INTEGRATION_RATE_LIMIT_PER_MINUTE` for its first sync.
 
 ## Limits and later work
 
 - Batch sync of many students in one request, and removing students from classes through the API.
-- Webhooks (an event outbox with signed deliveries), then exam launch from a portal.
+- Exam launch from a portal, then OAuth.
+- More webhook events (an attempt handed in, marking finished), per-event retries chosen by the school, and pausing an endpoint automatically after it fails for days.
 - OAuth 2.0 client credentials (`POST /oauth/token`), the token flow in `api-contract.md`.
 - Per-key permissions and IP allowlists.
 - Platform admin views of integrations across schools.

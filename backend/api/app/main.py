@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,11 +10,14 @@ from app.attempts.student import router as attempts_student_router
 from app.auth.dependencies import CSRF_HEADER
 from app.auth.router import router as auth_router
 from app.core.config import get_settings
+from app.db.session import SessionLocal
 from app.documents.router import router as documents_router
 from app.exams.router import router as exams_router
+from app.integrations import webhooks
 from app.integrations.manage import router as integrations_admin_router
 from app.integrations.public import router as integration_api_router
 from app.integrations.router import router as integrations_router
+from app.integrations.webhook_admin import router as webhooks_admin_router
 from app.offline.router import admin_router as devices_admin_router
 from app.offline.router import device_router as devices_router
 from app.offline.router import exam_router as offline_exam_router
@@ -34,7 +39,20 @@ from app.school.subjects import router as school_subjects_router
 
 settings = get_settings()
 
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Webhooks (ADR 0008): with WEBHOOK_DELIVERY=inline the API process sends due deliveries
+    # itself; with "worker", `python -m app.worker` does.
+    stop = None
+    if settings.webhook_delivery == "inline":
+        stop = webhooks.start_background(SessionLocal)
+    yield
+    if stop is not None:
+        stop.set()
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=settings.app_name,
     version=settings.app_version,
     description=(
@@ -78,6 +96,7 @@ app.include_router(offline_exam_router, prefix=settings.api_v1_prefix)
 app.include_router(offline_public_router, prefix=settings.api_v1_prefix)
 app.include_router(results_student_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_router, prefix=settings.api_v1_prefix)
+app.include_router(webhooks_admin_router, prefix=settings.api_v1_prefix)
 app.include_router(integrations_admin_router, prefix=settings.api_v1_prefix)
 app.include_router(integration_api_router, prefix=settings.api_v1_prefix)
 

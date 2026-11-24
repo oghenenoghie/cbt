@@ -33,6 +33,7 @@ from app.exams.schemas import (
     PaperQuestion,
     ReviewNote,
 )
+from app.integrations import events
 from app.models import (
     ClassArm,
     ClassLevelSubject,
@@ -761,6 +762,7 @@ def publish_exam(
         select(func.count()).select_from(ExamPaperItem).where(ExamPaperItem.exam_id == exam.id)
     )
     audit(db, principal, request, "exam.published", "exam", exam.id, {"questions": questions})
+    events.exam_published(db, principal.tenant_id, exam.id)
     db.commit()
     return _out(db, viewer, exam)
 
@@ -786,5 +788,6 @@ def withdraw_exam(
     exam.withdrawn_at = _now()
     exam.review_note = body.note
     audit(db, principal, request, "exam.withdrawn", "exam", exam.id)
+    events.exam_withdrawn(db, principal.tenant_id, exam.id)
     db.commit()
     return _out(db, viewer, exam)
