@@ -742,3 +742,19 @@ textarea:focus-visible,
 .table .sub.warning {
   color: var(--warning);
 }
+
+/* A number box with its unit beside it (structured practical parts). */
+.with-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.with-unit input {
+  flex: 1;
+  max-width: 280px;
+}
+
+.with-unit .unit {
+  color: var(--muted, #5b6478);
+}

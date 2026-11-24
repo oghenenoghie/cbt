@@ -746,6 +746,8 @@ def test_the_attempt_json_stays_small_and_plain(school) -> None:
         "diagram_spec",
         "matching_prompts",
         "calculation_prompts",
+        "practical_parts",
+        "practical_table",
         "options",
         "marks",
         "selected_option_ids",

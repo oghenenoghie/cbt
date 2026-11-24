@@ -19,6 +19,8 @@ export interface PackageItem {
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
   calculation_prompts?: string[];
+  practical_parts?: { prompt: string; kind: "short" | "number" | "written"; marks: number; unit?: string | null }[];
+  practical_table?: { columns: string[]; rows: string[][] } | null;
   options: { id: string; text: string }[];
   marks: number;
 }

@@ -178,9 +178,13 @@ export type QuestionType =
   | "essay"
   | "diagram_label"
   | "matching"
-  | "calculation";
-/** AI drafts can be any of the bank's types (ADR 0005, ADR 0006 stage C). */
-export type AiQuestionType = Exclude<QuestionType, "diagram_label" | "matching" | "calculation">;
+  | "calculation"
+  | "practical";
+/** AI drafts can be any of the bank's types (ADR 0005, ADR 0006 stage C) except these. */
+export type AiQuestionType = Exclude<
+  QuestionType,
+  "diagram_label" | "matching" | "calculation" | "practical"
+>;
 export type Difficulty = "easy" | "medium" | "hard";
 export type BankStatus = "active" | "archived";
 
@@ -203,6 +207,37 @@ export interface AnswerKey {
   matching_options?: string[];
   correct_matches?: string[];
   calculation_steps?: { prompt: string; value: number; tolerance: number }[];
+  practical_parts?: PracticalPart[];
+  practical_table?: PracticalTable | null;
+}
+
+/** How a practical's part is answered (ADR 0006 decision 8). */
+export type PartKind = "short" | "number" | "written";
+
+/** A table of readings or results that a practical's parts refer to. */
+export interface PracticalTable {
+  columns: string[];
+  rows: string[][];
+}
+
+/** One part of a practical, with its answer: staff only. */
+export interface PracticalPart {
+  prompt: string;
+  kind: PartKind;
+  marks: number;
+  accepted_answers?: string[] | null;
+  value?: number | null;
+  tolerance?: number | null;
+  unit?: string | null;
+  guide?: string | null;
+}
+
+/** What students see of a part. */
+export interface PracticalPartView {
+  prompt: string;
+  kind: PartKind;
+  marks: number;
+  unit: string | null;
 }
 
 export interface CalculationStep {
@@ -287,8 +322,11 @@ export interface QuestionContent {
   guide: string | null;
   label_answers?: string[][] | null;
   matching_prompts?: string[] | null;
-  matching_answers?: number[] | null;
+  /** For each prompt, the position of its answer in `options` (matching). */
+  correct_matches?: number[] | null;
   calculation_steps?: CalculationStepInput[] | null;
+  practical_parts?: PracticalPart[] | null;
+  practical_table?: PracticalTable | null;
   explanation: string | null;
   marks: number;
   difficulty: Difficulty | null;
@@ -483,11 +521,16 @@ export interface AttemptQuestion {
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
   calculation_prompts?: string[];
+  practical_parts?: PracticalPartView[] | null;
+  practical_table?: PracticalTable | null;
   /** In this student's order. Empty for questions answered in writing. */
   options: QuestionOption[];
   marks: number;
   selected_option_ids: string[];
-  /** The saved answer to a short-answer, number or essay question. */
+  /**
+   * The saved answer to a question answered in writing. A practical's is a JSON list of strings,
+   * one per part.
+   */
   text: string | null;
 }
 
@@ -542,6 +585,8 @@ export interface ReviewQuestion {
   diagram_spec?: DiagramSpec | null;
   matching_prompts?: string[];
   calculation_prompts?: string[];
+  practical_parts?: PracticalPartView[] | null;
+  practical_table?: PracticalTable | null;
   options: QuestionOption[];
   selected_option_ids: string[];
   /** What the student wrote, for questions answered in writing. */

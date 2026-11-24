@@ -3,9 +3,21 @@
 import { parseTimestamp } from "@/lib/format";
 import type { MyExam, QuestionType } from "@/lib/types";
 
-/** Questions a student answers by typing (a word, a number or an essay) rather than choosing. */
+/**
+ * Questions whose answer is sent as text rather than chosen options: typed answers (a word, a
+ * number, an essay), and the structured types, whose answer is a JSON list of strings (diagram
+ * labels, matches, calculation steps, a practical's parts).
+ */
 export function answeredInWriting(type: QuestionType): boolean {
-  return type === "short_answer" || type === "numeric" || type === "essay" || type === "diagram_label";
+  return (
+    type === "short_answer" ||
+    type === "numeric" ||
+    type === "essay" ||
+    type === "diagram_label" ||
+    type === "matching" ||
+    type === "calculation" ||
+    type === "practical"
+  );
 }
 
 /** Words in a written answer, as a student would count them. */

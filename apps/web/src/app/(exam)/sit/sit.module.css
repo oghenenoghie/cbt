@@ -268,3 +268,24 @@
   line-height: 1.6;
   resize: vertical;
 }
+
+.withUnit {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 100%;
+}
+
+.withUnit .written {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.unit {
+  flex: none;
+  color: var(--muted);
+}
+
+.partWritten {
+  min-height: 120px;
+}

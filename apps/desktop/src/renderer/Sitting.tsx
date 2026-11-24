@@ -25,6 +25,8 @@ function given(answer: GivenAnswer | undefined, question?: SittingQuestion): boo
     return labelsFromText(answer?.text ?? "", question.matching_prompts?.length ?? 0).some((value) => value.trim());
   if (question?.type === "calculation")
     return labelsFromText(answer?.text ?? "", question.calculation_prompts?.length ?? 0).some((value) => value.trim());
+  if (question?.type === "practical")
+    return labelsFromText(answer?.text ?? "", question.practical_parts?.length ?? 0).some((value) => value.trim());
   return Boolean(answer && (answer.selected.length > 0 || answer.text?.trim()));
 }
 
@@ -157,6 +159,44 @@ function QuestionInput({
     );
   }
   const text = answer?.text ?? "";
+  if (question.type === "practical") {
+    const parts = question.practical_parts ?? [];
+    const values = labelsFromText(text, parts.length);
+    const table = question.practical_table;
+    return <div className="stack">
+      {table && (
+        <table className="table">
+          <thead><tr>{table.columns.map((column, index) => <th key={index} scope="col">{column}</th>)}</tr></thead>
+          <tbody>{table.rows.map((row, r) => <tr key={r}>{row.map((cell, c) => <td key={c}>{cell}</td>)}</tr>)}</tbody>
+        </table>
+      )}
+      <fieldset className="field">
+        <legend>Answer each part</legend>
+        {parts.map((part, index) => {
+          const id = `a-${question.item_id}-${index}`;
+          const label = `(${String.fromCharCode(97 + index)}) ${part.prompt} · ${count(part.marks, "mark")}`;
+          const change = (value: string) => {
+            const next = [...values]; next[index] = value;
+            onChange({ selected: [], text: JSON.stringify(next) }, true);
+          };
+          return (
+            <div className="field" key={index}>
+              <label htmlFor={id}>{label}</label>
+              {part.kind === "written" ? (
+                <textarea id={id} rows={4} maxLength={3000} value={values[index] ?? ""} onChange={(event) => change(event.target.value)} />
+              ) : (
+                <span className="with-unit">
+                  <input id={id} autoComplete="off" maxLength={500} inputMode={part.kind === "number" ? "decimal" : undefined} value={values[index] ?? ""} onChange={(event) => change(event.target.value)} />
+                  {part.kind === "number" && part.unit && <span className="unit">{part.unit}</span>}
+                </span>
+              )}
+            </div>
+          );
+        })}
+        <span className="hint">Short answers and numbers are marked straight away; written parts are marked by your teacher.</span>
+      </fieldset>
+    </div>;
+  }
   if (question.type === "matching") {
     const matches = labelsFromText(text, question.matching_prompts?.length ?? 0);
     return <fieldset className="field">

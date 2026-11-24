@@ -26,7 +26,7 @@ from app.models import AttemptResponse, Exam, ExamAttempt, ResponseMark
 from app.models.tenant import as_utc
 
 # Answers a teacher can mark. Choice questions are only ever marked automatically.
-WRITTEN_TYPES = ("short_answer", "numeric", "essay")
+WRITTEN_TYPES = ("short_answer", "numeric", "essay", "practical")
 
 
 def has_closed(exam: Exam, at: datetime) -> bool:

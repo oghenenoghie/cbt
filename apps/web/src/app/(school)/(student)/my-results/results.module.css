@@ -135,3 +135,10 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.partAnswer {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  white-space: pre-wrap;
+}

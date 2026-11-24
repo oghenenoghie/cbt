@@ -14,7 +14,8 @@ export type QuestionType =
   | "essay"
   | "diagram_label"
   | "matching"
-  | "calculation";
+  | "calculation"
+  | "practical";
 
 export const CHOICE_TYPES: readonly QuestionType[] = ["mcq_single", "mcq_multiple", "true_false"];
 
@@ -27,6 +28,14 @@ export interface AnswerKey {
     matching_prompts?: string[];
     correct_matches?: string[];
     calculation_steps?: { prompt: string; value: number; tolerance: number }[];
+    practical_parts?: {
+      prompt: string;
+      kind: "short" | "number" | "written";
+      marks: number;
+      accepted_answers?: string[];
+      value?: number;
+      tolerance?: number;
+    }[];
     value?: number;
     tolerance?: number;
     guide?: string;
@@ -69,7 +78,48 @@ export function parseNumber(text: string | null): number | null {
   return Number(value);
 }
 
+function within(value: number | null, expected: number, tolerance: number): boolean {
+  // A hair of slack so 0.1 + 0.2 still counts as 0.3, as on the server.
+  return value !== null && Math.abs(value - expected) <= tolerance + 1e-9 * Math.max(1, Math.abs(expected));
+}
+
+/**
+ * A structured practical: short and number parts earn their marks; a written part earns nothing
+ * here and, if answered, waits for a teacher. Scaled to the paper's marks, as on the server.
+ */
+function markPractical(key: AnswerKey, marks: number, given: Given): Marked {
+  const parts = key.answer_key?.practical_parts ?? [];
+  let supplied: unknown = [];
+  try { supplied = JSON.parse(given.text ?? "[]"); } catch { supplied = []; }
+  const answers = Array.isArray(supplied) ? supplied : [];
+  let earned = 0;
+  let allRight = parts.length > 0;
+  let waiting = false;
+  parts.forEach((part, index) => {
+    const answer = typeof answers[index] === "string" ? (answers[index] as string) : "";
+    if (part.kind === "written") {
+      allRight = false;
+      waiting = waiting || answer.trim() !== "";
+      return;
+    }
+    let right: boolean;
+    if (part.kind === "short") {
+      const accepted = new Set((part.accepted_answers ?? []).map(normalizeAnswer));
+      const normalized = normalizeAnswer(answer);
+      right = normalized !== "" && accepted.has(normalized);
+    } else {
+      right = within(parseNumber(answer), Number(part.value), Number(part.tolerance ?? 0));
+    }
+    if (right) earned += part.marks;
+    else allRight = false;
+  });
+  const total = parts.reduce((sum, part) => sum + part.marks, 0);
+  const score = total ? Math.floor((marks * earned) / total + 0.5) : 0;
+  return { isCorrect: allRight, score, needsMarking: waiting };
+}
+
 export function mark(key: AnswerKey, marks: number, given: Given): Marked {
+  if (key.type === "practical") return markPractical(key, marks, given);
   if (key.type === "essay") {
     return { isCorrect: false, score: 0, needsMarking: Boolean(given.text && given.text.trim()) };
   }

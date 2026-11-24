@@ -51,6 +51,7 @@ from app.offline.schemas import (
     SubmissionBody,
     SubmissionResult,
 )
+from app.questions.schemas import practical_for_students, practical_kinds
 
 
 def now() -> datetime:
@@ -203,6 +204,16 @@ def build_package(
                 "calculation_prompts": [step["prompt"] for step in (version.answer_key or {}).get("calculation_steps", [])]
                 if version.type == "calculation"
                 else [],
+                # A practical's parts and given table, without answers or guides.
+                "practical_parts": [
+                    part.model_dump(exclude_none=True)
+                    for part in practical_for_students(version.type, version.answer_key)[0]
+                ],
+                "practical_table": (
+                    table.model_dump()
+                    if (table := practical_for_students(version.type, version.answer_key)[1])
+                    else None
+                ),
                 # The options' text only: which are right is never here.
                 "options": [{"id": o["id"], "text": o["text"]} for o in version.options],
                 "marks": item.marks,
@@ -378,6 +389,7 @@ def _answers_problem(
                 if version.type == "matching"
                 else [],
                 calculation_count=len((version.answer_key or {}).get("calculation_steps", [])),
+                part_kinds=practical_kinds(version.type, version.answer_key),
             )
         except (HTTPException, ValidationError):
             return f"An answer doesn't fit its question (question {event.item_id[:8]})."

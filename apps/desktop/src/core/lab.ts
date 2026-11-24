@@ -63,6 +63,8 @@ const SIGN_IN_TRIES = 5;
 const SIGN_IN_LOCK_MS = 60_000;
 const MAX_SHORT_ANSWER_CHARS = 500;
 const MAX_ANSWER_CHARS = 20_000;
+// One written part of a structured practical, as on the server.
+const MAX_PART_ANSWER_CHARS = 3000;
 const MAX_EVENTS = 20_000;
 
 /** Keeps this computer's secrets encrypted at rest (Electron's safeStorage in the app). */
@@ -228,6 +230,21 @@ export function checkedAnswer(item: PackageItem, given: GivenAnswer): GivenAnswe
     if (!Array.isArray(supplied) || supplied.length !== count || supplied.some((id) => typeof id !== "string" || (id !== "" && !ids.includes(id))) || new Set(supplied.filter(Boolean)).size !== supplied.filter(Boolean).length)
       throw new LabError("Choose each answer at most once.");
     return { selected: [], text: supplied.some((id) => id !== "") ? JSON.stringify(supplied) : null };
+  }
+  if (item.type === "practical") {
+    const kinds = (item.practical_parts ?? []).map((part) => part.kind);
+    let supplied: unknown;
+    try { supplied = text === null ? Array(kinds.length).fill("") : JSON.parse(text); } catch { throw new LabError("Answer each part of the question."); }
+    if (!Array.isArray(supplied) || supplied.length !== kinds.length)
+      throw new LabError("Answer each part of the question.");
+    supplied.forEach((value, index) => {
+      const limit = kinds[index] === "written" ? MAX_PART_ANSWER_CHARS : MAX_SHORT_ANSWER_CHARS;
+      if (typeof value !== "string" || value.length > limit)
+        throw new LabError(`Keep each part's answer to ${limit} characters or fewer.`);
+    });
+    const encoded = JSON.stringify(supplied);
+    if (encoded.length > MAX_ANSWER_CHARS) throw new LabError("Shorten your answers and try again.");
+    return { selected: [], text: (supplied as string[]).some((value) => value.trim()) ? encoded : null };
   }
   if (item.type === "calculation") {
     const count = item.calculation_prompts?.length ?? 0;
@@ -732,6 +749,10 @@ export class Lab {
           type: item.type,
           stem: item.stem,
           diagram_spec: item.diagram_spec ?? null,
+          matching_prompts: item.matching_prompts ?? [],
+          calculation_prompts: item.calculation_prompts ?? [],
+          practical_parts: item.practical_parts ?? [],
+          practical_table: item.practical_table ?? null,
           options: (meta.option_orders[itemId] ?? []).map((id) => options.get(id)!).filter(Boolean),
           marks: item.marks,
           passage: item.passage_id ? (pkg.passages[item.passage_id] ?? null) : null,

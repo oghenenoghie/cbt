@@ -6,7 +6,9 @@ import { Suspense } from "react";
 
 import { Loaded } from "@/components/Feedback";
 import { DiagramPreview } from "@/components/bank/DiagramPreview";
+import { PracticalTableView } from "@/components/practical/PracticalTable";
 import { formatDateTime } from "@/lib/format";
+import { partAnswers, partLetter } from "@/lib/practical";
 import type { MyResultDetail, ReviewQuestion } from "@/lib/types";
 import { useApi } from "@/lib/useApi";
 import { useQueryParams } from "@/lib/useQueryParams";
@@ -73,6 +75,35 @@ function Reviewed({ question }: { question: ReviewQuestion }) {
               </li>
             ))}
           </ol>
+        ) : question.type === "practical" ? (
+          <>
+            <PracticalTableView table={question.practical_table} />
+            <ol className={styles.options} aria-label="Your answers to each part">
+              {(() => {
+                const parts = question.practical_parts ?? [];
+                const answers = partAnswers(question.text, parts.length);
+                return parts.map((part, index) => (
+                  <li key={index}>
+                    <span>{partLetter(index)}</span>
+                    <span className={styles.partAnswer}>
+                      <span>
+                        {part.prompt}{" "}
+                        <span className="muted">({part.marks === 1 ? "1 mark" : `${part.marks} marks`})</span>
+                      </span>
+                      {answers[index].trim() ? (
+                        <strong>
+                          {answers[index]}
+                          {part.unit ? ` ${part.unit}` : ""}
+                        </strong>
+                      ) : (
+                        <em className="muted">Not answered</em>
+                      )}
+                    </span>
+                  </li>
+                ));
+              })()}
+            </ol>
+          </>
         ) : question.type === "calculation" ? (
           <ol className={styles.options}>
             {(question.calculation_prompts ?? []).map((prompt, index) => {

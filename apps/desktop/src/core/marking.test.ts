@@ -72,3 +72,32 @@ test("essays wait for a teacher unless left blank", () => {
   });
   assert.equal(mark(key("essay", []), 5, answer([], "   ")).needsMarking, false);
 });
+
+test("structured practical parts are marked one by one, as on the server", () => {
+  const practical = key("practical", [], {
+    practical_parts: [
+      { prompt: "Volume", kind: "number", marks: 2, value: 24.5, tolerance: 0.1 },
+      { prompt: "Colour", kind: "short", marks: 1, accepted_answers: ["pink to colourless", "pink to clear"] },
+      { prompt: "Precaution", kind: "written", marks: 2 },
+    ],
+  });
+  const cases: [string[], number, boolean][] = [
+    [["24.5", "Pink to colourless.", ""], 3, false],
+    [["24,45", "pink to clear", "Read at eye level"], 3, true],
+    [["25", "pink to colourless", ""], 1, false],
+    [["", "", ""], 0, false],
+    [["24.5", "blue", "   "], 2, false],
+  ];
+  for (const [answers, score, waiting] of cases) {
+    const marked = mark(practical, 5, answer([], JSON.stringify(answers)));
+    assert.deepEqual([marked.score, marked.needsMarking, marked.isCorrect], [score, waiting, false], answers.join("|"));
+  }
+  const autoOnly = key("practical", [], {
+    practical_parts: [
+      { prompt: "Volume", kind: "number", marks: 2, value: 24.5, tolerance: 0.1 },
+      { prompt: "Colour", kind: "short", marks: 1, accepted_answers: ["pink to clear"] },
+    ],
+  });
+  assert.deepEqual(mark(autoOnly, 3, answer([], JSON.stringify(["24.5", "pink to clear"]))), { isCorrect: true, score: 3, needsMarking: false });
+  assert.equal(mark(autoOnly, 6, answer([], JSON.stringify(["24.5", "x"]))).score, 4);
+});

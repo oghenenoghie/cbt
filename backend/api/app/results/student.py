@@ -24,6 +24,7 @@ from app.models import (
     Subject,
 )
 from app.models.tenant import as_utc
+from app.questions.schemas import practical_for_students
 from app.results import service
 from app.results.schemas import (
     MyResult,
@@ -185,6 +186,8 @@ def my_result(
                     calculation_prompts=[step["prompt"] for step in (version.answer_key or {}).get("calculation_steps", [])]
                     if version.type == "calculation"
                     else [],
+                    practical_parts=practical_for_students(version.type, version.answer_key)[0],
+                    practical_table=practical_for_students(version.type, version.answer_key)[1],
                     options=[
                         OptionText(id=o, text=texts[o]) for o in attempt.option_orders[item_id]
                     ],

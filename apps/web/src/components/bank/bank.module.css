@@ -280,3 +280,76 @@
   gap: 10px 16px;
   grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr));
 }
+
+/* --- Practical questions (ADR 0006 decision 8) ------------------------------------------- */
+
+.gridWrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.gridTable {
+  border-collapse: collapse;
+}
+
+.gridTable th,
+.gridTable td {
+  padding: 3px;
+  vertical-align: middle;
+}
+
+.gridTable input[type="text"] {
+  width: 140px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  font-weight: 400;
+}
+
+.gridTable th input[type="text"] {
+  font-weight: 600;
+  background: var(--surface-muted);
+}
+
+.gridTable input[type="text"]:focus {
+  border-color: var(--primary);
+  box-shadow: var(--focus);
+  outline: none;
+}
+
+.gridCell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.partBox {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.partTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.practicalParts {
+  display: grid;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.practicalParts li {
+  display: grid;
+  gap: 2px;
+}

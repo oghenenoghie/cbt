@@ -11,6 +11,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.diagrams import DiagramSpec
+from app.questions.schemas import PracticalPartView, PracticalTableView
 
 
 class OptionText(BaseModel):
@@ -54,6 +55,9 @@ class ReviewQuestion(BaseModel):
     diagram_spec: DiagramSpec | None = None
     matching_prompts: list[str] = Field(default_factory=list)
     calculation_prompts: list[str] = Field(default_factory=list)
+    # A structured practical's parts and given table, never their answers or guides.
+    practical_parts: list[PracticalPartView] = Field(default_factory=list)
+    practical_table: PracticalTableView | None = None
     options: list[OptionText]
     selected_option_ids: list[str]
     # What the student wrote, for questions answered with text.

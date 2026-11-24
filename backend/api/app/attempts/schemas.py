@@ -7,11 +7,14 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.diagrams import DiagramSpec
+from app.questions.schemas import PracticalPartView, PracticalTableView
 
 OptionId = str
 # Longest written answer a student can save; short answers and numbers have a lower limit.
 MAX_ANSWER_CHARS = 20000
 MAX_SHORT_ANSWER_CHARS = 500
+# One written part of a structured practical question.
+MAX_PART_ANSWER_CHARS = 3000
 
 
 class MyExam(BaseModel):
@@ -57,6 +60,9 @@ class AttemptQuestion(BaseModel):
     diagram_spec: DiagramSpec | None = None
     matching_prompts: list[str] = Field(default_factory=list)
     calculation_prompts: list[str] = Field(default_factory=list)
+    # A structured practical's parts and given table, never their answers or guides.
+    practical_parts: list[PracticalPartView] = Field(default_factory=list)
+    practical_table: PracticalTableView | None = None
     options: list[AttemptOption]
     marks: int
     selected_option_ids: list[str]
